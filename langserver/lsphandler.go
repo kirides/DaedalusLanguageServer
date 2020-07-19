@@ -24,6 +24,11 @@ type LspHandler struct {
 	TextDocumentSyncHandler jsonrpc2.Handler
 }
 
+var (
+	// ErrWalkAbort should be returned if a walk function should abort early
+	ErrWalkAbort = fmt.Errorf("OK")
+)
+
 // NewLspHandler ...
 func NewLspHandler() *LspHandler {
 	bufferManager := NewBufferManager()
@@ -111,6 +116,82 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Sy
 	return symbol, nil
 }
 
+func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.SignatureHelp, error) {
+	doc := h.bufferManager.GetBuffer(params.TextDocument.URI.Filename())
+	methodCallLine := doc.GetMethodCall(params.Position)
+	// The expected method call turned out to be a `func void something( ... )` -> a function definition
+	if rxFunctionDef.MatchString(methodCallLine) {
+		return lsp.SignatureHelp{}, nil
+	}
+
+	methodCallLine = rxStringValues.ReplaceAllLiteralString(methodCallLine, "")
+	oldLen := -1
+	for len(methodCallLine) != oldLen {
+		oldLen = len(methodCallLine)
+		methodCallLine = rxFuncCall.ReplaceAllLiteralString(methodCallLine, "")
+	}
+
+	// If for some reason the parenthesis of the methodcall went missing
+	idxParen := strings.LastIndexByte(methodCallLine, '(')
+	if idxParen < 0 {
+		return lsp.SignatureHelp{}, fmt.Errorf("the parenthesis of the methodcall went missing")
+	}
+
+	word := ""
+	for i := idxParen - 1; i > 0; i-- {
+		if !isIdentifier(methodCallLine[i]) {
+			start := i + 1
+			if start+idxParen > len(methodCallLine) {
+				return lsp.SignatureHelp{}, fmt.Errorf("Idx out of bounds. Bad format :/")
+			}
+			word = methodCallLine[start : start+idxParen]
+		}
+	}
+	if word == "" {
+		word = methodCallLine[:idxParen]
+	}
+	word = strings.TrimSpace(word)
+
+	var funcSymbol Symbol
+
+	h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
+		if _, ok := s.(FunctionSymbol); ok {
+			if strings.EqualFold(s.Name(), word) {
+				funcSymbol = s
+				return ErrWalkAbort
+			}
+		}
+		return nil
+	})
+	if funcSymbol == nil {
+		return lsp.SignatureHelp{}, fmt.Errorf("no functino symbol found")
+	}
+	sigCtx := methodCallLine[idxParen+1:]
+	fn := funcSymbol.(FunctionSymbol)
+
+	var fnParams []lsp.ParameterInformation
+	for _, p := range fn.Parameters {
+		fnParams = append(fnParams, lsp.ParameterInformation{
+			Label: p.String(),
+		})
+	}
+
+	return lsp.SignatureHelp{
+		Signatures: []lsp.SignatureInformation{
+			{
+				Documentation: &lsp.MarkupContent{
+					Kind:  lsp.Markdown,
+					Value: fn.Documentation(),
+				},
+				Label:      fn.String(),
+				Parameters: fnParams,
+			},
+		},
+		ActiveParameter: float64(strings.Count(sigCtx, ",")),
+		ActiveSignature: 0,
+	}, nil
+}
+
 func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.Location, error) {
 	symbol, err := h.lookUpSymbol(params.TextDocument.URI.Filename(), params.Position)
 	if err != nil {
@@ -152,6 +233,9 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 				},
 				DefinitionProvider: true,
 				HoverProvider:      true,
+				SignatureHelpProvider: &lsp.SignatureHelpOptions{
+					TriggerCharacters: []string{"(", ","},
+				},
 				TextDocumentSync: lsp.TextDocumentSyncOptions{
 					Change:    float64(lsp.Full),
 					OpenClose: true,
@@ -241,6 +325,15 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 					Value: strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(found.Documentation(), "\r", ""), "\n", "  \n") + "\n```daedalus\n" + found.String() + "\n```"),
 				},
 			}, nil)
+		}
+	case lsp.MethodTextDocumentSignatureHelp:
+		var params lsp.TextDocumentPositionParams
+		json.Unmarshal(*r.Params, &params)
+		result, err := h.handleSignatureInfo(ctx, &params)
+		if err == nil {
+			r.Reply(ctx, result, nil)
+		} else {
+			r.Reply(ctx, nil, nil)
 		}
 	default:
 		return h.baseLspHandler.Deliver(ctx, r, delivered)
