@@ -69,3 +69,11 @@ func TestParseSingleScriptFromFile(t *testing.T) {
 	// b, _ := json.MarshalIndent(result, "", "  ")
 	// t.Logf("%s\n", b)
 }
+
+func TestGothicSrc(t *testing.T) {
+	paths := resolveSrcPaths(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\Gothic.src`, `E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content`)
+
+	// result := ParseScript("C:\\temp", string(script))
+	b, _ := json.MarshalIndent(paths, "", "  ")
+	t.Logf("%s\n", b)
+}

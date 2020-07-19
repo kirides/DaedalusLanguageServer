@@ -177,9 +177,9 @@ func resolveSrcPaths(srcFile, prefixDir string) []string {
 
 		if ext == ".d" {
 			if strings.Contains(fname, "*") {
-				rxFilePath := regexp.MustCompile(strings.ReplaceAll(regexp.QuoteMeta(fname), "\\*", ".*"))
+				rxFilePath := regexp.MustCompile(strings.ReplaceAll(regexp.QuoteMeta(strings.ToLower(fname)), "\\*", ".*"))
 
-				entries, err := ioutil.ReadDir(dir)
+				entries, err := ioutil.ReadDir(filepath.Join(prefixDir, dir))
 				if err != nil {
 					continue
 				}
@@ -187,7 +187,7 @@ func resolveSrcPaths(srcFile, prefixDir string) []string {
 					if e.IsDir() {
 						continue
 					}
-					if rxFilePath.MatchString(e.Name()) {
+					if rxFilePath.MatchString(strings.ToLower(e.Name())) {
 						absPath, err := filepath.Abs(filepath.Join(prefixDir, dir, e.Name()))
 						if err != nil {
 							continue
@@ -203,7 +203,8 @@ func resolveSrcPaths(srcFile, prefixDir string) []string {
 				resolvedPaths = append(resolvedPaths, absPath)
 			}
 		} else if ext == ".src" {
-			resolvedPaths = append(resolvedPaths, resolveSrcPaths(line, dir)...)
+			fmt.Fprintf(os.Stderr, "Collecting scripts from %q\n", filepath.Join(prefixDir, dir, fname))
+			resolvedPaths = append(resolvedPaths, resolveSrcPaths(filepath.Join(prefixDir, line), filepath.Join(prefixDir, dir))...)
 		}
 	}
 
@@ -211,9 +212,8 @@ func resolveSrcPaths(srcFile, prefixDir string) []string {
 }
 
 func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error) {
-
-	fmt.Fprintf(os.Stderr, "Parsing %q. This might take a while.\n", srcFile)
 	resolvedPaths := resolveSrcPaths(srcFile, filepath.Dir(srcFile))
+	fmt.Fprintf(os.Stderr, "Parsing %q. This might take a while.\n", srcFile)
 
 	results := make([]*ParseResult, 0, len(resolvedPaths))
 	decoder := charmap.Windows1252.NewDecoder()
