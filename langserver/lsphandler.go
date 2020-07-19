@@ -44,33 +44,69 @@ func NewLspHandler() *LspHandler {
 	}
 }
 
+func completionItemFromSymbol(s Symbol) (lsp.CompletionItem, error) {
+	kind, err := completionItemKindForSymbol(s)
+	if err != nil {
+		return lsp.CompletionItem{}, err
+	}
+	return lsp.CompletionItem{
+		Kind:   kind,
+		Label:  s.Name(),
+		Detail: s.String(),
+		Documentation: lsp.MarkupContent{
+			Kind:  lsp.PlainText,
+			Value: s.Documentation(),
+		},
+	}, nil
+}
+
+func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
+	switch s.(type) {
+	case VariableSymbol:
+		return lsp.VariableCompletion, nil
+	case ConstantSymbol:
+		return lsp.ConstantCompletion, nil
+	case FunctionSymbol:
+		return lsp.FunctionCompletion, nil
+	case ClassSymbol:
+		return lsp.ClassCompletion, nil
+	case ProtoTypeOrInstanceSymbol:
+		return lsp.ClassCompletion, nil
+	}
+	return lsp.CompletionItemKind(-1), fmt.Errorf("Symbol not found")
+}
+
 func (h *LspHandler) handleTextDocumentCompletion(ctx context.Context, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	result := make([]lsp.CompletionItem, 0, 200)
+	parsedDoc, err := h.parsedDocuments.Get(params.TextDocument.URI.Filename())
+	if err == nil {
+		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
+		for _, fn := range parsedDoc.Functions {
+			if fn.BodyDefinition.InBBox(di) {
+				for _, p := range fn.Parameters {
+					ci, err := completionItemFromSymbol(p)
+					if err != nil {
+						continue
+					}
+					result = append(result, ci)
+				}
+				for _, p := range fn.LocalVariables {
+					ci, err := completionItemFromSymbol(p)
+					if err != nil {
+						continue
+					}
+					result = append(result, ci)
+				}
+				break
+			}
+		}
+	}
 	h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
-		var kind lsp.CompletionItemKind
-		switch s.(type) {
-		case VariableSymbol:
-			kind = lsp.VariableCompletion
-		case ConstantSymbol:
-			kind = lsp.ConstantCompletion
-		case FunctionSymbol:
-			kind = lsp.FunctionCompletion
-		case ClassSymbol:
-			kind = lsp.ClassCompletion
-		case ProtoTypeOrInstanceSymbol:
-			kind = lsp.ClassCompletion
-		default:
+		ci, err := completionItemFromSymbol(s)
+		if err != nil {
 			return nil
 		}
-		result = append(result, lsp.CompletionItem{
-			Kind:   kind,
-			Label:  s.Name(),
-			Detail: s.String(),
-			Documentation: lsp.MarkupContent{
-				Kind:  lsp.PlainText,
-				Value: s.Documentation(),
-			},
-		})
+		result = append(result, ci)
 		return nil
 	})
 
