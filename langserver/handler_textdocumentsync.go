@@ -57,31 +57,32 @@ func (h *textDocumentSyncHandler) updateBuffer(ctx context.Context, r *jsonrpc2.
 		Diagnostics: diagnostics,
 	})
 
-	h.Log("Updated buffer for %q with %d chars\n", documentURI, len(chars))
+	h.LogDebug("Updated buffer for %q with %d chars\n", documentURI, len(chars))
 }
 
 // Deliver ...
 func (h *textDocumentSyncHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered bool) bool {
+	// Recover if something bad happens in the handlers...
 	defer func() {
 		err := recover()
 		if err != nil {
-			h.Log("Recovered from panic at %s: %v\n", r.Method, err)
+			h.LogWarn("Recovered from panic at %s: %v\n", r.Method, err)
 		}
 	}()
 	switch r.Method {
 	case lsp.MethodTextDocumentDidOpen:
 		var params lsp.DidOpenTextDocumentParams
 		json.Unmarshal(*r.Params, &params)
-		h.updateBuffer(ctx, r, params.TextDocument.URI.Filename(), params.TextDocument.Text)
+		h.updateBuffer(ctx, r, h.uriToFilename(params.TextDocument.URI), params.TextDocument.Text)
 	case lsp.MethodTextDocumentDidChange:
 		var params lsp.DidChangeTextDocumentParams
 		json.Unmarshal(*r.Params, &params)
-		h.updateBuffer(ctx, r, params.TextDocument.URI.Filename(), params.ContentChanges[0].Text)
+		h.updateBuffer(ctx, r, h.uriToFilename(params.TextDocument.URI), params.ContentChanges[0].Text)
 
 	case lsp.MethodTextDocumentDidSave:
 		var params lsp.DidSaveTextDocumentParams
 		json.Unmarshal(*r.Params, &params)
-		h.updateBuffer(ctx, r, params.TextDocument.URI.Filename(), params.Text)
+		h.updateBuffer(ctx, r, h.uriToFilename(params.TextDocument.URI), params.Text)
 
 	default:
 		return h.baseLspHandler.Deliver(ctx, r, delivered)

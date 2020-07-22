@@ -37,13 +37,16 @@ func (m BufferedDocument) GetWordRangeAtPosition(position lsp.Position) string {
 		}
 	}
 	center := int(position.Character) - 1
+	if center < 0 {
+		center = 0
+	}
 	start := center
 	end := center
 
-	for isIdentifier(doc[start]) {
+	for start >= 0 && isIdentifier(doc[start]) {
 		start--
 	}
-	for isIdentifier(doc[end]) {
+	for end < len(doc) && isIdentifier(doc[end]) {
 		end++
 	}
 	if start < center {

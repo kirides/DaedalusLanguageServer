@@ -33,11 +33,18 @@ var (
 func NewLspHandler() *LspHandler {
 	bufferManager := NewBufferManager()
 	parsedDocuments := newParseResultsManager()
+	logLv := LogLevelInfo
 	return &LspHandler{
+		baseLspHandler: baseLspHandler{
+			LogLevel: logLv,
+		},
 		initialized:     false,
 		bufferManager:   bufferManager,
 		parsedDocuments: parsedDocuments,
 		TextDocumentSyncHandler: &textDocumentSyncHandler{
+			baseLspHandler: baseLspHandler{
+				LogLevel: logLv,
+			},
 			bufferManager:   bufferManager,
 			parsedDocuments: parsedDocuments,
 		},
@@ -78,7 +85,7 @@ func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
 
 func (h *LspHandler) handleTextDocumentCompletion(ctx context.Context, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	result := make([]lsp.CompletionItem, 0, 200)
-	parsedDoc, err := h.parsedDocuments.Get(params.TextDocument.URI.Filename())
+	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
 	if err == nil {
 		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 		for _, fn := range parsedDoc.Functions {
@@ -115,6 +122,9 @@ func (h *LspHandler) handleTextDocumentCompletion(ctx context.Context, params *l
 
 func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Symbol, error) {
 	doc := h.bufferManager.GetBuffer(documentURI)
+	if doc == "" {
+		return nil, fmt.Errorf("Document %q not found", documentURI)
+	}
 	identifier := doc.GetWordRangeAtPosition(position)
 
 	p, err := h.parsedDocuments.Get(documentURI)
@@ -153,7 +163,7 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Sy
 }
 
 func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.SignatureHelp, error) {
-	doc := h.bufferManager.GetBuffer(params.TextDocument.URI.Filename())
+	doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
 	methodCallLine := doc.GetMethodCall(params.Position)
 	// The expected method call turned out to be a `func void something( ... )` -> a function definition
 	if rxFunctionDef.MatchString(methodCallLine) {
@@ -229,7 +239,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 }
 
 func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.Location, error) {
-	symbol, err := h.lookUpSymbol(params.TextDocument.URI.Filename(), params.Position)
+	symbol, err := h.lookUpSymbol(h.uriToFilename(params.TextDocument.URI), params.Position)
 	if err != nil {
 		return lsp.Location{}, err
 	}
@@ -250,7 +260,7 @@ func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextD
 
 // Deliver ...
 func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered bool) bool {
-	h.Log("Requested '%s'\n", r.Method)
+	h.LogDebug("Requested '%s'\n", r.Method)
 	if delivered {
 		return false
 	}
@@ -289,12 +299,12 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 		exe, _ := os.Executable()
 		resultsX, err := h.parsedDocuments.ParseSource(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"))
 		if err != nil {
-			h.Log("Error parsing %q: %v", filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"), err)
+			h.LogError("Error parsing %q: %v", filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"), err)
 			return true
 		}
 		results, err := h.parsedDocuments.ParseSource("Gothic.src")
 		if err != nil {
-			h.Log("Error parsing Gothic.src: %v", err)
+			h.LogError("Error parsing Gothic.src: %v", err)
 			return true
 		}
 		results = append(resultsX, results...)
@@ -325,6 +335,12 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 	}
 
 	// Recover if something bad happens in the handlers...
+	defer func() {
+		err := recover()
+		if err != nil {
+			h.LogWarn("Recovered from panic at %s: %v\n", r.Method, err)
+		}
+	}()
 
 	switch r.Method {
 	case lsp.MethodTextDocumentCompletion:
@@ -346,11 +362,11 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 	case lsp.MethodTextDocumentHover:
 		var params lsp.TextDocumentPositionParams
 		json.Unmarshal(*r.Params, &params)
-		found, err := h.lookUpSymbol(params.TextDocument.URI.Filename(), params.Position)
+		found, err := h.lookUpSymbol(h.uriToFilename(params.TextDocument.URI), params.Position)
 		if err != nil {
 			h.replyEither(ctx, r, nil, nil)
 		} else {
-			h.Log("Found Symbol for Hover: %s\n", found.String())
+			h.LogDebug("Found Symbol for Hover: %s\n", found.String())
 			h.replyEither(ctx, r, lsp.Hover{
 				Range: lsp.Range{
 					Start: params.Position,
