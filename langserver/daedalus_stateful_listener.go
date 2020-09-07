@@ -63,7 +63,9 @@ func (l *DaedalusStatefulListener) symbolSummaryForContext(summaries []parser.IS
 		if i > 0 {
 			l.summaryBuilder.WriteRune('\n')
 		}
-		l.summaryBuilder.WriteString(strings.TrimLeft(sum.GetText(), "/ \t"))
+		sumReplaced := strings.TrimLeft(sum.GetText(), "/ \t")
+		sumReplaced = strings.ReplaceAll(sumReplaced, "/// ", "  \n")
+		l.summaryBuilder.WriteString(sumReplaced)
 	}
 
 	return l.summaryBuilder.String()
