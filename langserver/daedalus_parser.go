@@ -61,7 +61,7 @@ func ParseScript(source, content string) *ParseResult {
 	p.AddErrorListener(errListener)
 	// Use SLL prediction
 	p.Interpreter.SetPredictionMode(antlr.PredictionModeSLL)
-	listener := NewDaedalusStatefulListener(p, source)
+	listener := NewDaedalusStatefulListener(source)
 
 	antlr.NewParseTreeWalker().Walk(listener, p.DaedalusFile())
 

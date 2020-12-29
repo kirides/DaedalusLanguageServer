@@ -13,7 +13,6 @@ import (
 type DaedalusStatefulListener struct {
 	parser.BaseDaedalusListener
 
-	parser          *parser.DaedalusParser
 	source          string
 	GlobalVariables []VariableSymbol
 	GlobalConstants []ConstantSymbol
@@ -26,9 +25,8 @@ type DaedalusStatefulListener struct {
 }
 
 // NewDaedalusStatefulListener ...
-func NewDaedalusStatefulListener(p *parser.DaedalusParser, source string) *DaedalusStatefulListener {
+func NewDaedalusStatefulListener(source string) *DaedalusStatefulListener {
 	return &DaedalusStatefulListener{
-		parser:          p,
 		source:          source,
 		GlobalVariables: []VariableSymbol{},
 		GlobalConstants: []ConstantSymbol{},
@@ -101,8 +99,40 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 				))
 		}
 	}
+	for _, iInnerVar := range v.AllVarArrayDecl() {
+		innerVal := iInnerVar.(*parser.VarArrayDeclContext)
+		if innerVal != nil {
+			result = append(result,
+				NewVariableSymbol(innerVal.NameNode().GetText(),
+					v.TypeReference().GetText(),
+					l.source,
+					summary, // documentation
+					symbolDefinitionForRuleContext(innerVal.NameNode()),
+				))
+		}
+	}
 
 	return result
+}
+
+func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c *parser.ConstArrayAssignmentContext) string {
+	result := "{ "
+	counter := 0
+	for i, v := range c.AllExpressionBlock() {
+		if i >= n {
+			break
+		}
+		counter++
+		if i > 0 {
+			result += ", " + v.GetText()
+		} else {
+			result += v.GetText()
+		}
+	}
+	if counter == 0 {
+		return result + "}"
+	}
+	return result + " ... }"
 }
 
 func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) []Symbol {
@@ -121,6 +151,18 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 				summary, // documentation
 				symbolDefinitionForRuleContext(cv.NameNode()),
 				cv.ConstValueAssignment().(*parser.ConstValueAssignmentContext).ExpressionBlock().GetText(),
+			))
+	}
+
+	for _, iInnerVar := range c.AllConstArrayDef() {
+		innerVal := iInnerVar.(*parser.ConstArrayDefContext)
+		result = append(result,
+			NewConstantSymbol(innerVal.NameNode().GetText(),
+				c.TypeReference().GetText(),
+				l.source,
+				summary, // documentation
+				symbolDefinitionForRuleContext(innerVal.NameNode()),
+				l.maxNOfConstValues(3, innerVal.ConstArrayAssignment().(*parser.ConstArrayAssignmentContext)),
 			))
 	}
 
