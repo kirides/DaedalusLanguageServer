@@ -91,20 +91,19 @@ func (p *ParseResult) WalkGlobalSymbols(walkFn func(Symbol) error) error {
 }
 
 type parseResultsManager struct {
-	mtx          *sync.Mutex
+	mtx          sync.RWMutex
 	parseResults map[string]*ParseResult
 }
 
 func newParseResultsManager() *parseResultsManager {
 	return &parseResultsManager{
-		mtx:          &sync.Mutex{},
 		parseResults: make(map[string]*ParseResult),
 	}
 }
 
 func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error) error {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
 
 	for _, p := range m.parseResults {
 		err := p.WalkGlobalSymbols(func(s Symbol) error {
@@ -121,8 +120,8 @@ func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error) error
 func (m *parseResultsManager) GetGlobalSymbols() ([]Symbol, error) {
 	result := make([]Symbol, 0, 200)
 
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
 
 	for _, p := range m.parseResults {
 		p.WalkGlobalSymbols(func(s Symbol) error {
@@ -135,8 +134,8 @@ func (m *parseResultsManager) GetGlobalSymbols() ([]Symbol, error) {
 }
 
 func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
 	if r, ok := m.parseResults[documentURI]; ok {
 		return r, nil
 	}
@@ -235,44 +234,11 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 		}
 
 		parsed := ParseScript(r, string(buf.Bytes()))
+
+		m.mtx.Lock()
+		m.parseResults[parsed.Source] = parsed
+		m.mtx.Unlock()
 		results = append(results, parsed)
-	}
-
-	// maxConcurrency := runtime.NumCPU()
-	// if maxConcurrency > 4 {
-	// 	maxConcurrency = maxConcurrency / 2
-	// }
-	// filesToParse := make(chan string, maxConcurrency)
-	// mtx := &sync.Mutex{}
-
-	// results := make([]*ParseResult, 0, len(resolvedPaths))
-	// wg := &sync.WaitGroup{}
-	// wg.Add(maxConcurrency)
-	// for i := 0; i < maxConcurrency; i++ {
-	// 	go func() {
-	// 		defer wg.Done()
-	// 		for r := range filesToParse {
-	// 			fileBody, _ := ioutil.ReadFile(r)
-	// 			script, _ := charmap.Windows1252.NewDecoder().Bytes(fileBody)
-	// 			parsed := ParseScript(r, string(script))
-
-	// 			mtx.Lock()
-	// 			results = append(results, parsed)
-	// 			mtx.Unlock()
-	// 		}
-	// 	}()
-	// }
-
-	// for _, v := range resolvedPaths {
-	// 	filesToParse <- v
-	// }
-	// close(filesToParse)
-	// wg.Wait()
-
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-	for _, r := range results {
-		m.parseResults[r.Source] = r
 	}
 	fmt.Fprintf(os.Stderr, "Done parsing %q: %d scripts.\n", srcFile, len(results))
 	return results, nil

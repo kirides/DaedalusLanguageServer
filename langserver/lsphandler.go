@@ -22,6 +22,7 @@ type LspHandler struct {
 
 	parsedDocuments         *parseResultsManager
 	TextDocumentSyncHandler jsonrpc2.Handler
+	initialDiagnostics      map[string][]lsp.Diagnostic
 }
 
 var (
@@ -296,32 +297,34 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 		h.initialized = true
 		return true
 	case lsp.MethodInitialized:
-		exe, _ := os.Executable()
-		resultsX, err := h.parsedDocuments.ParseSource(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"))
-		if err != nil {
-			h.LogError("Error parsing %q: %v", filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"), err)
-			return true
-		}
-		results, err := h.parsedDocuments.ParseSource("Gothic.src")
-		if err != nil {
-			h.LogError("Error parsing Gothic.src: %v", err)
-			return true
-		}
-		results = append(resultsX, results...)
+		go func() {
+			exe, _ := os.Executable()
+			resultsX, err := h.parsedDocuments.ParseSource(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"))
+			if err != nil {
+				h.LogError("Error parsing %q: %v", filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"), err)
+				return
+			}
+			results, err := h.parsedDocuments.ParseSource("Gothic.src")
+			if err != nil {
+				h.LogError("Error parsing Gothic.src: %v", err)
+				return
+			}
+			results = append(resultsX, results...)
 
-		diagnostics := make([]lsp.Diagnostic, 0, 5)
-		for _, p := range results {
-			diagnostics = diagnostics[:0]
-			if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
-				for _, se := range p.SyntaxErrors {
-					diagnostics = append(diagnostics, se.Diagnostic())
+			var diagnostics []lsp.Diagnostic
+			tmpDiags := make(map[string][]lsp.Diagnostic)
+
+			for _, p := range results {
+				if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
+					diagnostics = make([]lsp.Diagnostic, 0, len(p.SyntaxErrors))
+					for _, se := range p.SyntaxErrors {
+						diagnostics = append(diagnostics, se.Diagnostic())
+					}
+					tmpDiags[p.Source] = diagnostics
 				}
 			}
-			r.Conn().Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
-				URI:         lsp.DocumentURI(uri.File(p.Source)),
-				Diagnostics: diagnostics,
-			})
-		}
+			h.initialDiagnostics = tmpDiags
+		}()
 		return true
 	}
 
@@ -341,7 +344,15 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 			h.LogWarn("Recovered from panic at %s: %v\n", r.Method, err)
 		}
 	}()
-
+	if h.initialDiagnostics != nil && len(h.initialDiagnostics) > 0 {
+		for k, v := range h.initialDiagnostics {
+			r.Conn().Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
+				URI:         lsp.DocumentURI(uri.File(k)),
+				Diagnostics: v,
+			})
+		}
+		h.initialDiagnostics = map[string][]lsp.Diagnostic{}
+	}
 	switch r.Method {
 	case lsp.MethodTextDocumentCompletion:
 		var params lsp.CompletionParams

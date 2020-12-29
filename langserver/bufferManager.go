@@ -6,14 +6,13 @@ import (
 
 // BufferManager ...
 type BufferManager struct {
-	mtx       *sync.Mutex
+	mtx       sync.RWMutex
 	documents map[string]BufferedDocument
 }
 
 // NewBufferManager ...
 func NewBufferManager() *BufferManager {
 	return &BufferManager{
-		mtx:       new(sync.Mutex),
 		documents: make(map[string]BufferedDocument),
 	}
 }
@@ -28,8 +27,8 @@ func (m *BufferManager) UpdateBuffer(documentURI string, buf string) {
 
 // GetBuffer ...
 func (m *BufferManager) GetBuffer(documentURI string) BufferedDocument {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
 	if doc, ok := m.documents[documentURI]; ok {
 		return doc
 	}
