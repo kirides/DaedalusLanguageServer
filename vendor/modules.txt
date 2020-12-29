@@ -1,4 +1,4 @@
-# github.com/antlr/antlr4 v0.0.0-20200820155224-be881fa6b91d
+# github.com/antlr/antlr4 v0.0.0-20201214011320-c79b0fd80c9d
 ## explicit
 github.com/antlr/antlr4/runtime/Go/antlr
 # github.com/francoispqt/gojay v1.2.13

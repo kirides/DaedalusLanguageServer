@@ -1,2 +1,7 @@
 /.vscode
 *.exe
+
+
+/langserver/parser/*.tokens
+/langserver/parser/*.interp
+/antlr_parser/*.jar

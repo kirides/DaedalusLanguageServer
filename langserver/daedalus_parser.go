@@ -28,19 +28,45 @@ type ParseResult struct {
 	Source          string
 }
 
+type parserPool struct {
+	inner sync.Pool
+}
+
+func newParserPool() *parserPool {
+	return &parserPool{
+		inner: sync.Pool{
+			New: func() interface{} { return parser.NewDaedalusParser(nil) },
+		},
+	}
+}
+func (p *parserPool) Get() *parser.DaedalusParser {
+	return p.inner.Get().(*parser.DaedalusParser)
+}
+func (p *parserPool) Put(v *parser.DaedalusParser) {
+	p.inner.Put(v)
+}
+
+var pooledParsers = newParserPool()
+
 // ParseScript ...
 func ParseScript(source, content string) *ParseResult {
 	inputStream := antlr.NewInputStream(content)
 	lexer := parser.NewDaedalusLexer(inputStream)
 	tokenStream := antlr.NewCommonTokenStream(lexer, 0)
-	p := parser.NewDaedalusParser(tokenStream)
+	p := pooledParsers.Get()
+	p.SetInputStream(tokenStream)
+
 	errListener := &SyntaxErrorListener{}
+	p.RemoveErrorListeners()
 	p.AddErrorListener(errListener)
 	// Use SLL prediction
 	p.Interpreter.SetPredictionMode(antlr.PredictionModeSLL)
 	listener := NewDaedalusStatefulListener(p, source)
 
 	antlr.NewParseTreeWalker().Walk(listener, p.DaedalusFile())
+
+	p.SetInputStream(nil)
+	pooledParsers.Put(p)
 
 	result := &ParseResult{
 		SyntaxErrors:    errListener.SyntaxErrors,
