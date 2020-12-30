@@ -321,14 +321,93 @@ func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefConte
 	l.Functions = append(l.Functions, fnc)
 }
 
+type listenerSyntaxError struct {
+	*antlr.BaseRecognitionException
+	Code SyntaxErrorCode
+}
+
+func (l *DaedalusStatefulListener) report(parser antlr.Parser, ctx antlr.RuleContext, symbol antlr.Token, code SyntaxErrorCode) {
+	ex := antlr.NewBaseRecognitionException(code.Description, parser, parser.GetInputStream(), ctx)
+	parser.NotifyErrorListeners(ex.GetMessage(), symbol, &listenerSyntaxError{BaseRecognitionException: ex, Code: code})
+}
+
 // EnterAnyIdentifier ...
 func (l *DaedalusStatefulListener) EnterAnyIdentifier(ctx *parser.AnyIdentifierContext) {
 	if ctx.Identifier() != nil {
 		id := ctx.Identifier().GetText()
 
 		if len(id) > 0 && (id[0] >= 0x30 && id[0] <= 0x39) {
-			ex := antlr.NewBaseRecognitionException(D0001NoIdentifierWithStartingDigits.Description, ctx.GetParser(), ctx.GetParser().GetInputStream(), ctx)
-			ctx.GetParser().NotifyErrorListeners(ex.GetMessage(), ctx.Identifier().GetSymbol(), ex)
+			l.report(ctx.GetParser(), ctx, ctx.Identifier().GetSymbol(), D0001NoIdentifierWithStartingDigits)
 		}
+	}
+}
+
+func (l *DaedalusStatefulListener) lookupSymbol(name string, symbol SymbolType) Symbol {
+	if (symbol & SymbolClass) != 0 {
+		for _, f := range l.Classes {
+			if strings.EqualFold(f.Name(), name) {
+				return f
+			}
+		}
+	}
+	if (symbol & SymbolConstant) != 0 {
+		for _, f := range l.GlobalConstants {
+			if strings.EqualFold(f.Name(), name) {
+				return f
+			}
+		}
+	}
+	if (symbol & SymbolFunction) != 0 {
+		for _, f := range l.Functions {
+			if strings.EqualFold(f.Name(), name) {
+				return f
+			}
+		}
+	}
+	if (symbol & SymbolInstance) != 0 {
+		for _, f := range l.Instances {
+			if strings.EqualFold(f.Name(), name) {
+				return f
+			}
+		}
+	}
+	if (symbol & SymbolPrototype) != 0 {
+		for _, f := range l.Prototypes {
+			if strings.EqualFold(f.Name(), name) {
+				return f
+			}
+		}
+	}
+	if (symbol & SymbolVariable) != 0 {
+		for _, f := range l.GlobalVariables {
+			if strings.EqualFold(f.Name(), name) {
+				return f
+			}
+		}
+	}
+	var foundSymbol Symbol
+
+	l.knownSymbols.WalkGlobalSymbols(func(s Symbol) error {
+		if strings.EqualFold(s.Name(), name) {
+			foundSymbol = s
+			return ErrWalkAbort
+		}
+		return nil
+	}, symbol)
+
+	return foundSymbol
+}
+
+// EnterFuncCall ...
+func (l *DaedalusStatefulListener) EnterFuncCall(ctx *parser.FuncCallContext) {
+	funcName := ctx.NameNode().GetText()
+	sym := l.lookupSymbol(funcName, SymbolFunction)
+
+	if sym == nil {
+		return
+	}
+
+	if len(ctx.AllFuncArgExpression()) < len(sym.(FunctionSymbol).Parameters) {
+		l.report(ctx.GetParser(), ctx, ctx.NameNode().GetStop(), D0004NotEnoughArgumentsSpecified)
 	}
 }

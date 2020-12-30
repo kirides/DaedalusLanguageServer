@@ -82,7 +82,7 @@ func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 }
 
 // SymbolType ...
-type SymbolType int
+type SymbolType uint
 
 const (
 	// SymbolNone ...
