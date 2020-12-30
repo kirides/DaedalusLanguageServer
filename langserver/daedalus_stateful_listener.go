@@ -22,10 +22,15 @@ type DaedalusStatefulListener struct {
 	Instances       []ProtoTypeOrInstanceSymbol
 
 	summaryBuilder *bytes.Buffer
+	knownSymbols   symbolWalker
+}
+
+type symbolWalker interface {
+	WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error
 }
 
 // NewDaedalusStatefulListener ...
-func NewDaedalusStatefulListener(source string) *DaedalusStatefulListener {
+func NewDaedalusStatefulListener(source string, knownSymbols symbolWalker) *DaedalusStatefulListener {
 	return &DaedalusStatefulListener{
 		source:          source,
 		GlobalVariables: []VariableSymbol{},
@@ -35,6 +40,7 @@ func NewDaedalusStatefulListener(source string) *DaedalusStatefulListener {
 		Prototypes:      []ProtoTypeOrInstanceSymbol{},
 		Instances:       []ProtoTypeOrInstanceSymbol{},
 		summaryBuilder:  &bytes.Buffer{},
+		knownSymbols:    knownSymbols,
 	}
 }
 

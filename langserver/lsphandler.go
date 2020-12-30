@@ -116,7 +116,7 @@ func (h *LspHandler) handleTextDocumentCompletion(ctx context.Context, params *l
 		}
 		result = append(result, ci)
 		return nil
-	})
+	}, SymbolAll)
 
 	return result, nil
 }
@@ -154,7 +154,7 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Sy
 			return fmt.Errorf("OK")
 		}
 		return nil
-	})
+	}, SymbolAll)
 
 	if symbol == nil {
 		return nil, fmt.Errorf("Identifier %q not found", identifier)
@@ -209,7 +209,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 			}
 		}
 		return nil
-	})
+	}, SymbolFunction)
 	if funcSymbol == nil {
 		return lsp.SignatureHelp{}, fmt.Errorf("no functino symbol found")
 	}

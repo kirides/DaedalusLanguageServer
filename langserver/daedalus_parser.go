@@ -49,7 +49,7 @@ func (p *parserPool) Put(v *parser.DaedalusParser) {
 var pooledParsers = newParserPool()
 
 // ParseScript ...
-func ParseScript(source, content string) *ParseResult {
+func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 	inputStream := antlr.NewInputStream(content)
 	lexer := parser.NewDaedalusLexer(inputStream)
 	tokenStream := antlr.NewCommonTokenStream(lexer, 0)
@@ -61,7 +61,7 @@ func ParseScript(source, content string) *ParseResult {
 	p.AddErrorListener(errListener)
 	// Use SLL prediction
 	p.Interpreter.SetPredictionMode(antlr.PredictionModeSLL)
-	listener := NewDaedalusStatefulListener(source)
+	listener := NewDaedalusStatefulListener(source, m)
 
 	antlr.NewParseTreeWalker().Walk(listener, p.DaedalusFile())
 
@@ -81,36 +81,70 @@ func ParseScript(source, content string) *ParseResult {
 	return result
 }
 
+// SymbolType ...
+type SymbolType int
+
+const (
+	// SymbolNone ...
+	SymbolNone SymbolType = 0
+	// SymbolClass ...
+	SymbolClass SymbolType = 1 << 0
+	// SymbolConstant ...
+	SymbolConstant SymbolType = 1 << 1
+	// SymbolFunction ...
+	SymbolFunction SymbolType = 1 << 2
+	// SymbolInstance ...
+	SymbolInstance SymbolType = 1 << 3
+	// SymbolPrototype ...
+	SymbolPrototype SymbolType = 1 << 4
+	// SymbolVariable ...
+	SymbolVariable SymbolType = 1 << 5
+	// SymbolAll ...
+	SymbolAll SymbolType = 0xFFFFFFFF
+)
+
 // WalkGlobalSymbols ...
-func (p *ParseResult) WalkGlobalSymbols(walkFn func(Symbol) error) error {
-	for _, s := range p.Classes {
-		if err := walkFn(s); err != nil {
-			return err
+func (p *ParseResult) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error {
+	if (types & SymbolClass) != 0 {
+		for _, s := range p.Classes {
+			if err := walkFn(s); err != nil {
+				return err
+			}
 		}
 	}
-	for _, s := range p.GlobalConstants {
-		if err := walkFn(s); err != nil {
-			return err
+	if (types & SymbolConstant) != 0 {
+		for _, s := range p.GlobalConstants {
+			if err := walkFn(s); err != nil {
+				return err
+			}
 		}
 	}
-	for _, s := range p.Functions {
-		if err := walkFn(s); err != nil {
-			return err
+	if (types & SymbolFunction) != 0 {
+		for _, s := range p.Functions {
+			if err := walkFn(s); err != nil {
+				return err
+			}
 		}
 	}
-	for _, s := range p.Instances {
-		if err := walkFn(s); err != nil {
-			return err
+	if (types & SymbolInstance) != 0 {
+		for _, s := range p.Instances {
+			if err := walkFn(s); err != nil {
+				return err
+			}
 		}
 	}
-	for _, s := range p.Prototypes {
-		if err := walkFn(s); err != nil {
-			return err
+	if (types & SymbolPrototype) != 0 {
+		for _, s := range p.Prototypes {
+			if err := walkFn(s); err != nil {
+				return err
+			}
 		}
 	}
-	for _, s := range p.GlobalVariables {
-		if err := walkFn(s); err != nil {
-			return err
+	if (types & SymbolVariable) != 0 {
+		for _, s := range p.GlobalVariables {
+			if err := walkFn(s); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -127,14 +161,14 @@ func newParseResultsManager() *parseResultsManager {
 	}
 }
 
-func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error) error {
+func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()
 
 	for _, p := range m.parseResults {
 		err := p.WalkGlobalSymbols(func(s Symbol) error {
 			return walkFn(s)
-		})
+		}, types)
 		if err != nil {
 			return err
 		}
@@ -143,7 +177,7 @@ func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error) error
 	return nil
 }
 
-func (m *parseResultsManager) GetGlobalSymbols() ([]Symbol, error) {
+func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) ([]Symbol, error) {
 	result := make([]Symbol, 0, 200)
 
 	m.mtx.RLock()
@@ -153,7 +187,7 @@ func (m *parseResultsManager) GetGlobalSymbols() ([]Symbol, error) {
 		p.WalkGlobalSymbols(func(s Symbol) error {
 			result = append(result, s)
 			return nil
-		})
+		}, types)
 	}
 
 	return result, nil
@@ -169,7 +203,7 @@ func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
 }
 
 func (m *parseResultsManager) Update(documentURI, content string) (*ParseResult, error) {
-	r := ParseScript(documentURI, content)
+	r := m.ParseScript(documentURI, content)
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -259,7 +293,7 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 			continue
 		}
 
-		parsed := ParseScript(r, string(buf.Bytes()))
+		parsed := m.ParseScript(r, string(buf.Bytes()))
 
 		m.mtx.Lock()
 		m.parseResults[parsed.Source] = parsed

@@ -22,8 +22,8 @@ func TestParseSingleScript(t *testing.T) {
 		HookEngineF(oCNpc__OnDamage_Hit, 7, _DMG_OnDmg_Pre);
 		dmg = 1;
 	};`
-
-	result := ParseScript("C:\\temp", script)
+	m := newParseResultsManager()
+	result := m.ParseScript("C:\\temp", script)
 	b, _ := json.MarshalIndent(result, "", "  ")
 	t.Logf("%s\n", b)
 }
@@ -32,7 +32,8 @@ func TestParseSingleScriptFromFile(t *testing.T) {
 	fileBody, _ := ioutil.ReadFile(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\LeGo\Int64.d`)
 	script, _ := charmap.Windows1252.NewDecoder().Bytes(fileBody)
 
-	result := ParseScript("C:\\temp", string(script))
+	m := newParseResultsManager()
+	result := m.ParseScript("C:\\temp", string(script))
 	b, _ := json.MarshalIndent(result, "", "  ")
 	t.Logf("%s\n", b)
 }
