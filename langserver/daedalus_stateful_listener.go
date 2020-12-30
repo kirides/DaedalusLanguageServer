@@ -321,6 +321,22 @@ func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefConte
 	l.Functions = append(l.Functions, fnc)
 }
 
+// EnterStatementBlock ...
+func (l *DaedalusStatefulListener) EnterStatementBlock(ctx *parser.StatementBlockContext) {
+	for i, stmt := range ctx.GetChildren() {
+		if ifStmt, ok := stmt.(*parser.IfBlockStatementContext); ok {
+			if ctx.GetChildCount()-1 == i {
+				l.report(ctx.GetParser(), ctx, ifStmt.GetStop(), D0003MissingSemicolonMightCauseIssues)
+				continue
+			}
+			child := ctx.GetChild(i + 1)
+			if termNode, ok := child.(*antlr.TerminalNodeImpl); !(ok && termNode.GetText() == ";") {
+				l.report(ctx.GetParser(), ctx, ifStmt.GetStop(), D0003MissingSemicolonMightCauseIssues)
+			}
+		}
+	}
+}
+
 type listenerSyntaxError struct {
 	*antlr.BaseRecognitionException
 	Code SyntaxErrorCode
