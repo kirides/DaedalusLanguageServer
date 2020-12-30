@@ -50,12 +50,26 @@ func (p *parserPool) Put(v *parser.DaedalusParser) {
 
 var pooledParsers = newParserPool()
 
+// ParseAndValidateScript ...
+func (m *parseResultsManager) ParseAndValidateScript(source, content string) *ParseResult {
+	r := m.ParseScript(source, content)
+	e := m.ValidateScript(source, content)
+	if len(e) > 0 {
+		r.SyntaxErrors = append(r.SyntaxErrors, e...)
+	}
+	return r
+}
+
 // ParseScript ...
 func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 	inputStream := antlr.NewInputStream(content)
 	lexer := parser.NewDaedalusLexer(inputStream)
 	tokenStream := antlr.NewCommonTokenStream(lexer, 0)
 	p := pooledParsers.Get()
+	defer func() {
+		p.SetInputStream(nil)
+		pooledParsers.Put(p)
+	}()
 	p.SetInputStream(tokenStream)
 
 	errListener := &SyntaxErrorListener{}
@@ -66,9 +80,6 @@ func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 	listener := NewDaedalusStatefulListener(source, m)
 
 	antlr.NewParseTreeWalker().Walk(listener, p.DaedalusFile())
-
-	p.SetInputStream(nil)
-	pooledParsers.Put(p)
 
 	result := &ParseResult{
 		SyntaxErrors:    errListener.SyntaxErrors,
@@ -81,6 +92,30 @@ func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 		Source:          source,
 	}
 	return result
+}
+
+// ValidateScript ...
+func (m *parseResultsManager) ValidateScript(source, content string) []SyntaxError {
+	inputStream := antlr.NewInputStream(content)
+	lexer := parser.NewDaedalusLexer(inputStream)
+	tokenStream := antlr.NewCommonTokenStream(lexer, 0)
+	p := pooledParsers.Get()
+	defer func() {
+		p.SetInputStream(nil)
+		pooledParsers.Put(p)
+	}()
+	p.SetInputStream(tokenStream)
+
+	errListener := &SyntaxErrorListener{}
+	p.RemoveErrorListeners()
+	p.AddErrorListener(errListener)
+	// Use SLL prediction
+	p.Interpreter.SetPredictionMode(antlr.PredictionModeSLL)
+	listener := NewDaedalusValidatingListener(source, m)
+
+	antlr.NewParseTreeWalker().Walk(listener, p.DaedalusFile())
+
+	return errListener.SyntaxErrors
 }
 
 // SymbolType ...
@@ -253,7 +288,7 @@ func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
 }
 
 func (m *parseResultsManager) Update(documentURI, content string) (*ParseResult, error) {
-	r := m.ParseScript(documentURI, content)
+	r := m.ParseAndValidateScript(documentURI, content)
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -325,6 +360,59 @@ var (
 	decoderPool = sync.Pool{New: func() interface{} { return charmap.Windows1252.NewDecoder() }}
 )
 
+func (m *parseResultsManager) validateFiles(resolvedPaths []string) map[string][]SyntaxError {
+	results := make(map[string][]SyntaxError)
+
+	chanPaths := make(chan string, len(resolvedPaths))
+	for _, r := range resolvedPaths {
+		chanPaths <- r
+	}
+	close(chanPaths)
+
+	var wg sync.WaitGroup
+	numWorkers := runtime.NumCPU()
+	if numWorkers > 2 {
+		numWorkers = numWorkers / 2
+	}
+	wg.Add(numWorkers)
+	for i := 0; i < numWorkers; i++ {
+		go func(wg *sync.WaitGroup) {
+			defer wg.Done()
+
+			buf := bufferPool.Get().(*bytes.Buffer)
+			defer bufferPool.Put(buf)
+
+			decoder := decoderPool.Get().(*encoding.Decoder)
+			defer decoderPool.Put(decoder)
+
+			for r := range chanPaths {
+				f, err := os.Open(r)
+				if err != nil {
+					continue
+				}
+				decoder.Reset()
+				translated := decoder.Reader(f)
+				buf.Reset()
+				_, err = buf.ReadFrom(translated)
+				f.Close()
+				if err != nil {
+					continue
+				}
+
+				parsed := m.ValidateScript(r, string(buf.Bytes()))
+				if len(parsed) > 0 {
+					m.mtx.Lock()
+					results[r] = parsed
+					m.mtx.Unlock()
+				}
+			}
+		}(&wg)
+	}
+
+	wg.Wait()
+	return results
+}
+
 func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error) {
 	resolvedPaths := resolveSrcPaths(srcFile, filepath.Dir(srcFile))
 	fmt.Fprintf(os.Stderr, "Parsing %q. This might take a while.\n", srcFile)
@@ -378,6 +466,14 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 	}
 
 	wg.Wait()
+
+	validations := m.validateFiles(resolvedPaths)
+
+	for _, v := range results {
+		if e, ok := validations[v.Source]; ok {
+			v.SyntaxErrors = append(v.SyntaxErrors, e...)
+		}
+	}
 
 	fmt.Fprintf(os.Stderr, "Done parsing %q: %d scripts.\n", srcFile, len(results))
 	return results, nil
