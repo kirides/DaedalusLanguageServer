@@ -34,22 +34,7 @@ func (h *textDocumentSyncHandler) updateBuffer(ctx context.Context, r *jsonrpc2.
 	diagnostics := []lsp.Diagnostic{}
 	if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
 		for _, se := range p.SyntaxErrors {
-			diagnostics = append(diagnostics, lsp.Diagnostic{
-				Code:     se.ErrorCode.Code,
-				Message:  se.ErrorCode.Description,
-				Source:   "vscode-daedalus",
-				Severity: lspSeverityFromSeverity(se.ErrorCode.Severity),
-				Range: lsp.Range{
-					Start: lsp.Position{
-						Line:      float64(se.Line - 1),
-						Character: float64(se.Column),
-					},
-					End: lsp.Position{
-						Line:      float64(se.Line - 1),
-						Character: float64(se.Column),
-					},
-				},
-			})
+			diagnostics = append(diagnostics, se.Diagnostic())
 		}
 	}
 	r.Conn().Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{

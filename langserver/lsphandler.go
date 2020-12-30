@@ -328,7 +328,9 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 		}
 	}()
 	if h.initialDiagnostics != nil && len(h.initialDiagnostics) > 0 {
+		fmt.Fprintf(os.Stderr, "Publishing initial diagnostics (%d).\n", len(h.initialDiagnostics))
 		for k, v := range h.initialDiagnostics {
+			fmt.Fprintf(os.Stderr, "> %s\n", k)
 			r.Conn().Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
 				URI:         lsp.DocumentURI(uri.File(k)),
 				Diagnostics: v,
@@ -343,7 +345,6 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 		items, err := h.handleTextDocumentCompletion(ctx, &params)
 		h.replyEither(ctx, r, items, err)
 
-		return true
 	case lsp.MethodTextDocumentDefinition:
 		var params lsp.TextDocumentPositionParams
 		json.Unmarshal(*r.Params, &params)
@@ -353,6 +354,7 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 		} else {
 			h.replyEither(ctx, r, found, nil)
 		}
+
 	case lsp.MethodTextDocumentHover:
 		var params lsp.TextDocumentPositionParams
 		json.Unmarshal(*r.Params, &params)
@@ -372,6 +374,7 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 				},
 			}, nil)
 		}
+
 	case lsp.MethodTextDocumentSignatureHelp:
 		var params lsp.TextDocumentPositionParams
 		json.Unmarshal(*r.Params, &params)
