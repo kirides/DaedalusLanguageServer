@@ -9,10 +9,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -318,36 +320,65 @@ func resolveSrcPaths(srcFile, prefixDir string) []string {
 	return resolvedPaths
 }
 
+var (
+	bufferPool  = sync.Pool{New: func() interface{} { b := new(bytes.Buffer); b.Grow(2048); return b }}
+	decoderPool = sync.Pool{New: func() interface{} { return charmap.Windows1252.NewDecoder() }}
+)
+
 func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error) {
 	resolvedPaths := resolveSrcPaths(srcFile, filepath.Dir(srcFile))
 	fmt.Fprintf(os.Stderr, "Parsing %q. This might take a while.\n", srcFile)
 
 	results := make([]*ParseResult, 0, len(resolvedPaths))
-	decoder := charmap.Windows1252.NewDecoder()
-	buf := new(bytes.Buffer)
-	buf.Grow(2048)
 
+	chanPaths := make(chan string, len(resolvedPaths))
 	for _, r := range resolvedPaths {
-		f, err := os.Open(r)
-		if err != nil {
-			continue
-		}
-		decoder.Reset()
-		translated := decoder.Reader(f)
-		buf.Reset()
-		_, err = buf.ReadFrom(translated)
-		f.Close()
-		if err != nil {
-			continue
-		}
-
-		parsed := m.ParseScript(r, string(buf.Bytes()))
-
-		m.mtx.Lock()
-		m.parseResults[parsed.Source] = parsed
-		m.mtx.Unlock()
-		results = append(results, parsed)
+		chanPaths <- r
 	}
+	close(chanPaths)
+
+	var wg sync.WaitGroup
+	numWorkers := runtime.NumCPU()
+	if numWorkers > 2 {
+		numWorkers = numWorkers / 2
+	}
+	wg.Add(numWorkers)
+	for i := 0; i < numWorkers; i++ {
+		go func(wg *sync.WaitGroup) {
+			defer wg.Done()
+
+			buf := bufferPool.Get().(*bytes.Buffer)
+			defer bufferPool.Put(buf)
+
+			decoder := decoderPool.Get().(*encoding.Decoder)
+			defer decoderPool.Put(decoder)
+
+			for r := range chanPaths {
+				f, err := os.Open(r)
+				if err != nil {
+					continue
+				}
+				decoder.Reset()
+				translated := decoder.Reader(f)
+				buf.Reset()
+				_, err = buf.ReadFrom(translated)
+				f.Close()
+				if err != nil {
+					continue
+				}
+
+				parsed := m.ParseScript(r, string(buf.Bytes()))
+
+				m.mtx.Lock()
+				m.parseResults[parsed.Source] = parsed
+				results = append(results, parsed)
+				m.mtx.Unlock()
+			}
+		}(&wg)
+	}
+
+	wg.Wait()
+
 	fmt.Fprintf(os.Stderr, "Done parsing %q: %d scripts.\n", srcFile, len(results))
 	return results, nil
 }
