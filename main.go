@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"langsrv/langserver"
@@ -22,12 +23,17 @@ func main() {
 			http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", *pprofPort), nil)
 		}()
 	}
-	bufStream := jsonrpc2.NewStream(os.Stdin, os.Stdout)
+	lspHandler := langserver.NewLspHandler()
+	connectLanguageServer(os.Stdin, os.Stdout, lspHandler.TextDocumentSyncHandler, lspHandler).
+		Run(context.Background())
+}
 
+func connectLanguageServer(in io.Reader, out io.Writer, handlers ...jsonrpc2.Handler) *jsonrpc2.Conn {
+	bufStream := jsonrpc2.NewStream(in, out)
 	rootConn := jsonrpc2.NewConn(bufStream)
 
-	lspHandler := langserver.NewLspHandler()
-	rootConn.AddHandler(lspHandler.TextDocumentSyncHandler)
-	rootConn.AddHandler(lspHandler)
-	rootConn.Run(context.Background())
+	for _, h := range handlers {
+		rootConn.AddHandler(h)
+	}
+	return rootConn
 }
