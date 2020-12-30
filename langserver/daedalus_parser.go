@@ -19,12 +19,12 @@ import (
 // ParseResult ...
 type ParseResult struct {
 	SyntaxErrors    []SyntaxError
-	GlobalVariables []VariableSymbol
-	GlobalConstants []ConstantSymbol
-	Functions       []FunctionSymbol
-	Classes         []ClassSymbol
-	Prototypes      []ProtoTypeOrInstanceSymbol
-	Instances       []ProtoTypeOrInstanceSymbol
+	GlobalVariables map[string]VariableSymbol
+	GlobalConstants map[string]ConstantSymbol
+	Functions       map[string]FunctionSymbol
+	Classes         map[string]ClassSymbol
+	Prototypes      map[string]ProtoTypeOrInstanceSymbol
+	Instances       map[string]ProtoTypeOrInstanceSymbol
 	Source          string
 }
 
@@ -103,6 +103,41 @@ const (
 	SymbolAll SymbolType = 0xFFFFFFFF
 )
 
+// LookupGlobalSymbol ...
+func (p *ParseResult) LookupGlobalSymbol(name string, types SymbolType) (Symbol, bool) {
+	if (types & SymbolClass) != 0 {
+		if s, ok := p.Classes[name]; ok {
+			return s, true
+		}
+	}
+	if (types & SymbolConstant) != 0 {
+		if s, ok := p.GlobalConstants[name]; ok {
+			return s, true
+		}
+	}
+	if (types & SymbolFunction) != 0 {
+		if s, ok := p.Functions[name]; ok {
+			return s, true
+		}
+	}
+	if (types & SymbolInstance) != 0 {
+		if s, ok := p.Instances[name]; ok {
+			return s, true
+		}
+	}
+	if (types & SymbolPrototype) != 0 {
+		if s, ok := p.Prototypes[name]; ok {
+			return s, true
+		}
+	}
+	if (types & SymbolVariable) != 0 {
+		if s, ok := p.GlobalVariables[name]; ok {
+			return s, true
+		}
+	}
+	return nil, false
+}
+
 // WalkGlobalSymbols ...
 func (p *ParseResult) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error {
 	if (types & SymbolClass) != 0 {
@@ -175,6 +210,19 @@ func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error, types
 	}
 
 	return nil
+}
+
+func (m *parseResultsManager) LookupGlobalSymbol(name string, types SymbolType) (Symbol, bool) {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	for _, p := range m.parseResults {
+		if s, ok := p.LookupGlobalSymbol(name, types); ok {
+			return s, true
+		}
+	}
+
+	return nil, false
 }
 
 func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) ([]Symbol, error) {

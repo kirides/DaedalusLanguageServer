@@ -147,16 +147,9 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Sy
 		}
 	}
 
-	var symbol Symbol
-	h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
-		if strings.EqualFold(s.Name(), identifier) {
-			symbol = s
-			return fmt.Errorf("OK")
-		}
-		return nil
-	}, SymbolAll)
+	symbol, found := h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(identifier), SymbolAll)
 
-	if symbol == nil {
+	if !found {
 		return nil, fmt.Errorf("Identifier %q not found", identifier)
 	}
 
@@ -197,20 +190,10 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 	if word == "" {
 		word = methodCallLine[:idxParen]
 	}
-	word = strings.TrimSpace(word)
+	word = strings.ToUpper(strings.TrimSpace(word))
 
-	var funcSymbol Symbol
-
-	h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
-		if _, ok := s.(FunctionSymbol); ok {
-			if strings.EqualFold(s.Name(), word) {
-				funcSymbol = s
-				return ErrWalkAbort
-			}
-		}
-		return nil
-	}, SymbolFunction)
-	if funcSymbol == nil {
+	funcSymbol, found := h.parsedDocuments.LookupGlobalSymbol(word, SymbolFunction)
+	if !found {
 		return lsp.SignatureHelp{}, fmt.Errorf("no functino symbol found")
 	}
 	sigCtx := methodCallLine[idxParen+1:]

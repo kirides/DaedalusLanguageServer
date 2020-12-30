@@ -14,12 +14,12 @@ type DaedalusStatefulListener struct {
 	parser.BaseDaedalusListener
 
 	source          string
-	GlobalVariables []VariableSymbol
-	GlobalConstants []ConstantSymbol
-	Functions       []FunctionSymbol
-	Classes         []ClassSymbol
-	Prototypes      []ProtoTypeOrInstanceSymbol
-	Instances       []ProtoTypeOrInstanceSymbol
+	GlobalVariables map[string]VariableSymbol
+	GlobalConstants map[string]ConstantSymbol
+	Functions       map[string]FunctionSymbol
+	Classes         map[string]ClassSymbol
+	Prototypes      map[string]ProtoTypeOrInstanceSymbol
+	Instances       map[string]ProtoTypeOrInstanceSymbol
 
 	summaryBuilder *bytes.Buffer
 	knownSymbols   symbolWalker
@@ -27,18 +27,19 @@ type DaedalusStatefulListener struct {
 
 type symbolWalker interface {
 	WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error
+	LookupGlobalSymbol(name string, types SymbolType) (Symbol, bool)
 }
 
 // NewDaedalusStatefulListener ...
 func NewDaedalusStatefulListener(source string, knownSymbols symbolWalker) *DaedalusStatefulListener {
 	return &DaedalusStatefulListener{
 		source:          source,
-		GlobalVariables: []VariableSymbol{},
-		GlobalConstants: []ConstantSymbol{},
-		Functions:       []FunctionSymbol{},
-		Classes:         []ClassSymbol{},
-		Prototypes:      []ProtoTypeOrInstanceSymbol{},
-		Instances:       []ProtoTypeOrInstanceSymbol{},
+		GlobalVariables: map[string]VariableSymbol{},
+		GlobalConstants: map[string]ConstantSymbol{},
+		Functions:       map[string]FunctionSymbol{},
+		Classes:         map[string]ClassSymbol{},
+		Prototypes:      map[string]ProtoTypeOrInstanceSymbol{},
+		Instances:       map[string]ProtoTypeOrInstanceSymbol{},
 		summaryBuilder:  &bytes.Buffer{},
 		knownSymbols:    knownSymbols,
 	}
@@ -185,7 +186,7 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 			continue
 		}
 		for _, s := range l.constsFromContext(c) {
-			l.GlobalConstants = append(l.GlobalConstants, s.(ConstantSymbol))
+			l.GlobalConstants[strings.ToUpper(s.Name())] = s.(ConstantSymbol)
 		}
 	}
 	vars := ctx.GetTypedRuleContexts(varDeclContextType) // Does not really work somehow ...
@@ -195,7 +196,7 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 			continue
 		}
 		for _, s := range l.variablesFromContext(v) {
-			l.GlobalVariables = append(l.GlobalVariables, s.(VariableSymbol))
+			l.GlobalVariables[strings.ToUpper(s.Name())] = s.(VariableSymbol)
 		}
 	}
 }
@@ -224,23 +225,22 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 				)
 			}
 		}
-		l.Classes = append(l.Classes,
-			NewClassSymbol(c.NameNode().GetText(),
-				l.source,
-				l.symbolSummaryForContext(c.AllSymbolSummary()),
-				symbolDefinitionForRuleContext(c.NameNode()),
-				SymbolDefinition{
-					Start: DefinitionIndex{
-						Line:   c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetLine(),
-						Column: c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetColumn(),
-					},
-					End: DefinitionIndex{
-						Line:   c.GetChild(c.GetChildCount() - 1).(antlr.TerminalNode).GetSymbol().GetLine(),
-						Column: c.GetChild(c.GetChildCount() - 1).(antlr.TerminalNode).GetSymbol().GetColumn(),
-					},
+		csym := NewClassSymbol(c.NameNode().GetText(),
+			l.source,
+			l.symbolSummaryForContext(c.AllSymbolSummary()),
+			symbolDefinitionForRuleContext(c.NameNode()),
+			SymbolDefinition{
+				Start: DefinitionIndex{
+					Line:   c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetLine(),
+					Column: c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetColumn(),
 				},
-				cFields),
-		)
+				End: DefinitionIndex{
+					Line:   c.GetChild(c.GetChildCount() - 1).(antlr.TerminalNode).GetSymbol().GetLine(),
+					Column: c.GetChild(c.GetChildCount() - 1).(antlr.TerminalNode).GetSymbol().GetColumn(),
+				},
+			},
+			cFields)
+		l.Classes[strings.ToUpper(csym.Name())] = csym
 	}
 
 	prototypes := ctx.GetTypedRuleContexts(prototypeDefContextType)
@@ -249,15 +249,15 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 		if !ok {
 			continue
 		}
-		l.Prototypes = append(l.Prototypes,
-			NewPrototypeOrInstanceSymbol(
-				c.NameNode().GetText(),
-				c.ParentReference().(*parser.ParentReferenceContext).Identifier().GetText(),
-				l.source,
-				"",
-				symbolDefinitionForRuleContext(c.NameNode()),
-				symbolDefinitionForRuleContext(c.StatementBlock()),
-				false))
+		psym := NewPrototypeOrInstanceSymbol(
+			c.NameNode().GetText(),
+			c.ParentReference().(*parser.ParentReferenceContext).Identifier().GetText(),
+			l.source,
+			"",
+			symbolDefinitionForRuleContext(c.NameNode()),
+			symbolDefinitionForRuleContext(c.StatementBlock()),
+			false)
+		l.Prototypes[strings.ToUpper(psym.Name())] = psym
 	}
 
 	instances := ctx.GetTypedRuleContexts(instanceDefContextType)
@@ -266,14 +266,15 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 		if !ok {
 			continue
 		}
-		l.Instances = append(l.Instances, NewPrototypeOrInstanceSymbol(
+		psym := NewPrototypeOrInstanceSymbol(
 			c.NameNode().GetText(),
 			c.ParentReference().(*parser.ParentReferenceContext).Identifier().GetText(),
 			l.source,
 			"",
 			symbolDefinitionForRuleContext(c.NameNode()),
 			symbolDefinitionForRuleContext(c.StatementBlock()),
-			true))
+			true)
+		l.Prototypes[strings.ToUpper(psym.Name())] = psym
 	}
 }
 
@@ -318,7 +319,7 @@ func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefConte
 		params,
 		locals)
 
-	l.Functions = append(l.Functions, fnc)
+	l.Functions[strings.ToUpper(fnc.Name())] = fnc
 }
 
 // EnterStatementBlock ...
@@ -360,64 +361,45 @@ func (l *DaedalusStatefulListener) EnterAnyIdentifier(ctx *parser.AnyIdentifierC
 
 func (l *DaedalusStatefulListener) lookupSymbol(name string, symbol SymbolType) Symbol {
 	if (symbol & SymbolClass) != 0 {
-		for _, f := range l.Classes {
-			if strings.EqualFold(f.Name(), name) {
-				return f
-			}
+		if s, ok := l.Classes[name]; ok {
+			return s
 		}
 	}
 	if (symbol & SymbolConstant) != 0 {
-		for _, f := range l.GlobalConstants {
-			if strings.EqualFold(f.Name(), name) {
-				return f
-			}
+		if s, ok := l.GlobalConstants[name]; ok {
+			return s
 		}
 	}
 	if (symbol & SymbolFunction) != 0 {
-		for _, f := range l.Functions {
-			if strings.EqualFold(f.Name(), name) {
-				return f
-			}
+		if s, ok := l.Functions[name]; ok {
+			return s
 		}
 	}
 	if (symbol & SymbolInstance) != 0 {
-		for _, f := range l.Instances {
-			if strings.EqualFold(f.Name(), name) {
-				return f
-			}
+		if s, ok := l.Instances[name]; ok {
+			return s
 		}
 	}
 	if (symbol & SymbolPrototype) != 0 {
-		for _, f := range l.Prototypes {
-			if strings.EqualFold(f.Name(), name) {
-				return f
-			}
+		if s, ok := l.Prototypes[name]; ok {
+			return s
 		}
 	}
 	if (symbol & SymbolVariable) != 0 {
-		for _, f := range l.GlobalVariables {
-			if strings.EqualFold(f.Name(), name) {
-				return f
-			}
+		if s, ok := l.GlobalVariables[name]; ok {
+			return s
 		}
 	}
-	var foundSymbol Symbol
 
-	l.knownSymbols.WalkGlobalSymbols(func(s Symbol) error {
-		if strings.EqualFold(s.Name(), name) {
-			foundSymbol = s
-			return ErrWalkAbort
-		}
-		return nil
-	}, symbol)
-
+	foundSymbol, _ := l.knownSymbols.LookupGlobalSymbol(name, symbol)
 	return foundSymbol
 }
 
 // EnterFuncCall ...
 func (l *DaedalusStatefulListener) EnterFuncCall(ctx *parser.FuncCallContext) {
 	funcName := ctx.NameNode().GetText()
-	sym := l.lookupSymbol(funcName, SymbolFunction)
+	funcName = strings.ToUpper(funcName)
+	sym := l.lookupSymbol(strings.ToUpper(funcName), SymbolFunction)
 
 	if sym == nil {
 		return
