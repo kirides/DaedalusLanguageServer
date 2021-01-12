@@ -114,7 +114,7 @@ referenceAtom: nameNode ( '[' arrayIndex ']')?;
 reference: referenceAtom ( '.' referenceAtom )?;
 
 typeReference:  ( Identifier | Void | Int | Float | StringKeyword | Func | Instance);
-anyIdentifier:  ( Void | Int | Float | StringKeyword | Func | Instance | Class | Prototype | Null | Identifier);
+anyIdentifier:  ( Void | Var | Int | Float | StringKeyword | Func | Instance | Class | Prototype | Null | Identifier);
 
 nameNode: anyIdentifier;
 
