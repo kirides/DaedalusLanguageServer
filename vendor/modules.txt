@@ -1,4 +1,4 @@
-# github.com/antlr/antlr4 v0.0.0-20201214011320-c79b0fd80c9d
+# github.com/antlr/antlr4 v0.0.0-20210105212045-464bcbc32de2
 ## explicit
 github.com/antlr/antlr4/runtime/Go/antlr
 # github.com/francoispqt/gojay v1.2.13
@@ -13,9 +13,10 @@ go.lsp.dev/protocol/internal/gojaypool
 # go.lsp.dev/uri v0.3.0
 ## explicit
 go.lsp.dev/uri
-# go.uber.org/atomic v1.6.0
+# go.uber.org/atomic v1.7.0
 go.uber.org/atomic
-# go.uber.org/multierr v1.5.0
+# go.uber.org/multierr v1.6.0
+## explicit
 go.uber.org/multierr
 # go.uber.org/zap v1.16.0
 ## explicit
@@ -27,7 +28,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
 # golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 ## explicit
-# golang.org/x/text v0.3.3
+# golang.org/x/text v0.3.5
 ## explicit
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
