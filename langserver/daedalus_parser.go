@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"langsrv/langserver/parser"
 	"os"
 	"path/filepath"
@@ -298,7 +297,7 @@ func (m *parseResultsManager) Update(documentURI, content string) (*ParseResult,
 }
 
 func resolveSrcPaths(srcFile, prefixDir string) []string {
-	fileBytes, err := ioutil.ReadFile(srcFile)
+	fileBytes, err := os.ReadFile(srcFile)
 	if err != nil {
 		return []string{}
 	}
@@ -323,7 +322,7 @@ func resolveSrcPaths(srcFile, prefixDir string) []string {
 			if strings.Contains(fname, "*") {
 				rxFilePath := regexp.MustCompile(strings.ReplaceAll(regexp.QuoteMeta(strings.ToLower(fname)), "\\*", ".*"))
 
-				entries, err := ioutil.ReadDir(filepath.Join(prefixDir, dir))
+				entries, err := os.ReadDir(filepath.Join(prefixDir, dir))
 				if err != nil {
 					continue
 				}

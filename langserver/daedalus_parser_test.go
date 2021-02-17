@@ -2,7 +2,7 @@ package langserver
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"golang.org/x/text/encoding/charmap"
@@ -29,7 +29,7 @@ func TestParseSingleScript(t *testing.T) {
 }
 
 func TestParseSingleScriptFromFile(t *testing.T) {
-	fileBody, _ := ioutil.ReadFile(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\LeGo\Int64.d`)
+	fileBody, _ := os.ReadFile(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\LeGo\Int64.d`)
 	script, _ := charmap.Windows1252.NewDecoder().Bytes(fileBody)
 
 	m := newParseResultsManager()
