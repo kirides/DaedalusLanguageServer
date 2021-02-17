@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 
 	"langsrv/langserver"
 
@@ -23,9 +24,12 @@ func main() {
 			http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", *pprofPort), nil)
 		}()
 	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	lspHandler := langserver.NewLspHandler()
 	connectLanguageServer(os.Stdin, os.Stdout, lspHandler.TextDocumentSyncHandler, lspHandler).
-		Run(context.Background())
+		Run(ctx)
 }
 
 func connectLanguageServer(in io.Reader, out io.Writer, handlers ...jsonrpc2.Handler) *jsonrpc2.Conn {
