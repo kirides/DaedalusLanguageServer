@@ -287,17 +287,22 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 				h.LogError("Error parsing %q: %v", filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"), err)
 				return
 			}
-			results, err := h.parsedDocuments.ParseSource("Gothic.src")
-			if err != nil {
-				h.LogError("Error parsing Gothic.src: %v", err)
-				return
+
+			for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
+				if _, err := os.Stat(v); err == nil {
+					results, err := h.parsedDocuments.ParseSource(v)
+					if err != nil {
+						h.LogError("Error parsing %s: %v", v, err)
+						return
+					}
+					resultsX = append(resultsX, results...)
+				}
 			}
-			results = append(resultsX, results...)
 
 			var diagnostics []lsp.Diagnostic
 			tmpDiags := make(map[string][]lsp.Diagnostic)
 
-			for _, p := range results {
+			for _, p := range resultsX {
 				if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
 					diagnostics = make([]lsp.Diagnostic, 0, len(p.SyntaxErrors))
 					for _, se := range p.SyntaxErrors {
