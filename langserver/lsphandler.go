@@ -249,11 +249,11 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 		return false
 	}
 
-	if r.Params != nil {
-		var paramsMap map[string]interface{}
-		json.Unmarshal(*r.Params, &paramsMap)
-		// fmt.Fprintf(os.Stderr, "Params: %+v\n", paramsMap)
-	}
+	// if r.Params != nil {
+	// 	var paramsMap map[string]interface{}
+	// 	json.Unmarshal(*r.Params, &paramsMap)
+	// 	fmt.Fprintf(os.Stderr, "Params: %+v\n", paramsMap)
+	// }
 	switch r.Method {
 	case lsp.MethodInitialize:
 		if err := r.Reply(ctx, lsp.InitializeResult{
