@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"langsrv/langserver"
 
@@ -24,7 +25,7 @@ func main() {
 			http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", *pprofPort), nil)
 		}()
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer stop()
 
 	lspHandler := langserver.NewLspHandler()
