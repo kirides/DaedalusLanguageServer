@@ -58,16 +58,24 @@ func (h *textDocumentSyncHandler) Deliver(ctx context.Context, r *jsonrpc2.Reque
 	case lsp.MethodTextDocumentDidOpen:
 		var params lsp.DidOpenTextDocumentParams
 		json.Unmarshal(*r.Params, &params)
-		h.updateBuffer(ctx, r, h.uriToFilename(params.TextDocument.URI), params.TextDocument.Text)
+		documentUri := h.uriToFilename(params.TextDocument.URI)
+		if documentUri != "" {
+			h.updateBuffer(ctx, r, documentUri, params.TextDocument.Text)
+		}
 	case lsp.MethodTextDocumentDidChange:
 		var params lsp.DidChangeTextDocumentParams
 		json.Unmarshal(*r.Params, &params)
-		h.updateBuffer(ctx, r, h.uriToFilename(params.TextDocument.URI), params.ContentChanges[0].Text)
-
+		documentUri := h.uriToFilename(params.TextDocument.URI)
+		if documentUri != "" && len(params.ContentChanges) > 0 {
+			h.updateBuffer(ctx, r, documentUri, params.ContentChanges[0].Text)
+		}
 	case lsp.MethodTextDocumentDidSave:
 		var params lsp.DidSaveTextDocumentParams
 		json.Unmarshal(*r.Params, &params)
-		h.updateBuffer(ctx, r, h.uriToFilename(params.TextDocument.URI), params.Text)
+		documentUri := h.uriToFilename(params.TextDocument.URI)
+		if documentUri != "" {
+			h.updateBuffer(ctx, r, documentUri, params.Text)
+		}
 
 	default:
 		return h.baseLspHandler.Deliver(ctx, r, delivered)
