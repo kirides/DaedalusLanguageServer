@@ -58,9 +58,24 @@ func (h *baseLspHandler) LogError(format string, params ...interface{}) {
 	}
 }
 
+func fixURI(s string) (string, bool) {
+	if strings.HasPrefix(s, "git:/") {
+		return "file:///" + s[5:], true
+	}
+	if !strings.HasPrefix(s, "file:///") {
+		// VS Code sends URLs with only two slashes, which are invalid. golang/go#39789.
+		if strings.HasPrefix(s, "file://") {
+			return "file:///" + s[len("file://"):], true
+		}
+	}
+	return "", false
+}
+
 func (h *baseLspHandler) uriToFilename(v uri.URI) string {
 	s := string(v)
-	if !strings.HasPrefix(s, "file://") {
+	fixed, ok := fixURI(s)
+
+	if !ok {
 		unescaped, err := url.PathUnescape(s)
 		if err != nil {
 			h.LogWarn("Unsupported URI (not a filepath): %q\n", s)
@@ -70,11 +85,7 @@ func (h *baseLspHandler) uriToFilename(v uri.URI) string {
 		}
 		return ""
 	}
-	if !strings.HasPrefix(s, "file:///") {
-		// VS Code sends URLs with only two slashes, which are invalid. golang/go#39789.
-		s = "file:///" + s[len("file://"):]
-	}
-	v = uri.URI(s)
+	v = uri.URI(fixed)
 
 	return v.Filename()
 }
