@@ -15,14 +15,12 @@ import (
 
 // LspHandler ...
 type LspHandler struct {
-	baseLspHandler
-
-	initialized   bool
-	bufferManager *BufferManager
-
-	parsedDocuments         *parseResultsManager
 	TextDocumentSyncHandler jsonrpc2.Handler
+	bufferManager           *BufferManager
+	parsedDocuments         *parseResultsManager
 	initialDiagnostics      map[string][]lsp.Diagnostic
+	baseLspHandler
+	initialized bool
 }
 
 var (
@@ -124,7 +122,7 @@ func (h *LspHandler) handleTextDocumentCompletion(ctx context.Context, params *l
 func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Symbol, error) {
 	doc := h.bufferManager.GetBuffer(documentURI)
 	if doc == "" {
-		return nil, fmt.Errorf("Document %q not found", documentURI)
+		return nil, fmt.Errorf("document %q not found", documentURI)
 	}
 	identifier := doc.GetWordRangeAtPosition(position)
 
@@ -150,7 +148,7 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Sy
 	symbol, found := h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(identifier), SymbolAll)
 
 	if !found {
-		return nil, fmt.Errorf("Identifier %q not found", identifier)
+		return nil, fmt.Errorf("identifier %q not found", identifier)
 	}
 
 	return symbol, nil
@@ -182,7 +180,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 		if !isIdentifier(methodCallLine[i]) {
 			start := i + 1
 			if start+idxParen > len(methodCallLine) {
-				return lsp.SignatureHelp{}, fmt.Errorf("Idx out of bounds. Bad format :/")
+				return lsp.SignatureHelp{}, fmt.Errorf("idx out of bounds. Bad format :/")
 			}
 			word = methodCallLine[start : start+idxParen]
 		}

@@ -10,10 +10,9 @@ import (
 )
 
 type textDocumentSyncHandler struct {
-	baseLspHandler
-
 	bufferManager   *BufferManager
 	parsedDocuments *parseResultsManager
+	baseLspHandler
 }
 
 func lspSeverityFromSeverity(severity ErrorSeverity) lsp.DiagnosticSeverity {

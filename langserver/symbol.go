@@ -12,7 +12,6 @@ type Symbol interface {
 }
 
 type symbolBase struct {
-	stringerCache       string
 	NameValue           string
 	SymbolSource        string
 	SymbolDocumentation string
@@ -26,10 +25,10 @@ var _ Symbol = (*ConstantSymbol)(nil)
 
 // FunctionSymbol ...
 type FunctionSymbol struct {
-	symbolBase
 	ReturnType     string
 	Parameters     []VariableSymbol
 	LocalVariables []Symbol
+	symbolBase
 	BodyDefinition SymbolDefinition
 }
 
@@ -125,11 +124,6 @@ func (s symbolBase) Source() string {
 	return s.SymbolSource
 }
 
-// SetSource ...
-func (s symbolBase) SetSource(src string) {
-	s.SymbolSource = src
-}
-
 // Documentation ...
 func (s symbolBase) Documentation() string {
 	return s.SymbolDocumentation
@@ -147,8 +141,8 @@ func (s FunctionSymbol) String() string {
 
 // VariableSymbol ...
 type VariableSymbol struct {
-	symbolBase
 	Type string
+	symbolBase
 }
 
 // String ...
@@ -158,8 +152,8 @@ func (s VariableSymbol) String() string {
 
 // ConstantSymbol ...
 type ConstantSymbol struct {
-	VariableSymbol
 	Value string
+	VariableSymbol
 }
 
 // String ...
@@ -169,8 +163,8 @@ func (s ConstantSymbol) String() string {
 
 // ClassSymbol ...
 type ClassSymbol struct {
+	Fields []VariableSymbol
 	symbolBase
-	Fields         []VariableSymbol
 	BodyDefinition SymbolDefinition
 }
 
@@ -181,11 +175,11 @@ func (s ClassSymbol) String() string {
 
 // ProtoTypeOrInstanceSymbol ...
 type ProtoTypeOrInstanceSymbol struct {
+	Parent string
+	Fields []VariableSymbol
 	symbolBase
-	IsInstance     bool
-	Parent         string
-	Fields         []VariableSymbol
 	BodyDefinition SymbolDefinition
+	IsInstance     bool
 }
 
 // String ...

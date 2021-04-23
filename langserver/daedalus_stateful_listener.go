@@ -12,17 +12,15 @@ import (
 // DaedalusStatefulListener ...
 type DaedalusStatefulListener struct {
 	parser.BaseDaedalusListener
-
-	source          string
+	knownSymbols    symbolWalker
+	Instances       map[string]ProtoTypeOrInstanceSymbol
 	GlobalVariables map[string]VariableSymbol
-	GlobalConstants map[string]ConstantSymbol
 	Functions       map[string]FunctionSymbol
 	Classes         map[string]ClassSymbol
 	Prototypes      map[string]ProtoTypeOrInstanceSymbol
-	Instances       map[string]ProtoTypeOrInstanceSymbol
-
-	summaryBuilder *bytes.Buffer
-	knownSymbols   symbolWalker
+	summaryBuilder  *bytes.Buffer
+	GlobalConstants map[string]ConstantSymbol
+	source          string
 }
 
 type symbolWalker interface {
@@ -57,7 +55,7 @@ func symbolDefinitionForRuleContext(ctx antlr.ParserRuleContext) SymbolDefinitio
 }
 
 func (l *DaedalusStatefulListener) symbolSummaryForContext(summaries []parser.ISymbolSummaryContext) string {
-	if summaries == nil || len(summaries) == 0 {
+	if len(summaries) == 0 {
 		return ""
 	}
 

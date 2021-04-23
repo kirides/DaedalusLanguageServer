@@ -18,9 +18,9 @@ const (
 
 // SyntaxError ...
 type SyntaxError struct {
+	ErrorCode SyntaxErrorCode
 	Line      int
 	Column    int
-	ErrorCode SyntaxErrorCode
 }
 
 // SyntaxErrorCode ...

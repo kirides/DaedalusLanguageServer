@@ -19,14 +19,14 @@ import (
 
 // ParseResult ...
 type ParseResult struct {
-	SyntaxErrors    []SyntaxError
+	Instances       map[string]ProtoTypeOrInstanceSymbol
 	GlobalVariables map[string]VariableSymbol
 	GlobalConstants map[string]ConstantSymbol
 	Functions       map[string]FunctionSymbol
 	Classes         map[string]ClassSymbol
 	Prototypes      map[string]ProtoTypeOrInstanceSymbol
-	Instances       map[string]ProtoTypeOrInstanceSymbol
 	Source          string
+	SyntaxErrors    []SyntaxError
 }
 
 type parserPool struct {
@@ -222,8 +222,8 @@ func (p *ParseResult) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolT
 }
 
 type parseResultsManager struct {
-	mtx          sync.RWMutex
 	parseResults map[string]*ParseResult
+	mtx          sync.RWMutex
 }
 
 func newParseResultsManager() *parseResultsManager {
@@ -283,7 +283,7 @@ func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
 	if r, ok := m.parseResults[documentURI]; ok {
 		return r, nil
 	}
-	return nil, fmt.Errorf("Document %q not found", documentURI)
+	return nil, fmt.Errorf("document %q not found", documentURI)
 }
 
 func (m *parseResultsManager) Update(documentURI, content string) (*ParseResult, error) {
@@ -398,7 +398,7 @@ func (m *parseResultsManager) validateFiles(resolvedPaths []string) map[string][
 					continue
 				}
 
-				parsed := m.ValidateScript(r, string(buf.Bytes()))
+				parsed := m.ValidateScript(r, buf.String())
 				if len(parsed) > 0 {
 					m.mtx.Lock()
 					results[r] = parsed
@@ -454,7 +454,7 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 					continue
 				}
 
-				parsed := m.ParseScript(r, string(buf.Bytes()))
+				parsed := m.ParseScript(r, buf.String())
 
 				m.mtx.Lock()
 				m.parseResults[parsed.Source] = parsed

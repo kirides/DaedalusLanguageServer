@@ -6,8 +6,8 @@ import (
 
 // BufferManager ...
 type BufferManager struct {
-	mtx       sync.RWMutex
 	documents map[string]BufferedDocument
+	mtx       sync.RWMutex
 }
 
 // NewBufferManager ...

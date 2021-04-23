@@ -10,9 +10,8 @@ import (
 // DaedalusValidatingListener ...
 type DaedalusValidatingListener struct {
 	parser.BaseDaedalusListener
-
-	source       string
 	knownSymbols symbolWalker
+	source       string
 }
 
 // NewDaedalusValidatingListener ...

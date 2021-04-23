@@ -9,9 +9,9 @@ import (
 
 var (
 	// ErrDocumentNotFound ...
-	ErrDocumentNotFound = fmt.Errorf("Document not found")
+	ErrDocumentNotFound = fmt.Errorf("document not found")
 	// ErrSymbolNotFound ...
-	ErrSymbolNotFound = fmt.Errorf("Symbol not found")
+	ErrSymbolNotFound = fmt.Errorf("symbol not found")
 )
 
 // DocumentsManager ...
