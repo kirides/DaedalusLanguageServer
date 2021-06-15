@@ -58,6 +58,7 @@ func (h *baseLspHandler) LogError(format string, params ...interface{}) {
 	}
 }
 
+// workaround for unsupported file paths (git + invalid file://-prefix )
 func fixURI(s string) (string, bool) {
 	if strings.HasPrefix(s, "git:/") {
 		return "file:///" + s[5:], true
@@ -67,8 +68,9 @@ func fixURI(s string) (string, bool) {
 		if strings.HasPrefix(s, "file://") {
 			return "file:///" + s[len("file://"):], true
 		}
+		return "", false
 	}
-	return "", false
+	return s, true
 }
 
 func (h *baseLspHandler) uriToFilename(v uri.URI) string {
