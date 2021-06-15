@@ -93,9 +93,9 @@ type BaseATNConfigSet struct {
 
 func NewBaseATNConfigSet(fullCtx bool) *BaseATNConfigSet {
 	return &BaseATNConfigSet{
-		cachedHash:   -1,
-		configLookup: NewSet(nil, equalATNConfigs),
-		fullCtx:      fullCtx,
+		cachedHash: -1,
+		configLookup:     NewSet(nil, equalATNConfigs),
+		fullCtx:          fullCtx,
 	}
 }
 
@@ -149,7 +149,7 @@ func (b *BaseATNConfigSet) GetStates() *Set {
 	states := NewSet(nil, nil)
 
 	for i := 0; i < len(b.configs); i++ {
-		states.add(b.configs[i].GetStateValue())
+		states.add(b.configs[i].GetState())
 	}
 
 	return states
@@ -379,7 +379,7 @@ func equalATNConfigs(a, b interface{}) bool {
 		return false
 	}
 
-	nums := ai.GetStateValue() == bi.GetStateValue()
+	nums := ai.GetState().GetStateNumber() == bi.GetState().GetStateNumber()
 	alts := ai.GetAlt() == bi.GetAlt()
 	cons := ai.GetSemanticContext().equals(bi.GetSemanticContext())
 

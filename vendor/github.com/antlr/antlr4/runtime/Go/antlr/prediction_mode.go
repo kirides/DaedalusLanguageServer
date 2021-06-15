@@ -162,13 +162,13 @@ const (
 // the configurations to strip out all of the predicates so that a standard
 // {@link ATNConfigSet} will merge everything ignoring predicates.</p>
 //
-func PredictionModehasSLLConflictTerminatingPrediction(a *ATN, mode int, configs ATNConfigSet) bool {
+func PredictionModehasSLLConflictTerminatingPrediction(mode int, configs ATNConfigSet) bool {
 	// Configs in rule stop states indicate reaching the end of the decision
 	// rule (local context) or end of start rule (full context). If all
 	// configs meet this condition, then none of the configurations is able
 	// to Match additional input so we terminate prediction.
 	//
-	if PredictionModeallConfigsInRuleStopStates(a, configs) {
+	if PredictionModeallConfigsInRuleStopStates(configs) {
 		return true
 	}
 	// pure SLL mode parsing
@@ -202,9 +202,9 @@ func PredictionModehasSLLConflictTerminatingPrediction(a *ATN, mode int, configs
 // @param configs the configuration set to test
 // @return {@code true} if any configuration in {@code configs} is in a
 // {@link RuleStopState}, otherwise {@code false}
-func PredictionModehasConfigInRuleStopState(a *ATN, configs ATNConfigSet) bool {
+func PredictionModehasConfigInRuleStopState(configs ATNConfigSet) bool {
 	for _, c := range configs.GetItems() {
-		if _, ok := c.GetState(a).(*RuleStopState); ok {
+		if _, ok := c.GetState().(*RuleStopState); ok {
 			return true
 		}
 	}
@@ -219,10 +219,10 @@ func PredictionModehasConfigInRuleStopState(a *ATN, configs ATNConfigSet) bool {
 // @param configs the configuration set to test
 // @return {@code true} if all configurations in {@code configs} are in a
 // {@link RuleStopState}, otherwise {@code false}
-func PredictionModeallConfigsInRuleStopStates(a *ATN, configs ATNConfigSet) bool {
+func PredictionModeallConfigsInRuleStopStates(configs ATNConfigSet) bool {
 
 	for _, c := range configs.GetItems() {
-		if _, ok := c.GetState(a).(*RuleStopState); !ok {
+		if _, ok := c.GetState().(*RuleStopState); !ok {
 			return false
 		}
 	}
@@ -488,7 +488,7 @@ func PredictionModegetConflictingAltSubsets(configs ATNConfigSet) []*BitSet {
 	configToAlts := make(map[int]*BitSet)
 
 	for _, c := range configs.GetItems() {
-		key := 31*c.GetStateValue() + c.GetContext().hash()
+		key := 31 * c.GetState().GetStateNumber() + c.GetContext().hash()
 
 		alts, ok := configToAlts[key]
 		if !ok {
@@ -517,10 +517,10 @@ func PredictionModeGetStateToAltMap(configs ATNConfigSet) *AltDict {
 	m := NewAltDict()
 
 	for _, c := range configs.GetItems() {
-		alts := m.Get(c.GetStateString())
+		alts := m.Get(c.GetState().String())
 		if alts == nil {
 			alts = NewBitSet()
-			m.put(c.GetStateString(), alts)
+			m.put(c.GetState().String(), alts)
 		}
 		alts.(*BitSet).add(c.GetAlt())
 	}

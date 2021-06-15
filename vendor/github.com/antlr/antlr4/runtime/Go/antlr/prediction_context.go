@@ -175,7 +175,15 @@ func (b *BaseSingletonPredictionContext) equals(other PredictionContext) bool {
 }
 
 func (b *BaseSingletonPredictionContext) hash() int {
-	return b.cachedHash
+	h := murmurInit(1)
+
+	if b.parentCtx == nil {
+		return murmurFinish(h, 0)
+	}
+
+	h = murmurUpdate(h, b.parentCtx.hash())
+	h = murmurUpdate(h, b.returnState)
+	return murmurFinish(h, 2)
 }
 
 func (b *BaseSingletonPredictionContext) String() string {
@@ -307,7 +315,7 @@ func (a *ArrayPredictionContext) hash() int {
 		h = murmurUpdate(h, r)
 	}
 
-	return murmurFinish(h, 2*len(a.parents))
+	return murmurFinish(h, 2 * len(a.parents))
 }
 
 func (a *ArrayPredictionContext) String() string {

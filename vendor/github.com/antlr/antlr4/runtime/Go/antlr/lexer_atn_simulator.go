@@ -277,7 +277,7 @@ func (l *LexerATNSimulator) getReachableConfigSet(input CharStream, closure ATNC
 			fmt.Printf("testing %s at %s\n", l.GetTokenName(t), cfg.String()) // l.recog, true))
 		}
 
-		for _, trans := range cfg.GetState(l.ATN()).GetTransitions() {
+		for _, trans := range cfg.GetState().GetTransitions() {
 			target := l.getReachableTarget(trans, t)
 			if target != nil {
 				lexerActionExecutor := cfg.(*LexerATNConfig).lexerActionExecutor
@@ -344,12 +344,12 @@ func (l *LexerATNSimulator) closure(input CharStream, config *LexerATNConfig, co
 		fmt.Println("closure(" + config.String() + ")") // config.String(l.recog, true) + ")")
 	}
 
-	_, ok := config.GetState(l.ATN()).(*RuleStopState)
+	_, ok := config.state.(*RuleStopState)
 	if ok {
 
 		if LexerATNSimulatorDebug {
 			if l.recog != nil {
-				fmt.Printf("closure at %s rule stop %s\n", l.recog.GetRuleNames()[config.GetState(l.ATN()).GetRuleIndex()], config)
+				fmt.Printf("closure at %s rule stop %s\n", l.recog.GetRuleNames()[config.state.GetRuleIndex()], config)
 			} else {
 				fmt.Printf("closure at rule stop %s\n", config)
 			}
@@ -361,7 +361,7 @@ func (l *LexerATNSimulator) closure(input CharStream, config *LexerATNConfig, co
 				return true
 			}
 
-			configs.Add(NewLexerATNConfig2(config, config.GetState(l.ATN()), BasePredictionContextEMPTY), nil)
+			configs.Add(NewLexerATNConfig2(config, config.state, BasePredictionContextEMPTY), nil)
 			currentAltReachedAcceptState = true
 		}
 		if config.context != nil && !config.context.isEmpty() {
@@ -377,13 +377,13 @@ func (l *LexerATNSimulator) closure(input CharStream, config *LexerATNConfig, co
 		return currentAltReachedAcceptState
 	}
 	// optimization
-	if !config.GetState(l.ATN()).GetEpsilonOnlyTransitions() {
+	if !config.state.GetEpsilonOnlyTransitions() {
 		if !currentAltReachedAcceptState || !config.passedThroughNonGreedyDecision {
 			configs.Add(config, nil)
 		}
 	}
-	for j := 0; j < len(config.GetState(l.ATN()).GetTransitions()); j++ {
-		trans := config.GetState(l.ATN()).GetTransitions()[j]
+	for j := 0; j < len(config.state.GetTransitions()); j++ {
+		trans := config.state.GetTransitions()[j]
 		cfg := l.getEpsilonTarget(input, config, trans, configs, speculative, treatEOFAsEpsilon)
 		if cfg != nil {
 			currentAltReachedAcceptState = l.closure(input, cfg, configs,
@@ -570,7 +570,7 @@ func (l *LexerATNSimulator) addDFAState(configs ATNConfigSet) *DFAState {
 
 	for _, cfg := range configs.GetItems() {
 
-		_, ok := cfg.GetState(l.ATN()).(*RuleStopState)
+		_, ok := cfg.GetState().(*RuleStopState)
 
 		if ok {
 			firstConfigWithRuleStopState = cfg
@@ -580,7 +580,7 @@ func (l *LexerATNSimulator) addDFAState(configs ATNConfigSet) *DFAState {
 	if firstConfigWithRuleStopState != nil {
 		proposed.isAcceptState = true
 		proposed.lexerActionExecutor = firstConfigWithRuleStopState.(*LexerATNConfig).lexerActionExecutor
-		proposed.setPrediction(l.atn.ruleToTokenType[firstConfigWithRuleStopState.GetState(l.ATN()).GetRuleIndex()])
+		proposed.setPrediction(l.atn.ruleToTokenType[firstConfigWithRuleStopState.GetState().GetRuleIndex()])
 	}
 	hash := proposed.hash()
 	dfa := l.decisionToDFA[l.mode]
