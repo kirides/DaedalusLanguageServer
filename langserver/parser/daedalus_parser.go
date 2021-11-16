@@ -1,4 +1,4 @@
-// Code generated from Daedalus.g4 by ANTLR 4.9.2. DO NOT EDIT.
+// Code generated from Daedalus.g4 by ANTLR 4.9.3. DO NOT EDIT.
 
 package parser // Daedalus
 
@@ -472,6 +472,9 @@ func (s *SymbolSummaryContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) SymbolSummary() (localctx ISymbolSummaryContext) {
+	this := p
+	_ = this
+
 	localctx = NewSymbolSummaryContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 0, DaedalusParserRULE_symbolSummary)
 
@@ -649,6 +652,9 @@ func (s *DaedalusFileContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) DaedalusFile() (localctx IDaedalusFileContext) {
+	this := p
+	_ = this
+
 	localctx = NewDaedalusFileContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 2, DaedalusParserRULE_daedalusFile)
 
@@ -835,6 +841,9 @@ func (s *BlockDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) BlockDef() (localctx IBlockDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewBlockDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 4, DaedalusParserRULE_blockDef)
 	var _la int
@@ -1028,6 +1037,9 @@ func (s *InlineDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) InlineDef() (localctx IInlineDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewInlineDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 6, DaedalusParserRULE_inlineDef)
 	var _la int
@@ -1199,6 +1211,9 @@ func (s *FunctionDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) FunctionDef() (localctx IFunctionDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewFunctionDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 8, DaedalusParserRULE_functionDef)
 
@@ -1362,6 +1377,9 @@ func (s *ConstDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ConstDef() (localctx IConstDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewConstDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 10, DaedalusParserRULE_constDef)
 	var _la int
@@ -1560,6 +1578,9 @@ func (s *ClassDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ClassDef() (localctx IClassDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewClassDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 12, DaedalusParserRULE_classDef)
 
@@ -1730,6 +1751,9 @@ func (s *PrototypeDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) PrototypeDef() (localctx IPrototypeDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewPrototypeDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 14, DaedalusParserRULE_prototypeDef)
 
@@ -1871,6 +1895,9 @@ func (s *InstanceDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) InstanceDef() (localctx IInstanceDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewInstanceDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 16, DaedalusParserRULE_instanceDef)
 
@@ -2015,6 +2042,9 @@ func (s *InstanceDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) InstanceDecl() (localctx IInstanceDeclContext) {
+	this := p
+	_ = this
+
 	localctx = NewInstanceDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 18, DaedalusParserRULE_instanceDecl)
 
@@ -2223,6 +2253,9 @@ func (s *VarDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) VarDecl() (localctx IVarDeclContext) {
+	this := p
+	_ = this
+
 	localctx = NewVarDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 20, DaedalusParserRULE_varDecl)
 
@@ -2400,6 +2433,9 @@ func (s *ConstArrayDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ConstArrayDef() (localctx IConstArrayDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewConstArrayDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 22, DaedalusParserRULE_constArrayDef)
 
@@ -2526,6 +2562,9 @@ func (s *ConstArrayAssignmentContext) ExitRule(listener antlr.ParseTreeListener)
 }
 
 func (p *DaedalusParser) ConstArrayAssignment() (localctx IConstArrayAssignmentContext) {
+	this := p
+	_ = this
+
 	localctx = NewConstArrayAssignmentContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 24, DaedalusParserRULE_constArrayAssignment)
 
@@ -2669,6 +2708,9 @@ func (s *ConstValueDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ConstValueDef() (localctx IConstValueDefContext) {
+	this := p
+	_ = this
+
 	localctx = NewConstValueDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 26, DaedalusParserRULE_constValueDef)
 
@@ -2770,6 +2812,9 @@ func (s *ConstValueAssignmentContext) ExitRule(listener antlr.ParseTreeListener)
 }
 
 func (p *DaedalusParser) ConstValueAssignment() (localctx IConstValueAssignmentContext) {
+	this := p
+	_ = this
+
 	localctx = NewConstValueAssignmentContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 28, DaedalusParserRULE_constValueAssignment)
 
@@ -2881,6 +2926,9 @@ func (s *VarArrayDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) VarArrayDecl() (localctx IVarArrayDeclContext) {
+	this := p
+	_ = this
+
 	localctx = NewVarArrayDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 30, DaedalusParserRULE_varArrayDecl)
 
@@ -2990,6 +3038,9 @@ func (s *VarValueDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) VarValueDecl() (localctx IVarValueDeclContext) {
+	this := p
+	_ = this
+
 	localctx = NewVarValueDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 32, DaedalusParserRULE_varValueDecl)
 
@@ -3100,6 +3151,9 @@ func (s *ParameterListContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ParameterList() (localctx IParameterListContext) {
+	this := p
+	_ = this
+
 	localctx = NewParameterListContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 34, DaedalusParserRULE_parameterList)
 	var _la int
@@ -3259,6 +3313,9 @@ func (s *ParameterDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ParameterDecl() (localctx IParameterDeclContext) {
+	this := p
+	_ = this
+
 	localctx = NewParameterDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 36, DaedalusParserRULE_parameterDecl)
 	var _la int
@@ -3443,6 +3500,9 @@ func (s *StatementBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) StatementBlock() (localctx IStatementBlockContext) {
+	this := p
+	_ = this
+
 	localctx = NewStatementBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 38, DaedalusParserRULE_statementBlock)
 	var _la int
@@ -3679,6 +3739,9 @@ func (s *StatementContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) Statement() (localctx IStatementContext) {
+	this := p
+	_ = this
+
 	localctx = NewStatementContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 40, DaedalusParserRULE_statement)
 
@@ -3840,6 +3903,9 @@ func (s *FuncCallContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) FuncCall() (localctx IFuncCallContext) {
+	this := p
+	_ = this
+
 	localctx = NewFuncCallContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 42, DaedalusParserRULE_funcCall)
 	var _la int
@@ -3999,6 +4065,9 @@ func (s *AssignmentContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) Assignment() (localctx IAssignmentContext) {
+	this := p
+	_ = this
+
 	localctx = NewAssignmentContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 44, DaedalusParserRULE_assignment)
 
@@ -4104,6 +4173,9 @@ func (s *IfConditionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) IfCondition() (localctx IIfConditionContext) {
+	this := p
+	_ = this
+
 	localctx = NewIfConditionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 46, DaedalusParserRULE_ifCondition)
 
@@ -4205,6 +4277,9 @@ func (s *ElseBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ElseBlock() (localctx IElseBlockContext) {
+	this := p
+	_ = this
+
 	localctx = NewElseBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 48, DaedalusParserRULE_elseBlock)
 
@@ -4324,6 +4399,9 @@ func (s *ElseIfBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ElseIfBlock() (localctx IElseIfBlockContext) {
+	this := p
+	_ = this
+
 	localctx = NewElseIfBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 50, DaedalusParserRULE_elseIfBlock)
 
@@ -4447,6 +4525,9 @@ func (s *IfBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) IfBlock() (localctx IIfBlockContext) {
+	this := p
+	_ = this
+
 	localctx = NewIfBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 52, DaedalusParserRULE_ifBlock)
 
@@ -4585,6 +4666,9 @@ func (s *IfBlockStatementContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) IfBlockStatement() (localctx IIfBlockStatementContext) {
+	this := p
+	_ = this
+
 	localctx = NewIfBlockStatementContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 54, DaedalusParserRULE_ifBlockStatement)
 	var _la int
@@ -4716,6 +4800,9 @@ func (s *ReturnStatementContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ReturnStatement() (localctx IReturnStatementContext) {
+	this := p
+	_ = this
+
 	localctx = NewReturnStatementContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 56, DaedalusParserRULE_returnStatement)
 	var _la int
@@ -4825,6 +4912,9 @@ func (s *FuncArgExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) FuncArgExpression() (localctx IFuncArgExpressionContext) {
+	this := p
+	_ = this
+
 	localctx = NewFuncArgExpressionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 58, DaedalusParserRULE_funcArgExpression)
 
@@ -4922,6 +5012,9 @@ func (s *ExpressionBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ExpressionBlock() (localctx IExpressionBlockContext) {
+	this := p
+	_ = this
+
 	localctx = NewExpressionBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 60, DaedalusParserRULE_expressionBlock)
 
@@ -5702,6 +5795,9 @@ func (p *DaedalusParser) Expression() (localctx IExpressionContext) {
 }
 
 func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
+	this := p
+	_ = this
+
 	var _parentctx antlr.ParserRuleContext = p.GetParserRuleContext()
 	_parentState := p.GetState()
 	localctx = NewExpressionContext(p, p.GetParserRuleContext(), _parentState)
@@ -6027,6 +6123,9 @@ func (s *ArrayIndexContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ArrayIndex() (localctx IArrayIndexContext) {
+	this := p
+	_ = this
+
 	localctx = NewArrayIndexContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 64, DaedalusParserRULE_arrayIndex)
 
@@ -6144,6 +6243,9 @@ func (s *ArraySizeContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ArraySize() (localctx IArraySizeContext) {
+	this := p
+	_ = this
+
 	localctx = NewArraySizeContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 66, DaedalusParserRULE_arraySize)
 
@@ -6529,6 +6631,9 @@ func (s *ReferenceValueContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) Value() (localctx IValueContext) {
+	this := p
+	_ = this
+
 	localctx = NewValueContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 68, DaedalusParserRULE_value)
 
@@ -6699,6 +6804,9 @@ func (s *ReferenceAtomContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ReferenceAtom() (localctx IReferenceAtomContext) {
+	this := p
+	_ = this
+
 	localctx = NewReferenceAtomContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 70, DaedalusParserRULE_referenceAtom)
 
@@ -6827,6 +6935,9 @@ func (s *ReferenceContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) Reference() (localctx IReferenceContext) {
+	this := p
+	_ = this
+
 	localctx = NewReferenceContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 72, DaedalusParserRULE_reference)
 
@@ -6956,6 +7067,9 @@ func (s *TypeReferenceContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) TypeReference() (localctx ITypeReferenceContext) {
+	this := p
+	_ = this
+
 	localctx = NewTypeReferenceContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 74, DaedalusParserRULE_typeReference)
 	var _la int
@@ -7095,6 +7209,9 @@ func (s *AnyIdentifierContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) AnyIdentifier() (localctx IAnyIdentifierContext) {
+	this := p
+	_ = this
+
 	localctx = NewAnyIdentifierContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 76, DaedalusParserRULE_anyIdentifier)
 	var _la int
@@ -7200,6 +7317,9 @@ func (s *NameNodeContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) NameNode() (localctx INameNodeContext) {
+	this := p
+	_ = this
+
 	localctx = NewNameNodeContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 78, DaedalusParserRULE_nameNode)
 
@@ -7291,6 +7411,9 @@ func (s *ParentReferenceContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ParentReference() (localctx IParentReferenceContext) {
+	this := p
+	_ = this
+
 	localctx = NewParentReferenceContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 80, DaedalusParserRULE_parentReference)
 
@@ -7377,6 +7500,9 @@ func (s *AssignmentOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) AssignmentOperator() (localctx IAssignmentOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewAssignmentOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 82, DaedalusParserRULE_assignmentOperator)
 	var _la int
@@ -7471,6 +7597,9 @@ func (s *AddOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) AddOperator() (localctx IAddOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewAddOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 84, DaedalusParserRULE_addOperator)
 	var _la int
@@ -7565,6 +7694,9 @@ func (s *BitMoveOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) BitMoveOperator() (localctx IBitMoveOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewBitMoveOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 86, DaedalusParserRULE_bitMoveOperator)
 	var _la int
@@ -7659,6 +7791,9 @@ func (s *CompOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) CompOperator() (localctx ICompOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewCompOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 88, DaedalusParserRULE_compOperator)
 	var _la int
@@ -7753,6 +7888,9 @@ func (s *EqOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) EqOperator() (localctx IEqOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewEqOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 90, DaedalusParserRULE_eqOperator)
 	var _la int
@@ -7847,6 +7985,9 @@ func (s *OneArgOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) OneArgOperator() (localctx IOneArgOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewOneArgOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 92, DaedalusParserRULE_oneArgOperator)
 	var _la int
@@ -7941,6 +8082,9 @@ func (s *MultOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) MultOperator() (localctx IMultOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewMultOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 94, DaedalusParserRULE_multOperator)
 	var _la int
@@ -8035,6 +8179,9 @@ func (s *BinAndOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) BinAndOperator() (localctx IBinAndOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewBinAndOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 96, DaedalusParserRULE_binAndOperator)
 
@@ -8121,6 +8268,9 @@ func (s *BinOrOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) BinOrOperator() (localctx IBinOrOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewBinOrOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 98, DaedalusParserRULE_binOrOperator)
 
@@ -8207,6 +8357,9 @@ func (s *LogAndOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) LogAndOperator() (localctx ILogAndOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewLogAndOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 100, DaedalusParserRULE_logAndOperator)
 
@@ -8293,6 +8446,9 @@ func (s *LogOrOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) LogOrOperator() (localctx ILogOrOperatorContext) {
+	this := p
+	_ = this
+
 	localctx = NewLogOrOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 102, DaedalusParserRULE_logOrOperator)
 
@@ -8336,6 +8492,9 @@ func (p *DaedalusParser) Sempred(localctx antlr.RuleContext, ruleIndex, predInde
 }
 
 func (p *DaedalusParser) Expression_Sempred(localctx antlr.RuleContext, predIndex int) bool {
+	this := p
+	_ = this
+
 	switch predIndex {
 	case 0:
 		return p.Precpred(p.GetParserRuleContext(), 10)
