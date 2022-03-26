@@ -3,7 +3,7 @@ module langsrv
 go 1.17
 
 require (
-	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211115101625-aeaa445b4d4f
+	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220314183648-97c793e446ba
 	go.lsp.dev/jsonrpc2 v0.6.2
 	go.lsp.dev/protocol v0.8.0
 	go.lsp.dev/uri v0.3.0
