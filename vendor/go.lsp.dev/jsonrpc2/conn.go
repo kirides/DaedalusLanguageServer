@@ -233,17 +233,13 @@ func (c *conn) Done() <-chan struct{} {
 // Err implements Conn.
 func (c *conn) Err() error {
 	if err := c.err.Load(); err != nil {
-		return err.(errHolder).err
+		return err.(error)
 	}
 	return nil
 }
 
 // fail sets a failure condition on the stream and closes it.
 func (c *conn) fail(err error) {
-	c.err.Store(errHolder{err})
+	c.err.Store(err)
 	c.stream.Close()
-}
-
-type errHolder struct {
-	err error
 }
