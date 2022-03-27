@@ -1,6 +1,5 @@
-// Copyright 2019 The Go Language Server Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// SPDX-FileCopyrightText: 2019 The Go Language Server Authors
+// SPDX-License-Identifier: BSD-3-Clause
 
 package protocol
 
@@ -20,7 +19,7 @@ type WorkspaceFolder struct {
 	Name string `json:"name"`
 }
 
-// DidChangeWorkspaceFoldersParams params of DidChangeWorkspaceFolders Notification.
+// DidChangeWorkspaceFoldersParams params of DidChangeWorkspaceFolders notification.
 type DidChangeWorkspaceFoldersParams struct {
 	// Event is the actual workspace folder change event.
 	Event WorkspaceFoldersChangeEvent `json:"event"`
@@ -35,13 +34,13 @@ type WorkspaceFoldersChangeEvent struct {
 	Removed []WorkspaceFolder `json:"removed"`
 }
 
-// DidChangeConfigurationParams params of DidChangeConfiguration Notification.
+// DidChangeConfigurationParams params of DidChangeConfiguration notification.
 type DidChangeConfigurationParams struct {
 	// Settings is the actual changed settings
 	Settings interface{} `json:"settings,omitempty"`
 }
 
-// ConfigurationParams params of Configuration Request.
+// ConfigurationParams params of Configuration request.
 type ConfigurationParams struct {
 	Items []ConfigurationItem `json:"items"`
 }
@@ -59,7 +58,7 @@ type ConfigurationItem struct {
 	Section string `json:"section,omitempty"`
 }
 
-// DidChangeWatchedFilesParams params of DidChangeWatchedFiles Notification.
+// DidChangeWatchedFilesParams params of DidChangeWatchedFiles notification.
 type DidChangeWatchedFilesParams struct {
 	// Changes is the actual file events.
 	Changes []*FileEvent `json:"changes,omitempty"`
@@ -78,22 +77,22 @@ type FileEvent struct {
 type FileChangeType float64
 
 const (
-	// Created is the file got created.
-	Created FileChangeType = 1
-	// Changed is the file got changed.
-	Changed FileChangeType = 2
-	// Deleted is the file got deleted.
-	Deleted FileChangeType = 3
+	// FileChangeTypeCreated is the file got created.
+	FileChangeTypeCreated FileChangeType = 1
+	// FileChangeTypeChanged is the file got changed.
+	FileChangeTypeChanged FileChangeType = 2
+	// FileChangeTypeDeleted is the file got deleted.
+	FileChangeTypeDeleted FileChangeType = 3
 )
 
 // String implements fmt.Stringer.
 func (t FileChangeType) String() string {
 	switch t {
-	case Created:
+	case FileChangeTypeCreated:
 		return "Created"
-	case Changed:
+	case FileChangeTypeChanged:
 		return "Changed"
-	case Deleted:
+	case FileChangeTypeDeleted:
 		return "Deleted"
 	default:
 		return strconv.FormatFloat(float64(t), 'f', -10, 64)
@@ -114,7 +113,7 @@ type FileSystemWatcher struct {
 	// - `*` to match one or more characters in a path segment
 	// - `?` to match on one character in a path segment
 	// - `**` to match any number of path segments, including none
-	// - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+	// - `{}` to group conditions (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)
 	// - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
 	// - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
 	GlobPattern string `json:"globPattern"`
@@ -129,38 +128,45 @@ type FileSystemWatcher struct {
 type WatchKind float64
 
 const (
-	// CreateWatch interested in create events.
-	CreateWatch WatchKind = 1
+	// WatchKindCreate interested in create events.
+	WatchKindCreate WatchKind = 1
 
-	// ChangeWatch interested in change events
-	ChangeWatch WatchKind = 2
+	// WatchKindChange interested in change events.
+	WatchKindChange WatchKind = 2
 
-	// DeleteWatch interested in delete events
-	DeleteWatch WatchKind = 4
+	// WatchKindDelete interested in delete events.
+	WatchKindDelete WatchKind = 4
 )
 
 // String implements fmt.Stringer.
 func (k WatchKind) String() string {
 	switch k {
-	case CreateWatch:
+	case WatchKindCreate:
 		return "Create"
-	case ChangeWatch:
+	case WatchKindChange:
 		return "Change"
-	case DeleteWatch:
+	case WatchKindDelete:
 		return "Delete"
 	default:
 		return strconv.FormatFloat(float64(k), 'f', -10, 64)
 	}
 }
 
-// WorkspaceSymbolParams is the parameters of a Workspace Symbol Request.
+// WorkspaceSymbolParams is the parameters of a Workspace Symbol request.
 type WorkspaceSymbolParams struct {
-	// Query a non-empty query string
+	WorkDoneProgressParams
+	PartialResultParams
+
+	// Query a query string to filter symbols by.
+	//
+	// Clients may send an empty string here to request all symbols.
 	Query string `json:"query"`
 }
 
 // ExecuteCommandParams params of Execute a command.
 type ExecuteCommandParams struct {
+	WorkDoneProgressParams
+
 	// Command is the identifier of the actual command handler.
 	Command string `json:"command"`
 
@@ -189,4 +195,19 @@ type ApplyWorkspaceEditParams struct {
 type ApplyWorkspaceEditResponse struct {
 	// Applied indicates whether the edit was applied or not.
 	Applied bool `json:"applied"`
+
+	// FailureReason an optional textual description for why the edit was not applied.
+	// This may be used by the server for diagnostic logging or to provide
+	// a suitable error for a request that triggered the edit.
+	//
+	// @since 3.16.0.
+	FailureReason string `json:"failureReason,omitempty"`
+
+	// FailedChange depending on the client's failure handling strategy "failedChange"
+	// might contain the index of the change that failed. This property is
+	// only available if the client signals a "failureHandlingStrategy"
+	// in its client capabilities.
+	//
+	// @since 3.16.0.
+	FailedChange uint32 `json:"failedChange,omitempty"`
 }

@@ -1,12 +1,11 @@
-// Copyright 2019 The Go Language Server Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// SPDX-FileCopyrightText: 2019 The Go Language Server Authors
+// SPDX-License-Identifier: BSD-3-Clause
 
 package protocol
 
 import "strconv"
 
-// ShowMessageParams params of ShowMessage Notification.
+// ShowMessageParams params of ShowMessage notification.
 type ShowMessageParams struct {
 	// Message is the actual message.
 	Message string `json:"message"`
@@ -19,29 +18,29 @@ type ShowMessageParams struct {
 type MessageType float64
 
 const (
-	// Error an error message.
-	Error MessageType = 1
-	// Warning a warning message.
-	Warning MessageType = 2
-	// Info an information message.
-	Info MessageType = 3
-	// Log a log message.
-	Log MessageType = 4
+	// MessageTypeError an error message.
+	MessageTypeError MessageType = 1
+	// MessageTypeWarning a warning message.
+	MessageTypeWarning MessageType = 2
+	// MessageTypeInfo an information message.
+	MessageTypeInfo MessageType = 3
+	// MessageTypeLog a log message.
+	MessageTypeLog MessageType = 4
 )
 
 // String implements fmt.Stringer.
 func (m MessageType) String() string {
 	switch m {
-	case Error:
+	case MessageTypeError:
 		return "error"
-	case Warning:
+	case MessageTypeWarning:
 		return "warning"
-	case Info:
+	case MessageTypeInfo:
 		return "info"
-	case Log:
+	case MessageTypeLog:
 		return "log"
 	default:
-		return strconv.FormatFloat(float64(m), 'f', -1, 64)
+		return strconv.FormatFloat(float64(m), 'f', -10, 64)
 	}
 }
 
@@ -52,10 +51,10 @@ func (m MessageType) Enabled(level MessageType) bool {
 
 // messageTypeMap map of MessageTypes.
 var messageTypeMap = map[string]MessageType{
-	"error":   Error,
-	"warning": Warning,
-	"info":    Info,
-	"log":     Log,
+	"error":   MessageTypeError,
+	"warning": MessageTypeWarning,
+	"info":    MessageTypeInfo,
+	"log":     MessageTypeLog,
 }
 
 // ToMessageType converts level to the MessageType.
@@ -68,7 +67,7 @@ func ToMessageType(level string) MessageType {
 	return mt
 }
 
-// ShowMessageRequestParams params of ShowMessage Request.
+// ShowMessageRequestParams params of ShowMessage request.
 type ShowMessageRequestParams struct {
 	// Actions is the message action items to present.
 	Actions []MessageActionItem `json:"actions"`
@@ -86,11 +85,27 @@ type MessageActionItem struct {
 	Title string `json:"title"`
 }
 
-// LogMessageParams params of LogMessage Notification.
+// LogMessageParams params of LogMessage notification.
 type LogMessageParams struct {
 	// Message is the actual message
 	Message string `json:"message"`
 
 	// Type is the message type. See {@link MessageType}
 	Type MessageType `json:"type"`
+}
+
+// WorkDoneProgressCreateParams params of WorkDoneProgressCreate request.
+//
+// @since 3.15.0.
+type WorkDoneProgressCreateParams struct {
+	// Token is the token to be used to report progress.
+	Token ProgressToken `json:"token"`
+}
+
+// WorkDoneProgressCreateParams params of WorkDoneProgressCancel request.
+//
+// @since 3.15.0.
+type WorkDoneProgressCancelParams struct {
+	// Token is the token to be used to report progress.
+	Token ProgressToken `json:"token"`
 }

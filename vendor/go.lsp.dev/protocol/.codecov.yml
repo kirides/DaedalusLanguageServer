@@ -1,49 +1,45 @@
+codecov:
+  allow_coverage_offsets: true
+
+parsers:
+  go:
+    partials_as_hits: true
+
 coverage:
-  precision: 0
+  precision: 1
   round: down
   range: "70...100"
 
   status:
-    project: off
-    patch:
-      default: off
-      json:
-        flags: json
-        only_pulls: true
-        target: 50%
-        threshold: 10%
-      gojay:
-        flags: gojay
-        only_pulls: true
-        target: 50%
-        threshold: 10%
-    changes:
-      default: off
-      json:
-        flags: json
-        target: auto
-        threshold: 10%
-        if_not_found: success
-        if_ci_failed: error
-      gojay:
-        flags: gojay
-        target: auto
-        threshold: 10%
-        if_not_found: success
-        if_ci_failed: error
-  ignore:
-    - "internal"
-    - "vendor"
+    default_rules:
+      flag_coverage_not_uploaded_behavior: include
 
-flags:
-  json:
-    paths:
-      - /
-  gojay:
-    paths:
-      - /
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        if_not_found: success
+        if_ci_failed: error
+
+    patch:
+      default:
+        only_pulls: true
+        target: 50%
+        threshold: 10%
+
+    changes:
+      default:
+        target: auto
+        threshold: 10%
+        if_not_found: success
+        if_ci_failed: error
+        branches:
+          - main
 
 comment:
-  layout: "reach, diff, flags, files"
-  behavior: new
+  behavior: default
   require_changes: true
+  show_carryforward_flags: true
+
+github_checks:
+  annotations: true

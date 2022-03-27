@@ -1,6 +1,5 @@
-// Copyright 2019 The Go Language Server Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// SPDX-FileCopyrightText: 2019 The Go Language Server Authors
+// SPDX-License-Identifier: BSD-3-Clause
 
 package protocol
 
@@ -24,7 +23,6 @@ type RegistrationParams struct {
 
 // TextDocumentRegistrationOptions TextDocumentRegistration options.
 type TextDocumentRegistrationOptions struct {
-
 	// DocumentSelector a document selector to identify the scope of the registration. If set to null
 	// the document selector provided on the client side will be used.
 	DocumentSelector DocumentSelector `json:"documentSelector"`

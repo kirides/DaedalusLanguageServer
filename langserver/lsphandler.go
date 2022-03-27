@@ -29,24 +29,26 @@ var (
 )
 
 // NewLspHandler ...
-func NewLspHandler() *LspHandler {
+func NewLspHandler(conn jsonrpc2.Conn) *LspHandler {
 	bufferManager := NewBufferManager()
 	parsedDocuments := newParseResultsManager()
 	logLv := LogLevelInfo
 	return &LspHandler{
 		baseLspHandler: baseLspHandler{
 			LogLevel: logLv,
+			conn:     conn,
 		},
 		initialized:     false,
 		bufferManager:   bufferManager,
 		parsedDocuments: parsedDocuments,
-		TextDocumentSyncHandler: &textDocumentSyncHandler{
+		TextDocumentSyncHandler: (&textDocumentSyncHandler{
 			baseLspHandler: baseLspHandler{
 				LogLevel: logLv,
+				conn:     conn,
 			},
 			bufferManager:   bufferManager,
 			parsedDocuments: parsedDocuments,
-		},
+		}).Handle,
 	}
 }
 
@@ -69,15 +71,15 @@ func completionItemFromSymbol(s Symbol) (lsp.CompletionItem, error) {
 func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
 	switch s.(type) {
 	case VariableSymbol:
-		return lsp.VariableCompletion, nil
+		return lsp.CompletionItemKindVariable, nil
 	case ConstantSymbol:
-		return lsp.ConstantCompletion, nil
+		return lsp.CompletionItemKindConstant, nil
 	case FunctionSymbol:
-		return lsp.FunctionCompletion, nil
+		return lsp.CompletionItemKindFunction, nil
 	case ClassSymbol:
-		return lsp.ClassCompletion, nil
+		return lsp.CompletionItemKindClass, nil
 	case ProtoTypeOrInstanceSymbol:
-		return lsp.ClassCompletion, nil
+		return lsp.CompletionItemKindClass, nil
 	}
 	return lsp.CompletionItemKind(-1), fmt.Errorf("Symbol not found")
 }
@@ -215,7 +217,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 				Parameters: fnParams,
 			},
 		},
-		ActiveParameter: float64(strings.Count(sigCtx, ",")),
+		ActiveParameter: uint32(strings.Count(sigCtx, ",")),
 		ActiveSignature: 0,
 	}, nil
 }
@@ -230,31 +232,28 @@ func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextD
 		URI: uri.File(symbol.Source()),
 		Range: lsp.Range{
 			Start: lsp.Position{
-				Character: float64(symbol.Definition().Start.Column),
-				Line:      float64(symbol.Definition().Start.Line - 1),
+				Character: uint32(symbol.Definition().Start.Column),
+				Line:      uint32(symbol.Definition().Start.Line - 1),
 			},
 			End: lsp.Position{
-				Character: float64(symbol.Definition().Start.Column + len(symbol.Name())),
-				Line:      float64(symbol.Definition().Start.Line - 1),
+				Character: uint32(symbol.Definition().Start.Column + len(symbol.Name())),
+				Line:      uint32(symbol.Definition().Start.Line - 1),
 			},
 		}}, nil
 }
 
 // Deliver ...
-func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered bool) bool {
-	h.LogDebug("Requested '%s'\n", r.Method)
-	if delivered {
-		return false
-	}
+func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonrpc2.Request) error {
+	h.LogDebug("Requested '%s'\n", r.Method())
 
 	// if r.Params != nil {
 	// 	var paramsMap map[string]interface{}
 	// 	json.Unmarshal(*r.Params, &paramsMap)
 	// 	fmt.Fprintf(os.Stderr, "Params: %+v\n", paramsMap)
 	// }
-	switch r.Method {
+	switch r.Method() {
 	case lsp.MethodInitialize:
-		if err := r.Reply(ctx, lsp.InitializeResult{
+		if err := reply(ctx, lsp.InitializeResult{
 			Capabilities: lsp.ServerCapabilities{
 				CompletionProvider: &lsp.CompletionOptions{
 					TriggerCharacters: []string{"."},
@@ -265,7 +264,7 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 					TriggerCharacters: []string{"(", ","},
 				},
 				TextDocumentSync: lsp.TextDocumentSyncOptions{
-					Change:    float64(lsp.Full),
+					Change:    lsp.TextDocumentSyncKindFull,
 					OpenClose: true,
 					Save: &lsp.SaveOptions{
 						IncludeText: true,
@@ -273,10 +272,10 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 				},
 			},
 		}, nil); err != nil {
-			return false
+			return fmt.Errorf("not initialized")
 		}
 		h.initialized = true
-		return true
+		return nil
 	case lsp.MethodInitialized:
 		go func() {
 			exe, _ := os.Executable()
@@ -311,16 +310,14 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 			}
 			h.initialDiagnostics = tmpDiags
 		}()
-		return true
+		return nil
 	}
 
 	// DEFAULT / OTHERWISE
 
 	if !h.initialized {
-		if !r.IsNotify() {
-			r.Reply(ctx, nil, jsonrpc2.Errorf(jsonrpc2.ServerNotInitialized, "Not initialized yet"))
-		}
-		return false
+		reply(ctx, nil, jsonrpc2.Errorf(jsonrpc2.ServerNotInitialized, "Not initialized yet"))
+		return fmt.Errorf("Not initialized yet")
 	}
 
 	// Recover if something bad happens in the handlers...
@@ -334,40 +331,40 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 		fmt.Fprintf(os.Stderr, "Publishing initial diagnostics (%d).\n", len(h.initialDiagnostics))
 		for k, v := range h.initialDiagnostics {
 			fmt.Fprintf(os.Stderr, "> %s\n", k)
-			r.Conn().Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
+			h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
 				URI:         lsp.DocumentURI(uri.File(k)),
 				Diagnostics: v,
 			})
 		}
 		h.initialDiagnostics = map[string][]lsp.Diagnostic{}
 	}
-	switch r.Method {
+	switch r.Method() {
 	case lsp.MethodTextDocumentCompletion:
 		var params lsp.CompletionParams
-		json.Unmarshal(*r.Params, &params)
+		json.Unmarshal(r.Params(), &params)
 		items, err := h.handleTextDocumentCompletion(ctx, &params)
-		h.replyEither(ctx, r, items, err)
+		h.replyEither(ctx, reply, r, items, err)
 
 	case lsp.MethodTextDocumentDefinition:
 		var params lsp.TextDocumentPositionParams
-		json.Unmarshal(*r.Params, &params)
+		json.Unmarshal(r.Params(), &params)
 		found, err := h.handleGoToDefinition(ctx, &params)
 		if err != nil {
-			h.replyEither(ctx, r, nil, nil)
+			h.replyEither(ctx, reply, r, nil, nil)
 		} else {
-			h.replyEither(ctx, r, found, nil)
+			h.replyEither(ctx, reply, r, found, nil)
 		}
 
 	case lsp.MethodTextDocumentHover:
 		var params lsp.TextDocumentPositionParams
-		json.Unmarshal(*r.Params, &params)
+		json.Unmarshal(r.Params(), &params)
 		found, err := h.lookUpSymbol(h.uriToFilename(params.TextDocument.URI), params.Position)
 		if err != nil {
-			h.replyEither(ctx, r, nil, nil)
+			h.replyEither(ctx, reply, r, nil, nil)
 		} else {
 			h.LogDebug("Found Symbol for Hover: %s\n", found.String())
-			h.replyEither(ctx, r, lsp.Hover{
-				Range: lsp.Range{
+			h.replyEither(ctx, reply, r, lsp.Hover{
+				Range: &lsp.Range{
 					Start: params.Position,
 					End:   params.Position,
 				},
@@ -380,15 +377,15 @@ func (h *LspHandler) Deliver(ctx context.Context, r *jsonrpc2.Request, delivered
 
 	case lsp.MethodTextDocumentSignatureHelp:
 		var params lsp.TextDocumentPositionParams
-		json.Unmarshal(*r.Params, &params)
+		json.Unmarshal(r.Params(), &params)
 		result, err := h.handleSignatureInfo(ctx, &params)
 		if err == nil {
-			r.Reply(ctx, result, nil)
+			reply(ctx, result, nil)
 		} else {
-			r.Reply(ctx, nil, nil)
+			reply(ctx, nil, nil)
 		}
 	default:
-		return h.baseLspHandler.Deliver(ctx, r, delivered)
+		return h.baseLspHandler.Handle(ctx, reply, r)
 	}
-	return true
+	return nil
 }

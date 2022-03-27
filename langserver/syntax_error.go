@@ -68,12 +68,12 @@ func (se SyntaxError) Diagnostic() lsp.Diagnostic {
 		Severity: lspSeverityFromSeverity(se.ErrorCode.Severity),
 		Range: lsp.Range{
 			Start: lsp.Position{
-				Line:      float64(se.Line - 1),
-				Character: float64(se.Column),
+				Line:      uint32(se.Line - 1),
+				Character: uint32(se.Column),
 			},
 			End: lsp.Position{
-				Line:      float64(se.Line - 1),
-				Character: float64(se.Column),
+				Line:      uint32(se.Line - 1),
+				Character: uint32(se.Column),
 			},
 		},
 	}

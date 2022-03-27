@@ -2,6 +2,7 @@ package langserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -24,16 +25,30 @@ var (
 	LogLevelErr logLevel = 3
 )
 
-type baseLspHandler struct {
-	jsonrpc2.EmptyHandler
-	LogLevel logLevel
+type EmptyHandler struct{}
+
+var errNotImplemented = errors.New("not implemented")
+var errUnhandled = errors.New("unhandled")
+
+func (h *EmptyHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
+	return errNotImplemented
 }
 
-func (h *baseLspHandler) replyEither(ctx context.Context, r *jsonrpc2.Request, result interface{}, err error) {
+type baseLspHandler struct {
+	EmptyHandler
+	LogLevel logLevel
+	conn     jsonrpc2.Conn
+}
+
+func (h *baseLspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
+	return errUnhandled
+}
+
+func (h *baseLspHandler) replyEither(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request, result interface{}, err error) {
 	if err != nil {
-		r.Reply(ctx, nil, err)
+		reply(ctx, nil, err)
 	} else {
-		r.Reply(ctx, result, nil)
+		reply(ctx, result, nil)
 	}
 }
 

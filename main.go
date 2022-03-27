@@ -28,17 +28,41 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer stop()
 
-	lspHandler := langserver.NewLspHandler()
-	connectLanguageServer(os.Stdin, os.Stdout, lspHandler.TextDocumentSyncHandler, lspHandler).
-		Run(ctx)
+	conn := connectLanguageServer(&rwc{os.Stdin, os.Stdout})
+	lspHandler := langserver.NewLspHandler(conn)
+
+	handlers := []jsonrpc2.Handler{
+		lspHandler.TextDocumentSyncHandler,
+		lspHandler.Handle,
+	}
+	conn.Go(ctx, func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
+		var err error
+		for _, h := range handlers {
+			err = h(ctx, reply, req)
+			if err == nil {
+				return nil
+			}
+		}
+		return err
+	})
+	<-conn.Done()
 }
 
-func connectLanguageServer(in io.Reader, out io.Writer, handlers ...jsonrpc2.Handler) *jsonrpc2.Conn {
-	bufStream := jsonrpc2.NewStream(in, out)
-	rootConn := jsonrpc2.NewConn(bufStream)
+type rwc struct {
+	r io.ReadCloser
+	w io.WriteCloser
+}
 
-	for _, h := range handlers {
-		rootConn.AddHandler(h)
-	}
+func (rwc *rwc) Read(b []byte) (int, error)  { return rwc.r.Read(b) }
+func (rwc *rwc) Write(b []byte) (int, error) { return rwc.w.Write(b) }
+func (rwc *rwc) Close() error {
+	rwc.r.Close()
+	return rwc.w.Close()
+}
+
+func connectLanguageServer(rwc io.ReadWriteCloser) jsonrpc2.Conn {
+	bufStream := jsonrpc2.NewStream(rwc)
+	rootConn := jsonrpc2.NewConn(bufStream)
 	return rootConn
+
 }

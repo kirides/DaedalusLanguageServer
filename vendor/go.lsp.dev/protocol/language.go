@@ -1,18 +1,17 @@
-// Copyright 2019 The Go Language Server Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// SPDX-FileCopyrightText: 2019 The Go Language Server Authors
+// SPDX-License-Identifier: BSD-3-Clause
 
 package protocol
 
 import (
 	"strconv"
-
-	"go.lsp.dev/uri"
 )
 
-// CompletionParams params of Completion Request.
+// CompletionParams params of Completion request.
 type CompletionParams struct {
 	TextDocumentPositionParams
+	WorkDoneProgressParams
+	PartialResultParams
 
 	// Context is the completion context. This is only available if the client specifies
 	// to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`
@@ -23,26 +22,26 @@ type CompletionParams struct {
 type CompletionTriggerKind float64
 
 const (
-	// Invoked completion was triggered by typing an identifier (24x7 code
+	// CompletionTriggerKindInvoked completion was triggered by typing an identifier (24x7 code
 	// complete), manual invocation (e.g Ctrl+Space) or via API.
-	Invoked CompletionTriggerKind = 1
+	CompletionTriggerKindInvoked CompletionTriggerKind = 1
 
-	// TriggerCharacter completion was triggered by a trigger character specified by
+	// CompletionTriggerKindTriggerCharacter completion was triggered by a trigger character specified by
 	// the `triggerCharacters` properties of the `CompletionRegistrationOptions`.
-	TriggerCharacter CompletionTriggerKind = 2
+	CompletionTriggerKindTriggerCharacter CompletionTriggerKind = 2
 
-	// TriggerForIncompleteCompletions completion was re-triggered as the current completion list is incomplete.
-	TriggerForIncompleteCompletions CompletionTriggerKind = 3
+	// CompletionTriggerKindTriggerForIncompleteCompletions completion was re-triggered as the current completion list is incomplete.
+	CompletionTriggerKindTriggerForIncompleteCompletions CompletionTriggerKind = 3
 )
 
 // String implements fmt.Stringer.
 func (k CompletionTriggerKind) String() string {
 	switch k {
-	case Invoked:
+	case CompletionTriggerKindInvoked:
 		return "Invoked"
-	case TriggerCharacter:
+	case CompletionTriggerKindTriggerCharacter:
 		return "TriggerCharacter"
-	case TriggerForIncompleteCompletions:
+	case CompletionTriggerKindTriggerForIncompleteCompletions:
 		return "TriggerForIncompleteCompletions"
 	default:
 		return strconv.FormatFloat(float64(k), 'f', -10, 64)
@@ -75,27 +74,77 @@ type CompletionList struct {
 type InsertTextFormat float64
 
 const (
-	// TextFormatPlainText is the primary text to be inserted is treated as a plain string.
-	TextFormatPlainText InsertTextFormat = 1
+	// InsertTextFormatPlainText is the primary text to be inserted is treated as a plain string.
+	InsertTextFormatPlainText InsertTextFormat = 1
 
-	// TextFormatSnippet is the primary text to be inserted is treated as a snippet.
+	// InsertTextFormatSnippet is the primary text to be inserted is treated as a snippet.
 	//
 	// A snippet can define tab stops and placeholders with `$1`, `$2`
 	// and `${3:foo}`. `$0` defines the final tab stop, it defaults to
 	// the end of the snippet. Placeholders with equal identifiers are linked,
 	// that is typing in one will update others too.
-	TextFormatSnippet InsertTextFormat = 2
+	InsertTextFormatSnippet InsertTextFormat = 2
 )
 
 // String implements fmt.Stringer.
 func (tf InsertTextFormat) String() string {
 	switch tf {
-	case TextFormatPlainText:
+	case InsertTextFormatPlainText:
 		return "PlainText"
-	case TextFormatSnippet:
+	case InsertTextFormatSnippet:
 		return "Snippet"
 	default:
 		return strconv.FormatFloat(float64(tf), 'f', -10, 64)
+	}
+}
+
+// InsertReplaceEdit is a special text edit to provide an insert and a replace operation.
+//
+// @since 3.16.0.
+type InsertReplaceEdit struct {
+	// NewText is the string to be inserted.
+	NewText string `json:"newText"`
+
+	// Insert is the range if the insert is requested.
+	Insert Range `json:"insert"`
+
+	// Replace is the range if the replace is requested.
+	Replace Range `json:"replace"`
+}
+
+// InsertTextMode how whitespace and indentation is handled during completion
+// item insertion.
+//
+// @since 3.16.0.
+type InsertTextMode float64
+
+const (
+	// AsIs is the insertion or replace strings is taken as it is. If the
+	// value is multi line the lines below the cursor will be
+	// inserted using the indentation defined in the string value.
+	// The client will not apply any kind of adjustments to the
+	// string.
+	InsertTextModeAsIs InsertTextMode = 1
+
+	// AdjustIndentation is the editor adjusts leading whitespace of new lines so that
+	// they match the indentation up to the cursor of the line for
+	// which the item is accepted.
+	//
+	// Consider a line like this: <2tabs><cursor><3tabs>foo. Accepting a
+	// multi line completion item is indented using 2 tabs and all
+	// following lines inserted will be indented using 2 tabs as well.
+	InsertTextModeAdjustIndentation InsertTextMode = 2
+)
+
+// String returns a string representation of the InsertTextMode.
+func (k InsertTextMode) String() string {
+	switch k {
+	case InsertTextModeAsIs:
+		return "AsIs"
+	case InsertTextModeAdjustIndentation:
+		return "AdjustIndentation"
+	default:
+		return strconv.FormatFloat(float64(k), 'f', -10, 64)
 	}
 }
 
@@ -119,6 +168,11 @@ type CompletionItem struct {
 	// then type that character. *Note* that all commit characters should have `length=1` and that superfluous
 	// characters will be ignored.
 	CommitCharacters []string `json:"commitCharacters,omitempty"`
+
+	// Tags is the tag for this completion item.
+	//
+	// @since 3.15.0.
+	Tags []CompletionItemTag `json:"tags,omitempty"`
 
 	// Data an data entry field that is preserved on a completion item between
 	// a completion and a completion resolve request.
@@ -153,6 +207,13 @@ type CompletionItem struct {
 	// and the `newText` property of a provided `textEdit`.
 	InsertTextFormat InsertTextFormat `json:"insertTextFormat,omitempty"`
 
+	// InsertTextMode how whitespace and indentation is handled during completion
+	// item insertion. If not provided the client's default value depends on
+	// the `textDocument.completion.insertTextMode` client capability.
+	//
+	// @since 3.16.0.
+	InsertTextMode InsertTextMode `json:"insertTextMode,omitempty"`
+
 	// Kind is the kind of this completion item. Based of the kind
 	// an icon is chosen by the editor.
 	Kind CompletionItemKind `json:"kind,omitempty"`
@@ -176,9 +237,27 @@ type CompletionItem struct {
 	// TextEdit an edit which is applied to a document when selecting this completion. When an edit is provided the value of
 	// `insertText` is ignored.
 	//
-	// *Note:* The range of the edit must be a single line range and it must contain the position at which completion
+	// NOTE: The range of the edit must be a single line range and it must contain the position at which completion
 	// has been requested.
-	TextEdit *TextEdit `json:"textEdit,omitempty"`
+	//
+	// Most editors support two different operations when accepting a completion
+	// item. One is to insert a completion text and the other is to replace an
+	// existing text with a completion text. Since this can usually not be
+	// predetermined by a server it can report both ranges. Clients need to
+	// signal support for `InsertReplaceEdits` via the
+	// "textDocument.completion.insertReplaceSupport" client capability
+	// property.
+	//
+	// NOTE 1: The text edit's range as well as both ranges from an insert
+	// replace edit must be a [single line] and they must contain the position
+	// at which completion has been requested.
+	//
+	// NOTE 2: If an "InsertReplaceEdit" is returned the edit's insert range
+	// must be a prefix of the edit's replace range, that means it must be
+	// contained and starting at the same position.
+	//
+	// @since 3.16.0 additional type "InsertReplaceEdit".
+	TextEdit *TextEdit `json:"textEdit,omitempty"` // *TextEdit | *InsertReplaceEdit
 }
 
 // CompletionItemKind is the completion item kind values the client supports. When this
@@ -189,116 +268,139 @@ type CompletionItem struct {
 // If this property is not present the client only supports
 // the completion items kinds from `Text` to `Reference` as defined in
 // the initial version of the protocol.
-type CompletionItemKind int
+type CompletionItemKind float64
 
 const (
-	// TextCompletion text completion kind.
-	TextCompletion CompletionItemKind = 1
-	// MethodCompletion method completion kind.
-	MethodCompletion CompletionItemKind = 2
-	// FunctionCompletion function completion kind.
-	FunctionCompletion CompletionItemKind = 3
-	// ConstructorCompletion constructor completion kind.
-	ConstructorCompletion CompletionItemKind = 4
-	// FieldCompletion field completion kind.
-	FieldCompletion CompletionItemKind = 5
-	// VariableCompletion variable completion kind.
-	VariableCompletion CompletionItemKind = 6
-	// ClassCompletion class completion kind.
-	ClassCompletion CompletionItemKind = 7
-	// InterfaceCompletion interface completion kind.
-	InterfaceCompletion CompletionItemKind = 8
-	// ModuleCompletion module completion kind.
-	ModuleCompletion CompletionItemKind = 9
-	// PropertyCompletion property completion kind.
-	PropertyCompletion CompletionItemKind = 10
-	// UnitCompletion unit completion kind.
-	UnitCompletion CompletionItemKind = 11
-	// ValueCompletion value completion kind.
-	ValueCompletion CompletionItemKind = 12
-	// EnumCompletion enum completion kind.
-	EnumCompletion CompletionItemKind = 13
-	// KeywordCompletion keyword completion kind.
-	KeywordCompletion CompletionItemKind = 14
-	// SnippetCompletion snippet completion kind.
-	SnippetCompletion CompletionItemKind = 15
-	// ColorCompletion color completion kind.
-	ColorCompletion CompletionItemKind = 16
-	// FileCompletion file completion kind.
-	FileCompletion CompletionItemKind = 17
-	// ReferenceCompletion reference completion kind.
-	ReferenceCompletion CompletionItemKind = 18
-	// FolderCompletion folder completion kind.
-	FolderCompletion CompletionItemKind = 19
-	// EnumMemberCompletion enum member completion kind.
-	EnumMemberCompletion CompletionItemKind = 20
-	// ConstantCompletion constant completion kind.
-	ConstantCompletion CompletionItemKind = 21
-	// StructCompletion struct completion kind.
-	StructCompletion CompletionItemKind = 22
-	// EventCompletion event completion kind.
-	EventCompletion CompletionItemKind = 23
-	// OperatorCompletion operator completion kind.
-	OperatorCompletion CompletionItemKind = 24
-	// TypeParameterCompletion type parameter completion kind.
-	TypeParameterCompletion CompletionItemKind = 25
+	// CompletionItemKindText text completion kind.
+	CompletionItemKindText CompletionItemKind = 1
+	// CompletionItemKindMethod method completion kind.
+	CompletionItemKindMethod CompletionItemKind = 2
+	// CompletionItemKindFunction function completion kind.
+	CompletionItemKindFunction CompletionItemKind = 3
+	// CompletionItemKindConstructor constructor completion kind.
+	CompletionItemKindConstructor CompletionItemKind = 4
+	// CompletionItemKindField field completion kind.
+	CompletionItemKindField CompletionItemKind = 5
+	// CompletionItemKindVariable variable completion kind.
+	CompletionItemKindVariable CompletionItemKind = 6
+	// CompletionItemKindClass class completion kind.
+	CompletionItemKindClass CompletionItemKind = 7
+	// CompletionItemKindInterface interface completion kind.
+	CompletionItemKindInterface CompletionItemKind = 8
+	// CompletionItemKindModule module completion kind.
+	CompletionItemKindModule CompletionItemKind = 9
+	// CompletionItemKindProperty property completion kind.
+	CompletionItemKindProperty CompletionItemKind = 10
+	// CompletionItemKindUnit unit completion kind.
+	CompletionItemKindUnit CompletionItemKind = 11
+	// CompletionItemKindValue value completion kind.
+	CompletionItemKindValue CompletionItemKind = 12
+	// CompletionItemKindEnum enum completion kind.
+	CompletionItemKindEnum CompletionItemKind = 13
+	// CompletionItemKindKeyword keyword completion kind.
+	CompletionItemKindKeyword CompletionItemKind = 14
+	// CompletionItemKindSnippet snippet completion kind.
+	CompletionItemKindSnippet CompletionItemKind = 15
+	// CompletionItemKindColor color completion kind.
+	CompletionItemKindColor CompletionItemKind = 16
+	// CompletionItemKindFile file completion kind.
+	CompletionItemKindFile CompletionItemKind = 17
+	// CompletionItemKindReference reference completion kind.
+	CompletionItemKindReference CompletionItemKind = 18
+	// CompletionItemKindFolder folder completion kind.
+	CompletionItemKindFolder CompletionItemKind = 19
+	// CompletionItemKindEnumMember enum member completion kind.
+	CompletionItemKindEnumMember CompletionItemKind = 20
+	// CompletionItemKindConstant constant completion kind.
+	CompletionItemKindConstant CompletionItemKind = 21
+	// CompletionItemKindStruct struct completion kind.
+	CompletionItemKindStruct CompletionItemKind = 22
+	// CompletionItemKindEvent event completion kind.
+	CompletionItemKindEvent CompletionItemKind = 23
+	// CompletionItemKindOperator operator completion kind.
+	CompletionItemKindOperator CompletionItemKind = 24
+	// CompletionItemKindTypeParameter type parameter completion kind.
+	CompletionItemKindTypeParameter CompletionItemKind = 25
 )
 
 // String implements fmt.Stringer.
+//nolint:cyclop
 func (k CompletionItemKind) String() string {
 	switch k {
-	case TextCompletion:
+	case CompletionItemKindText:
 		return "Text"
-	case MethodCompletion:
+	case CompletionItemKindMethod:
 		return "Method"
-	case FunctionCompletion:
+	case CompletionItemKindFunction:
 		return "Function"
-	case ConstructorCompletion:
+	case CompletionItemKindConstructor:
 		return "Constructor"
-	case FieldCompletion:
+	case CompletionItemKindField:
 		return "Field"
-	case VariableCompletion:
+	case CompletionItemKindVariable:
 		return "Variable"
-	case ClassCompletion:
+	case CompletionItemKindClass:
 		return "Class"
-	case InterfaceCompletion:
+	case CompletionItemKindInterface:
 		return "Interface"
-	case ModuleCompletion:
+	case CompletionItemKindModule:
 		return "Module"
-	case PropertyCompletion:
+	case CompletionItemKindProperty:
 		return "Property"
-	case UnitCompletion:
+	case CompletionItemKindUnit:
 		return "Unit"
-	case ValueCompletion:
+	case CompletionItemKindValue:
 		return "Value"
-	case EnumCompletion:
+	case CompletionItemKindEnum:
 		return "Enum"
-	case KeywordCompletion:
+	case CompletionItemKindKeyword:
 		return "Keyword"
-	case SnippetCompletion:
+	case CompletionItemKindSnippet:
 		return "Snippet"
-	case ColorCompletion:
+	case CompletionItemKindColor:
 		return "Color"
-	case FileCompletion:
+	case CompletionItemKindFile:
 		return "File"
-	case ReferenceCompletion:
+	case CompletionItemKindReference:
 		return "Reference"
-	case FolderCompletion:
+	case CompletionItemKindFolder:
 		return "Folder"
-	case EnumMemberCompletion:
+	case CompletionItemKindEnumMember:
 		return "EnumMember"
-	case ConstantCompletion:
+	case CompletionItemKindConstant:
 		return "Constant"
-	case StructCompletion:
+	case CompletionItemKindStruct:
 		return "Struct"
-	case EventCompletion:
+	case CompletionItemKindEvent:
 		return "Event"
-	case OperatorCompletion:
+	case CompletionItemKindOperator:
 		return "Operator"
-	case TypeParameterCompletion:
+	case CompletionItemKindTypeParameter:
 		return "TypeParameter"
 	default:
-		return strconv.FormatInt(int64(k), 10)
+		return strconv.FormatFloat(float64(k), 'f', -10, 64)
+	}
+}
+
+// CompletionItemTag completion item tags are extra annotations that tweak the rendering of a completion
+// item.
+//
+// @since 3.15.0.
+type CompletionItemTag float64
+
+// list of CompletionItemTag.
+const (
+	// CompletionItemTagDeprecated is the render a completion as obsolete, usually using a strike-out.
+	CompletionItemTagDeprecated CompletionItemTag = 1
+)
+
+// String returns a string representation of the type.
+func (c CompletionItemTag) String() string {
+	switch c {
+	case CompletionItemTagDeprecated:
+		return "Deprecated"
+	default:
+		return strconv.FormatFloat(float64(c), 'f', -10, 64)
 	}
 }
 
@@ -321,6 +423,14 @@ type CompletionRegistrationOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+// HoverParams params of Hover request.
+//
+// @since 3.15.0.
+type HoverParams struct {
+	TextDocumentPositionParams
+	WorkDoneProgressParams
+}
+
 // Hover is the result of a hover request.
 type Hover struct {
 	// Contents is the hover's content
@@ -328,7 +438,83 @@ type Hover struct {
 
 	// Range an optional range is a range inside a text document
 	// that is used to visualize a hover, e.g. by changing the background color.
-	Range Range `json:"range,omitempty"`
+	Range *Range `json:"range,omitempty"`
+}
+
+// SignatureHelpParams params of SignatureHelp request.
+//
+// @since 3.15.0.
+type SignatureHelpParams struct {
+	TextDocumentPositionParams
+	WorkDoneProgressParams
+
+	// context is the signature help context.
+	//
+	// This is only available if the client specifies to send this using the
+	// client capability `textDocument.signatureHelp.contextSupport === true`.
+	//
+	// @since 3.15.0.
+	Context *SignatureHelpContext `json:"context,omitempty"`
+}
+
+// SignatureHelpTriggerKind is the how a signature help was triggered.
+//
+// @since 3.15.0.
+type SignatureHelpTriggerKind float64
+
+// list of SignatureHelpTriggerKind.
+const (
+	// SignatureHelpTriggerKindInvoked is the signature help was invoked manually by the user or by a command.
+	SignatureHelpTriggerKindInvoked SignatureHelpTriggerKind = 1
+
+	// SignatureHelpTriggerKindTriggerCharacter is the signature help was triggered by a trigger character.
+	SignatureHelpTriggerKindTriggerCharacter SignatureHelpTriggerKind = 2
+
+	// SignatureHelpTriggerKindContentChange is the signature help was triggered by the cursor moving or
+	// by the document content changing.
+	SignatureHelpTriggerKindContentChange SignatureHelpTriggerKind = 3
+)
+
+// String returns a string representation of the type.
+func (s SignatureHelpTriggerKind) String() string {
+	switch s {
+	case SignatureHelpTriggerKindInvoked:
+		return "Invoked"
+	case SignatureHelpTriggerKindTriggerCharacter:
+		return "TriggerCharacter"
+	case SignatureHelpTriggerKindContentChange:
+		return "ContentChange"
+	default:
+		return strconv.FormatFloat(float64(s), 'f', -10, 64)
+	}
+}
+
+// SignatureHelpContext is the additional information about the context in which a
+// signature help request was triggered.
+//
+// @since 3.15.0.
+type SignatureHelpContext struct {
+	// TriggerKind is the action that caused signature help to be triggered.
+	TriggerKind SignatureHelpTriggerKind `json:"triggerKind"`
+
+	// Character that caused signature help to be triggered.
+	//
+	// This is undefined when
+	//  TriggerKind != SignatureHelpTriggerKindTriggerCharacter
+	TriggerCharacter string `json:"triggerCharacter,omitempty"`
+
+	// IsRetrigger is the `true` if signature help was already showing when it was triggered.
+	//
+	// Retriggers occur when the signature help is already active and can be
+	// caused by actions such as typing a trigger character, a cursor move,
+	// or document content changes.
+	IsRetrigger bool `json:"isRetrigger"`
+
+	// ActiveSignatureHelp is the currently active SignatureHelp.
+	//
+	// The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field
+	// updated based on the user navigating through available signatures.
+	ActiveSignatureHelp *SignatureHelp `json:"activeSignatureHelp,omitempty"`
 }
 
 // SignatureHelp signature help represents the signature of something
@@ -345,7 +531,7 @@ type SignatureHelp struct {
 	// In future version of the protocol this property might become
 	// mandatory to better express the active parameter if the
 	// active signature does have any.
-	ActiveParameter float64 `json:"activeParameter,omitempty"`
+	ActiveParameter uint32 `json:"activeParameter,omitempty"`
 
 	// ActiveSignature is the active signature. If omitted or the value lies outside the
 	// range of `signatures` the value defaults to zero or is ignored if
@@ -354,21 +540,34 @@ type SignatureHelp struct {
 	// rely on a default value.
 	// In future version of the protocol this property might become
 	// mandatory to better express this.
-	ActiveSignature float64 `json:"activeSignature,omitempty"`
+	ActiveSignature uint32 `json:"activeSignature,omitempty"`
 }
 
 // SignatureInformation is the client supports the following `SignatureInformation`
 // specific properties.
 type SignatureInformation struct {
-	// Documentation The human-readable doc-comment of this signature. Will be shown
-	// in the UI but can be omitted.
-	Documentation *MarkupContent `json:"documentation,omitempty"`
-
-	// Label The label of this signature. Will be shown in the UI.
+	// Label is the label of this signature. Will be shown in
+	// the UI.
+	//
+	// @since 3.16.0.
 	Label string `json:"label"`
 
-	// ParameterInformation The parameters of this signature.
+	// Documentation is the human-readable doc-comment of this signature. Will be shown
+	// in the UI but can be omitted.
+	//
+	// @since 3.16.0.
+	Documentation interface{} `json:"documentation,omitempty"` // string | *MarkupContent
+
+	// Parameters is the parameters of this signature.
+	//
+	// @since 3.16.0.
 	Parameters []ParameterInformation `json:"parameters,omitempty"`
+
+	// ActiveParameterSupport is the client supports the `activeParameter` property on
+	// `SignatureInformation` literal.
+	//
+	// @since 3.16.0.
+	ActiveParameter uint32 `json:"activeParameter,omitempty"`
 }
 
 // ParameterInformation represents a parameter of a callable-signature. A parameter can
@@ -378,15 +577,15 @@ type ParameterInformation struct {
 	//
 	// Either a string or an inclusive start and exclusive end offsets within its containing
 	// signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
-	// string representation as `Position` and `Range` does.
+	// string representation as "Position" and "Range" does.
 	//
 	// *Note*: a label of type string should be a substring of its containing signature label.
-	// Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
-	Label string `json:"label"`
+	// Its intended use case is to highlight the parameter label part in the "SignatureInformation.label".
+	Label string `json:"label"` // string | [uint32, uint32]
 
 	// Documentation is the human-readable doc-comment of this parameter. Will be shown
 	// in the UI but can be omitted.
-	Documentation interface{} `json:"documentation,omitempty"`
+	Documentation interface{} `json:"documentation,omitempty"` // string | MarkupContent
 }
 
 // SignatureHelpRegistrationOptions SignatureHelp Registration options.
@@ -398,10 +597,15 @@ type SignatureHelpRegistrationOptions struct {
 	TriggerCharacters []string `json:"triggerCharacters,omitempty"`
 }
 
-// ReferenceParams params of Find References Request
+// ReferenceParams params of References request.
+//
+// @since 3.15.0.
 type ReferenceParams struct {
 	TextDocumentPositionParams
+	WorkDoneProgressParams
+	PartialResultParams
 
+	// Context is the ReferenceParams context.
 	Context ReferenceContext `json:"context"`
 }
 
@@ -423,35 +627,38 @@ type DocumentHighlight struct {
 }
 
 // DocumentHighlightKind a document highlight kind.
-type DocumentHighlightKind int
+type DocumentHighlightKind float64
 
 const (
-	// Text a textual occurrence.
-	Text DocumentHighlightKind = 1
+	// DocumentHighlightKindText a textual occurrence.
+	DocumentHighlightKindText DocumentHighlightKind = 1
 
-	// Read read-access of a symbol, like reading a variable.
-	Read DocumentHighlightKind = 2
+	// DocumentHighlightKindRead read-access of a symbol, like reading a variable.
+	DocumentHighlightKindRead DocumentHighlightKind = 2
 
-	// Write write-access of a symbol, like writing to a variable.
-	Write DocumentHighlightKind = 3
+	// DocumentHighlightKindWrite write-access of a symbol, like writing to a variable.
+	DocumentHighlightKindWrite DocumentHighlightKind = 3
 )
 
 // String implements fmt.Stringer.
 func (k DocumentHighlightKind) String() string {
 	switch k {
-	case Text:
+	case DocumentHighlightKindText:
 		return "Text"
-	case Read:
+	case DocumentHighlightKindRead:
 		return "Read"
-	case Write:
+	case DocumentHighlightKindWrite:
 		return "Write"
 	default:
-		return strconv.FormatInt(int64(k), 10)
+		return strconv.FormatFloat(float64(k), 'f', -10, 64)
 	}
 }
 
-// DocumentSymbolParams params of Document Symbols Request.
+// DocumentSymbolParams params of Document Symbols request.
 type DocumentSymbolParams struct {
+	WorkDoneProgressParams
+	PartialResultParams
+
 	// TextDocument is the text document.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
@@ -468,115 +675,137 @@ type DocumentSymbolParams struct {
 type SymbolKind float64
 
 const (
-	// FileSymbol symbol of file.
-	FileSymbol SymbolKind = 1
-	// ModuleSymbol symbol of module.
-	ModuleSymbol SymbolKind = 2
-	// NamespaceSymbol symbol of namespace.
-	NamespaceSymbol SymbolKind = 3
-	// PackageSymbol symbol of package.
-	PackageSymbol SymbolKind = 4
-	// ClassSymbol symbol of class.
-	ClassSymbol SymbolKind = 5
-	// MethodSymbol symbol of method.
-	MethodSymbol SymbolKind = 6
-	// PropertySymbol symbol of property.
-	PropertySymbol SymbolKind = 7
-	// FieldSymbol symbol of field.
-	FieldSymbol SymbolKind = 8
-	// ConstructorSymbol symbol of constructor.
-	ConstructorSymbol SymbolKind = 9
-	// EnumSymbol symbol of enum.
-	EnumSymbol SymbolKind = 10
-	// InterfaceSymbol symbol of interface.
-	InterfaceSymbol SymbolKind = 11
-	// FunctionSymbol symbol of function.
-	FunctionSymbol SymbolKind = 12
-	// VariableSymbol symbol of variable.
-	VariableSymbol SymbolKind = 13
-	// ConstantSymbol symbol of constant.
-	ConstantSymbol SymbolKind = 14
-	// StringSymbol symbol of string.
-	StringSymbol SymbolKind = 15
-	// NumberSymbol symbol of number.
-	NumberSymbol SymbolKind = 16
-	// BooleanSymbol symbol of boolean.
-	BooleanSymbol SymbolKind = 17
-	// ArraySymbol symbol of array.
-	ArraySymbol SymbolKind = 18
-	// ObjectSymbol symbol of object.
-	ObjectSymbol SymbolKind = 19
-	// KeySymbol symbol of key.
-	KeySymbol SymbolKind = 20
-	// NullSymbol symbol of null.
-	NullSymbol SymbolKind = 21
-	// EnumMemberSymbol symbol of enum member.
-	EnumMemberSymbol SymbolKind = 22
-	// StructSymbol symbol of struct.
-	StructSymbol SymbolKind = 23
-	// EventSymbol symbol of event.
-	EventSymbol SymbolKind = 24
-	// OperatorSymbol symbol of operator.
-	OperatorSymbol SymbolKind = 25
-	// TypeParameterSymbol symbol of type parameter.
-	TypeParameterSymbol SymbolKind = 26
+	// SymbolKindFile symbol of file.
+	SymbolKindFile SymbolKind = 1
+	// SymbolKindModule symbol of module.
+	SymbolKindModule SymbolKind = 2
+	// SymbolKindNamespace symbol of namespace.
+	SymbolKindNamespace SymbolKind = 3
+	// SymbolKindPackage symbol of package.
+	SymbolKindPackage SymbolKind = 4
+	// SymbolKindClass symbol of class.
+	SymbolKindClass SymbolKind = 5
+	// SymbolKindMethod symbol of method.
+	SymbolKindMethod SymbolKind = 6
+	// SymbolKindProperty symbol of property.
+	SymbolKindProperty SymbolKind = 7
+	// SymbolKindField symbol of field.
+	SymbolKindField SymbolKind = 8
+	// SymbolKindConstructor symbol of constructor.
+	SymbolKindConstructor SymbolKind = 9
+	// SymbolKindEnum symbol of enum.
+	SymbolKindEnum SymbolKind = 10
+	// SymbolKindInterface symbol of interface.
+	SymbolKindInterface SymbolKind = 11
+	// SymbolKindFunction symbol of function.
+	SymbolKindFunction SymbolKind = 12
+	// SymbolKindVariable symbol of variable.
+	SymbolKindVariable SymbolKind = 13
+	// SymbolKindConstant symbol of constant.
+	SymbolKindConstant SymbolKind = 14
+	// SymbolKindString symbol of string.
+	SymbolKindString SymbolKind = 15
+	// SymbolKindNumber symbol of number.
+	SymbolKindNumber SymbolKind = 16
+	// SymbolKindBoolean symbol of boolean.
+	SymbolKindBoolean SymbolKind = 17
+	// SymbolKindArray symbol of array.
+	SymbolKindArray SymbolKind = 18
+	// SymbolKindObject symbol of object.
+	SymbolKindObject SymbolKind = 19
+	// SymbolKindKey symbol of key.
+	SymbolKindKey SymbolKind = 20
+	// SymbolKindNull symbol of null.
+	SymbolKindNull SymbolKind = 21
+	// SymbolKindEnumMember symbol of enum member.
+	SymbolKindEnumMember SymbolKind = 22
+	// SymbolKindStruct symbol of struct.
+	SymbolKindStruct SymbolKind = 23
+	// SymbolKindEvent symbol of event.
+	SymbolKindEvent SymbolKind = 24
+	// SymbolKindOperator symbol of operator.
+	SymbolKindOperator SymbolKind = 25
+	// SymbolKindTypeParameter symbol of type parameter.
+	SymbolKindTypeParameter SymbolKind = 26
 )
 
 // String implements fmt.Stringer.
+//nolint:cyclop
 func (k SymbolKind) String() string {
 	switch k {
-	case FileSymbol:
+	case SymbolKindFile:
 		return "File"
-	case ModuleSymbol:
+	case SymbolKindModule:
 		return "Module"
-	case NamespaceSymbol:
+	case SymbolKindNamespace:
 		return "Namespace"
-	case PackageSymbol:
+	case SymbolKindPackage:
 		return "Package"
-	case ClassSymbol:
+	case SymbolKindClass:
 		return "Class"
-	case MethodSymbol:
+	case SymbolKindMethod:
 		return "Method"
-	case PropertySymbol:
+	case SymbolKindProperty:
 		return "Property"
-	case FieldSymbol:
+	case SymbolKindField:
 		return "Field"
-	case ConstructorSymbol:
+	case SymbolKindConstructor:
 		return "Constructor"
-	case EnumSymbol:
+	case SymbolKindEnum:
 		return "Enum"
-	case InterfaceSymbol:
+	case SymbolKindInterface:
 		return "Interface"
-	case FunctionSymbol:
+	case SymbolKindFunction:
 		return "Function"
-	case VariableSymbol:
+	case SymbolKindVariable:
 		return "Variable"
-	case ConstantSymbol:
+	case SymbolKindConstant:
 		return "Constant"
-	case StringSymbol:
+	case SymbolKindString:
 		return "String"
-	case NumberSymbol:
+	case SymbolKindNumber:
 		return "Number"
-	case BooleanSymbol:
+	case SymbolKindBoolean:
 		return "Boolean"
-	case ArraySymbol:
+	case SymbolKindArray:
 		return "Array"
-	case ObjectSymbol:
+	case SymbolKindObject:
 		return "Object"
-	case KeySymbol:
+	case SymbolKindKey:
 		return "Key"
-	case NullSymbol:
+	case SymbolKindNull:
 		return "Null"
-	case EnumMemberSymbol:
+	case SymbolKindEnumMember:
 		return "EnumMember"
-	case StructSymbol:
+	case SymbolKindStruct:
 		return "Struct"
-	case EventSymbol:
+	case SymbolKindEvent:
 		return "Event"
-	case OperatorSymbol:
+	case SymbolKindOperator:
 		return "Operator"
-	case TypeParameterSymbol:
+	case SymbolKindTypeParameter:
 		return "TypeParameter"
+	default:
+		return strconv.FormatFloat(float64(k), 'f', -10, 64)
+	}
+}
+
+// SymbolTag symbol tags are extra annotations that tweak the rendering of a symbol.
+//
+// @since 3.16.0.
+type SymbolTag float64
+
+// list of SymbolTag.
+const (
+	// SymbolTagDeprecated render a symbol as obsolete, usually using a strike-out.
+	SymbolTagDeprecated SymbolTag = 1
+)
+
+// String returns a string representation of the SymbolTag.
+func (k SymbolTag) String() string {
+	switch k {
+	case SymbolTagDeprecated:
+		return "Deprecated"
 	default:
 		return strconv.FormatFloat(float64(k), 'f', -10, 64)
 	}
@@ -595,6 +824,11 @@ type DocumentSymbol struct {
 
 	// Kind is the kind of this symbol.
 	Kind SymbolKind `json:"kind"`
+
+	// Tags for this document symbol.
+	//
+	// @since 3.16.0.
+	Tags []SymbolTag `json:"tags,omitempty"`
 
 	// Deprecated indicates if this symbol is deprecated.
 	Deprecated bool `json:"deprecated,omitempty"`
@@ -619,7 +853,12 @@ type SymbolInformation struct {
 	Name string `json:"name"`
 
 	// Kind is the kind of this symbol.
-	Kind float64 `json:"kind"`
+	Kind SymbolKind `json:"kind"`
+
+	// Tags for this completion item.
+	//
+	// @since 3.16.0.
+	Tags []SymbolTag `json:"tags,omitempty"`
 
 	// Deprecated indicates if this symbol is deprecated.
 	Deprecated bool `json:"deprecated,omitempty"`
@@ -644,6 +883,9 @@ type SymbolInformation struct {
 
 // CodeActionParams params for the CodeActionRequest.
 type CodeActionParams struct {
+	WorkDoneProgressParams
+	PartialResultParams
+
 	// TextDocument is the document in which the command was invoked.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 
@@ -660,12 +902,12 @@ type CodeActionParams struct {
 // to a default value when unknown.
 type CodeActionKind string
 
-// A set of predefined code action kinds
+// A set of predefined code action kinds.
 const (
-	// QuickFix base kind for quickfix actions: 'quickfix'
+	// QuickFix base kind for quickfix actions: 'quickfix'.
 	QuickFix CodeActionKind = "quickfix"
 
-	// Refactor base kind for refactoring actions: 'refactor'
+	// Refactor base kind for refactoring actions: 'refactor'.
 	Refactor CodeActionKind = "refactor"
 
 	// RefactorExtract base kind for refactoring extraction actions: 'refactor.extract'
@@ -706,7 +948,7 @@ const (
 	// Source code actions apply to the entire file.
 	Source CodeActionKind = "source"
 
-	// SourceOrganizeImports base kind for an organize imports source action: `source.organizeImports`
+	// SourceOrganizeImports base kind for an organize imports source action: `source.organizeImports`.
 	SourceOrganizeImports CodeActionKind = "source.organizeImports"
 )
 
@@ -736,6 +978,34 @@ type CodeAction struct {
 	// Diagnostics is the diagnostics that this code action resolves.
 	Diagnostics []Diagnostic `json:"diagnostics,omitempty"`
 
+	// IsPreferred marks this as a preferred action. Preferred actions are used by the `auto fix` command and can be targeted
+	// by keybindings.
+	//
+	// A quick fix should be marked preferred if it properly addresses the underlying error.
+	// A refactoring should be marked preferred if it is the most reasonable choice of actions to take.
+	//
+	// @since 3.15.0.
+	IsPreferred bool `json:"isPreferred,omitempty"`
+
+	// Disabled marks that the code action cannot currently be applied.
+	//
+	// Clients should follow the following guidelines regarding disabled code
+	// actions:
+	//
+	//  - Disabled code actions are not shown in automatic lightbulbs code
+	//    action menus.
+	//
+	//  - Disabled actions are shown as faded out in the code action menu when
+	//    the user request a more specific type of code action, such as
+	//    refactorings.
+	//
+	//  - If the user has a keybinding that auto applies a code action and only
+	//    a disabled code actions are returned, the client should show the user
+	//    an error message with `reason` in the editor.
+	//
+	// @since 3.16.0.
+	Disabled *CodeActionDisable `json:"disabled,omitempty"`
+
 	// Edit is the workspace edit this code action performs.
 	Edit *WorkspaceEdit `json:"edit,omitempty"`
 
@@ -743,16 +1013,37 @@ type CodeAction struct {
 	// provides an edit and a command, first the edit is
 	// executed and then the command.
 	Command *Command `json:"command,omitempty"`
+
+	// Data is a data entry field that is preserved on a code action between
+	// a "textDocument/codeAction" and a "codeAction/resolve" request.
+	//
+	// @since 3.16.0.
+	Data interface{} `json:"data,omitempty"`
+}
+
+// CodeActionDisable Disable in CodeAction.
+//
+// @since 3.16.0.
+type CodeActionDisable struct {
+	// Reason human readable description of why the code action is currently
+	// disabled.
+	//
+	// This is displayed in the code actions UI.
+	Reason string `json:"reason"`
 }
 
 // CodeActionRegistrationOptions CodeAction Registrationi options.
 type CodeActionRegistrationOptions struct {
 	TextDocumentRegistrationOptions
+
 	CodeActionOptions
 }
 
-// CodeLensParams params of Code Lens Request.
+// CodeLensParams params of Code Lens request.
 type CodeLensParams struct {
+	WorkDoneProgressParams
+	PartialResultParams
+
 	// TextDocument is the document to request code lens for.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
@@ -782,8 +1073,11 @@ type CodeLensRegistrationOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
-// DocumentLinkParams params of Document Link Request.
+// DocumentLinkParams params of Document Link request.
 type DocumentLinkParams struct {
+	WorkDoneProgressParams
+	PartialResultParams
+
 	// TextDocument is the document to provide document links for.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
@@ -795,20 +1089,32 @@ type DocumentLink struct {
 	Range Range `json:"range"`
 
 	// Target is the uri this link points to. If missing a resolve request is sent later.
-	Target uri.URI `json:"target,omitempty"`
+	Target DocumentURI `json:"target,omitempty"`
+
+	// Tooltip is the tooltip text when you hover over this link.
+	//
+	// If a tooltip is provided, is will be displayed in a string that includes instructions on how to
+	// trigger the link, such as `{0} (ctrl + click)`. The specific instructions vary depending on OS,
+	// user settings, and localization.
+	//
+	// @since 3.15.0.
+	Tooltip string `json:"tooltip,omitempty"`
 
 	// Data is a data entry field that is preserved on a document link between a
 	// DocumentLinkRequest and a DocumentLinkResolveRequest.
 	Data interface{} `json:"data,omitempty"`
 }
 
-// DocumentColorParams params of Document Color Request.
+// DocumentColorParams params of Document Color request.
 type DocumentColorParams struct {
+	WorkDoneProgressParams
+	PartialResultParams
+
 	// TextDocument is the document to format.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
 
-// ColorInformation response of Document Color Request.
+// ColorInformation response of Document Color request.
 type ColorInformation struct {
 	// Range is the range in the document where this color appears.
 	Range Range `json:"range"`
@@ -832,8 +1138,11 @@ type Color struct {
 	Red float64 `json:"red"`
 }
 
-// ColorPresentationParams params of Color Presentation Request.
+// ColorPresentationParams params of Color Presentation request.
 type ColorPresentationParams struct {
+	WorkDoneProgressParams
+	PartialResultParams
+
 	// TextDocument is the text document.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 
@@ -844,7 +1153,7 @@ type ColorPresentationParams struct {
 	Range Range `json:"range"`
 }
 
-// ColorPresentation response of Color Presentation Request.
+// ColorPresentation response of Color Presentation request.
 type ColorPresentation struct {
 	// Label is the label of this color presentation. It will be shown on the color
 	// picker header. By default this is also the text that is inserted when selecting
@@ -860,8 +1169,10 @@ type ColorPresentation struct {
 	AdditionalTextEdits []TextEdit `json:"additionalTextEdits,omitempty"`
 }
 
-// DocumentFormattingParams params of Document Formatting Request.
+// DocumentFormattingParams params of Document Formatting request.
 type DocumentFormattingParams struct {
+	WorkDoneProgressParams
+
 	// Options is the format options.
 	Options FormattingOptions `json:"options"`
 
@@ -875,11 +1186,31 @@ type FormattingOptions struct {
 	InsertSpaces bool `json:"insertSpaces"`
 
 	// TabSize size of a tab in spaces.
-	TabSize float64 `json:"tabSize"`
+	TabSize uint32 `json:"tabSize"`
+
+	// TrimTrailingWhitespace trim trailing whitespaces on a line.
+	//
+	// @since 3.15.0.
+	TrimTrailingWhitespace bool `json:"trimTrailingWhitespace,omitempty"`
+
+	// InsertFinalNewlines insert a newline character at the end of the file if one does not exist.
+	//
+	// @since 3.15.0.
+	InsertFinalNewline bool `json:"insertFinalNewline,omitempty"`
+
+	// TrimFinalNewlines trim all newlines after the final newline at the end of the file.
+	//
+	// @since 3.15.0.
+	TrimFinalNewlines bool `json:"trimFinalNewlines,omitempty"`
+
+	// Key is the signature for further properties.
+	Key map[string]interface{} `json:"key,omitempty"` // bool | int32 | string
 }
 
-// DocumentRangeFormattingParams params of Document Range Formatting Request.
+// DocumentRangeFormattingParams params of Document Range Formatting request.
 type DocumentRangeFormattingParams struct {
+	WorkDoneProgressParams
+
 	// TextDocument is the document to format.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 
@@ -890,7 +1221,7 @@ type DocumentRangeFormattingParams struct {
 	Options FormattingOptions `json:"options"`
 }
 
-// DocumentOnTypeFormattingParams params of Document on Type Formatting Request.
+// DocumentOnTypeFormattingParams params of Document on Type Formatting request.
 type DocumentOnTypeFormattingParams struct {
 	// TextDocument is the document to format.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
@@ -916,13 +1247,10 @@ type DocumentOnTypeFormattingRegistrationOptions struct {
 	MoreTriggerCharacter []string `json:"moreTriggerCharacter"`
 }
 
-// RenameParams params of Rename Request.
+// RenameParams params of Rename request.
 type RenameParams struct {
-	// TextDocument is the document to rename.
-	TextDocument TextDocumentIdentifier `json:"textDocument"`
-
-	// Position is the position at which this request was sent.
-	Position Position `json:"position"`
+	TextDocumentPositionParams
+	PartialResultParams
 
 	// NewName is the new name of the symbol. If the given name is not valid the
 	// request must return a [ResponseError](#ResponseError) with an
@@ -938,10 +1266,17 @@ type RenameRegistrationOptions struct {
 	PrepareProvider bool `json:"prepareProvider,omitempty"`
 }
 
-// FoldingRangeParams params of Folding Range Request.
+// PrepareRenameParams params of PrepareRenameParams request.
+//
+// @since 3.15.0.
+type PrepareRenameParams struct {
+	TextDocumentPositionParams
+}
+
+// FoldingRangeParams params of Folding Range request.
 type FoldingRangeParams struct {
-	// TextDocument is the text document.
-	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	TextDocumentPositionParams
+	PartialResultParams
 }
 
 // FoldingRangeKind is the enum of known range kinds.
@@ -960,19 +1295,19 @@ const (
 
 // FoldingRange capabilities specific to `textDocument/foldingRange` requests.
 //
-// Since 3.10.0
+// @since 3.10.0.
 type FoldingRange struct {
 	// StartLine is the zero-based line number from where the folded range starts.
-	StartLine float64 `json:"startLine"`
+	StartLine uint32 `json:"startLine"`
 
 	// StartCharacter is the zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line.
-	StartCharacter float64 `json:"startCharacter,omitempty"`
+	StartCharacter uint32 `json:"startCharacter,omitempty"`
 
 	// EndLine is the zero-based line number where the folded range ends.
-	EndLine float64 `json:"endLine"`
+	EndLine uint32 `json:"endLine"`
 
 	// EndCharacter is the zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.
-	EndCharacter float64 `json:"endCharacter,omitempty"`
+	EndCharacter uint32 `json:"endCharacter,omitempty"`
 
 	// Kind describes the kind of the folding range such as `comment' or 'region'. The kind
 	// is used to categorize folding ranges and used by commands like 'Fold all comments'.

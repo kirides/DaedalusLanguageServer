@@ -1,23 +1,40 @@
-// Copyright 2019 The Go Language Server Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// SPDX-FileCopyrightText: 2021 The Go Language Server Authors
+// SPDX-License-Identifier: BSD-3-Clause
 
 package protocol
 
-import (
-	"context"
+import "go.lsp.dev/jsonrpc2"
 
-	"go.lsp.dev/jsonrpc2"
-	"go.uber.org/zap"
+const (
+	// LSPReservedErrorRangeStart is the start range of LSP reserved error codes.
+	//
+	// It doesn't denote a real error code.
+	//
+	// @since 3.16.0.
+	LSPReservedErrorRangeStart jsonrpc2.Code = -32899
+
+	// ContentModified is the state change that invalidates the result of a request in execution.
+	//
+	// Defined by the protocol.
+	CodeContentModified jsonrpc2.Code = -32801
+
+	// RequestCancelled is the cancellation error.
+	//
+	// Defined by the protocol.
+	CodeRequestCancelled jsonrpc2.Code = -32800
+
+	// LSPReservedErrorRangeEnd is the end range of LSP reserved error codes.
+	//
+	// It doesn't denote a real error code.
+	//
+	// @since 3.16.0.
+	LSPReservedErrorRangeEnd jsonrpc2.Code = -32800
 )
 
-// ReplyError replies error message.
-func ReplyError(ctx context.Context, err error, req *jsonrpc2.Request) {
-	if _, ok := err.(*jsonrpc2.Error); !ok {
-		err = jsonrpc2.Errorf(jsonrpc2.ParseError, "%v", err)
-	}
+var (
+	// ErrContentModified should be used when a request is canceled early.
+	ErrContentModified = jsonrpc2.NewError(CodeContentModified, "cancelled JSON-RPC")
 
-	if err := req.Reply(ctx, nil, err); err != nil {
-		LoggerFromContext(ctx).Error("ReplyError", zap.Error(err))
-	}
-}
+	// ErrRequestCancelled should be used when a request is canceled early.
+	ErrRequestCancelled = jsonrpc2.NewError(CodeRequestCancelled, "cancelled JSON-RPC")
+)
