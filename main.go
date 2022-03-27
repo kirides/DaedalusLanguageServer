@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"langsrv/langserver"
@@ -20,8 +21,40 @@ import (
 	"go.lsp.dev/jsonrpc2"
 )
 
-func main() {
+func BV(s []debug.BuildSetting, key string) string {
+	for _, v := range s {
+		if v.Key == key {
+			if key == "vcs.revision" && len(v.Value) > 7 {
+				return v.Value[:7]
+			}
+			return v.Value
+		}
+	}
+	return ""
+}
 
+func logBuildInfo(log *zap.SugaredLogger) {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+
+	BV := func(key string) string {
+		for _, v := range bi.Settings {
+			if v.Key == key {
+				if key == "vcs.revision" && len(v.Value) > 7 {
+					return v.Value[:7]
+				}
+				return v.Value
+			}
+		}
+		return ""
+	}
+
+	log.Infof("Running %q built with %s at %s", BV("vcs.revision"), bi.GoVersion, BV("vcs.time"))
+}
+
+func main() {
 	pprofPort := flag.Int("pprof", -1, "enables pprof on the specified port")
 	logLevel := zap.LevelFlag("loglevel", zap.InfoLevel, "debug/info/warning/error")
 	flag.Parse()
@@ -35,6 +68,8 @@ func main() {
 	}
 	defer logger.Sync()
 	log := logger.Sugar()
+
+	logBuildInfo(log)
 
 	if *pprofPort > 0 {
 		go func() {
