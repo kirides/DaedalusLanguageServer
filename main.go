@@ -61,7 +61,7 @@ func main() {
 		}
 		if err != nil {
 			if errors.Is(err, langserver.ErrUnhandled) {
-				log.Infof("%s: %v\n", req.Method(), err)
+				log.Debugf("%v\n", err)
 			} else {
 				log.Errorf("%s: %v\n", req.Method(), err)
 			}
