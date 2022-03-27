@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -43,7 +44,12 @@ func main() {
 				return nil
 			}
 		}
-		return err
+		if err != nil {
+			if !errors.Is(err, langserver.ErrUnhandled) {
+				fmt.Fprintf(os.Stderr, "[ERR] %s: %v\n", req.Method(), err)
+			}
+		}
+		return nil
 	})
 	<-conn.Done()
 }

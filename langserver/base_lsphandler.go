@@ -28,7 +28,7 @@ var (
 type EmptyHandler struct{}
 
 var errNotImplemented = errors.New("not implemented")
-var errUnhandled = errors.New("unhandled")
+var ErrUnhandled = errors.New("unhandled")
 
 func (h *EmptyHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
 	return errNotImplemented
@@ -41,7 +41,7 @@ type baseLspHandler struct {
 }
 
 func (h *baseLspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
-	return errUnhandled
+	return fmt.Errorf("%w: %s", ErrUnhandled, req.Method())
 }
 
 func (h *baseLspHandler) replyEither(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request, result interface{}, err error) {
