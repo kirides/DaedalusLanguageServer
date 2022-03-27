@@ -5,24 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/uri"
-)
-
-type logLevel int
-
-var (
-	// LogLevelDebug ...
-	LogLevelDebug logLevel = 0
-	// LogLevelInfo ...
-	LogLevelInfo logLevel = 1
-	// LogLevelWarn ...
-	LogLevelWarn logLevel = 2
-	// LogLevelErr ...
-	LogLevelErr logLevel = 3
 )
 
 type EmptyHandler struct{}
@@ -34,10 +20,17 @@ func (h *EmptyHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req j
 	return errNotImplemented
 }
 
+type Logger interface {
+	Debugf(template string, args ...interface{})
+	Infof(template string, args ...interface{})
+	Warnf(template string, args ...interface{})
+	Errorf(template string, args ...interface{})
+}
+
 type baseLspHandler struct {
 	EmptyHandler
-	LogLevel logLevel
-	conn     jsonrpc2.Conn
+	conn   jsonrpc2.Conn
+	logger Logger
 }
 
 func (h *baseLspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
@@ -53,24 +46,16 @@ func (h *baseLspHandler) replyEither(ctx context.Context, reply jsonrpc2.Replier
 }
 
 func (h *baseLspHandler) LogDebug(format string, params ...interface{}) {
-	if h.LogLevel <= LogLevelDebug {
-		fmt.Fprintf(os.Stderr, "DEBUG: "+format, params...)
-	}
+	h.logger.Debugf(format, params...)
 }
 func (h *baseLspHandler) LogInfo(format string, params ...interface{}) {
-	if h.LogLevel <= LogLevelInfo {
-		fmt.Fprintf(os.Stderr, "INFO: "+format, params...)
-	}
+	h.logger.Infof(format, params...)
 }
 func (h *baseLspHandler) LogWarn(format string, params ...interface{}) {
-	if h.LogLevel <= LogLevelWarn {
-		fmt.Fprintf(os.Stderr, "WARN: "+format, params...)
-	}
+	h.logger.Warnf(format, params...)
 }
 func (h *baseLspHandler) LogError(format string, params ...interface{}) {
-	if h.LogLevel <= LogLevelErr {
-		fmt.Fprintf(os.Stderr, "ERROR: "+format, params...)
-	}
+	h.logger.Errorf(format, params...)
 }
 
 // workaround for unsupported file paths (git + invalid file://-prefix )

@@ -29,22 +29,21 @@ var (
 )
 
 // NewLspHandler ...
-func NewLspHandler(conn jsonrpc2.Conn) *LspHandler {
+func NewLspHandler(conn jsonrpc2.Conn, logger Logger) *LspHandler {
 	bufferManager := NewBufferManager()
 	parsedDocuments := newParseResultsManager()
-	logLv := LogLevelInfo
 	return &LspHandler{
 		baseLspHandler: baseLspHandler{
-			LogLevel: logLv,
-			conn:     conn,
+			logger: logger,
+			conn:   conn,
 		},
 		initialized:     false,
 		bufferManager:   bufferManager,
 		parsedDocuments: parsedDocuments,
 		TextDocumentSyncHandler: (&textDocumentSyncHandler{
 			baseLspHandler: baseLspHandler{
-				LogLevel: logLv,
-				conn:     conn,
+				logger: logger,
+				conn:   conn,
 			},
 			bufferManager:   bufferManager,
 			parsedDocuments: parsedDocuments,
