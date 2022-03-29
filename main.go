@@ -56,7 +56,7 @@ func logBuildInfo(log *zap.SugaredLogger) {
 
 func main() {
 	pprofPort := flag.Int("pprof", -1, "enables pprof on the specified port")
-	logLevel := zap.LevelFlag("loglevel", zap.InfoLevel, "debug/info/warning/error")
+	logLevel := zap.LevelFlag("loglevel", zap.InfoLevel, "debug/info/warn/error")
 	flag.Parse()
 
 	logCfg := zap.NewDevelopmentConfig()
