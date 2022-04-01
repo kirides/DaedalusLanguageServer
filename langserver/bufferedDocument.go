@@ -42,7 +42,12 @@ func (m BufferedDocument) GetWordRangeAtPosition(position lsp.Position) string {
 	}
 	start := center
 	end := center
-
+	if start >= len(doc) {
+		return ""
+	}
+	if end >= len(doc) {
+		end = len(doc)
+	}
 	for start >= 0 && isIdentifier(doc[start]) {
 		start--
 	}
@@ -101,7 +106,15 @@ func (m BufferedDocument) GetMethodCall(position lsp.Position) string {
 	if o+1 > len(doc) {
 		return doc[o:]
 	}
-	methodCallLine := doc[o+2 : o+2+(offset-o-2)]
+	st := o + 2
+	if st >= len(doc) {
+		st = len(doc) - 1
+	}
+	ed := st + (offset - o - 2)
+	if ed < st {
+		ed = st + 1
+	}
+	methodCallLine := doc[st:ed]
 	for i := 0; i < len(methodCallLine); i++ {
 		if !unicode.IsSpace(rune(methodCallLine[i])) {
 			methodCallLine = methodCallLine[i:]
