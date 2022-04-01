@@ -58,11 +58,8 @@ func (h *baseLspHandler) LogError(format string, params ...interface{}) {
 	h.logger.Errorf(format, params...)
 }
 
-// workaround for unsupported file paths (git + invalid file://-prefix )
+// workaround for unsupported file paths (invalid file://-prefix )
 func fixURI(s string) (string, bool) {
-	if strings.HasPrefix(s, "git:/") {
-		return "file:///" + s[5:], true
-	}
 	if !strings.HasPrefix(s, "file:///") {
 		// VS Code sends URLs with only two slashes, which are invalid. golang/go#39789.
 		if strings.HasPrefix(s, "file://") {
@@ -75,6 +72,9 @@ func fixURI(s string) (string, bool) {
 
 func (h *baseLspHandler) uriToFilename(v uri.URI) string {
 	s := string(v)
+	if strings.HasPrefix(s, "git:/") {
+		return ""
+	}
 	fixed, ok := fixURI(s)
 
 	if !ok {
