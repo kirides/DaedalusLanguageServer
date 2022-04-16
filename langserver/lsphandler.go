@@ -2,7 +2,6 @@ package langserver
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,10 +14,11 @@ import (
 
 // LspHandler ...
 type LspHandler struct {
-	TextDocumentSyncHandler jsonrpc2.Handler
-	bufferManager           *BufferManager
-	parsedDocuments         *parseResultsManager
-	initialDiagnostics      map[string][]lsp.Diagnostic
+	TextDocumentSync   *textDocumentSync
+	bufferManager      *BufferManager
+	parsedDocuments    *parseResultsManager
+	initialDiagnostics map[string][]lsp.Diagnostic
+	handlers           RpcMux
 	baseLspHandler
 	initialized bool
 }
@@ -37,17 +37,20 @@ func NewLspHandler(conn jsonrpc2.Conn, logger Logger) *LspHandler {
 			logger: logger,
 			conn:   conn,
 		},
+		handlers: RpcMux{
+			pathToType: map[string]Handler{},
+		},
 		initialized:     false,
 		bufferManager:   bufferManager,
 		parsedDocuments: parsedDocuments,
-		TextDocumentSyncHandler: (&textDocumentSyncHandler{
+		TextDocumentSync: &textDocumentSync{
 			baseLspHandler: baseLspHandler{
 				logger: logger,
 				conn:   conn,
 			},
 			bufferManager:   bufferManager,
 			parsedDocuments: parsedDocuments,
-		}).Handle,
+		},
 	}
 }
 
@@ -83,7 +86,7 @@ func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
 	return lsp.CompletionItemKind(-1), fmt.Errorf("Symbol not found")
 }
 
-func (h *LspHandler) handleTextDocumentCompletion(ctx context.Context, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	result := make([]lsp.CompletionItem, 0, 200)
 	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
 	if err == nil {
@@ -241,6 +244,57 @@ func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextD
 		}}, nil
 }
 
+func (h *LspHandler) handleTextDocumentCompletion(req RpcContext, data lsp.CompletionParams) error {
+	items, err := h.getTextDocumentCompletion(req.Context(), &data)
+	replyEither(req.Context(), req, items, err)
+	return nil
+}
+
+func (h *LspHandler) handleTextDocumentDefinition(req RpcContext, data lsp.TextDocumentPositionParams) error {
+	found, err := h.handleGoToDefinition(req.Context(), &data)
+	if err != nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+	return req.Reply(req.Context(), found, nil)
+}
+
+func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocumentPositionParams) error {
+	found, err := h.lookUpSymbol(h.uriToFilename(data.TextDocument.URI), data.Position)
+	if err != nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+	h.LogDebug("Found Symbol for Hover: %s\n", found.String())
+	return req.Reply(req.Context(), lsp.Hover{
+		Range: &lsp.Range{
+			Start: data.Position,
+			End:   data.Position,
+		},
+		Contents: lsp.MarkupContent{
+			Kind:  lsp.Markdown,
+			Value: strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(found.Documentation(), "\r", ""), "\n", "  \n") + "\n```daedalus\n" + found.String() + "\n```"),
+		},
+	}, nil)
+}
+func (h *LspHandler) handleTextDocumentSignatureHelp(req RpcContext, data lsp.TextDocumentPositionParams) error {
+	result, err := h.handleSignatureInfo(req.Context(), &data)
+	if err != nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+	return req.Reply(req.Context(), result, nil)
+}
+
+func (h *LspHandler) onInitialized() {
+	h.handlers.Register(lsp.MethodTextDocumentCompletion, MakeHandler(h.handleTextDocumentCompletion))
+	h.handlers.Register(lsp.MethodTextDocumentDefinition, MakeHandler(h.handleTextDocumentDefinition))
+	h.handlers.Register(lsp.MethodTextDocumentHover, MakeHandler(h.handleTextDocumentHover))
+	h.handlers.Register(lsp.MethodTextDocumentSignatureHelp, MakeHandler(h.handleTextDocumentSignatureHelp))
+
+	// textDocument/didOpen/didSave/didChange
+	h.handlers.Register(lsp.MethodTextDocumentDidOpen, MakeHandler(h.TextDocumentSync.handleTextDocumentDidOpen))
+	h.handlers.Register(lsp.MethodTextDocumentDidChange, MakeHandler(h.TextDocumentSync.handleTextDocumentDidChange))
+	h.handlers.Register(lsp.MethodTextDocumentDidSave, MakeHandler(h.TextDocumentSync.handleTextDocumentDidSave))
+}
+
 // Deliver ...
 func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonrpc2.Request) error {
 	h.LogDebug("Requested '%s'\n", r.Method())
@@ -274,6 +328,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 			return fmt.Errorf("not initialized")
 		}
 		h.initialized = true
+		h.onInitialized()
 		return nil
 	case lsp.MethodInitialized:
 		go func() {
@@ -326,6 +381,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 			h.LogWarn("Recovered from panic at %s: %v\n", r.Method, err)
 		}
 	}()
+
 	if h.initialDiagnostics != nil && len(h.initialDiagnostics) > 0 {
 		fmt.Fprintf(os.Stderr, "Publishing initial diagnostics (%d).\n", len(h.initialDiagnostics))
 		for k, v := range h.initialDiagnostics {
@@ -337,54 +393,10 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		}
 		h.initialDiagnostics = map[string][]lsp.Diagnostic{}
 	}
-	switch r.Method() {
-	case lsp.MethodTextDocumentCompletion:
-		var params lsp.CompletionParams
-		json.Unmarshal(r.Params(), &params)
-		items, err := h.handleTextDocumentCompletion(ctx, &params)
-		h.replyEither(ctx, reply, r, items, err)
 
-	case lsp.MethodTextDocumentDefinition:
-		var params lsp.TextDocumentPositionParams
-		json.Unmarshal(r.Params(), &params)
-		found, err := h.handleGoToDefinition(ctx, &params)
-		if err != nil {
-			h.replyEither(ctx, reply, r, nil, nil)
-		} else {
-			h.replyEither(ctx, reply, r, found, nil)
-		}
-
-	case lsp.MethodTextDocumentHover:
-		var params lsp.TextDocumentPositionParams
-		json.Unmarshal(r.Params(), &params)
-		found, err := h.lookUpSymbol(h.uriToFilename(params.TextDocument.URI), params.Position)
-		if err != nil {
-			h.replyEither(ctx, reply, r, nil, nil)
-		} else {
-			h.LogDebug("Found Symbol for Hover: %s\n", found.String())
-			h.replyEither(ctx, reply, r, lsp.Hover{
-				Range: &lsp.Range{
-					Start: params.Position,
-					End:   params.Position,
-				},
-				Contents: lsp.MarkupContent{
-					Kind:  lsp.Markdown,
-					Value: strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(found.Documentation(), "\r", ""), "\n", "  \n") + "\n```daedalus\n" + found.String() + "\n```"),
-				},
-			}, nil)
-		}
-
-	case lsp.MethodTextDocumentSignatureHelp:
-		var params lsp.TextDocumentPositionParams
-		json.Unmarshal(r.Params(), &params)
-		result, err := h.handleSignatureInfo(ctx, &params)
-		if err == nil {
-			reply(ctx, result, nil)
-		} else {
-			reply(ctx, nil, nil)
-		}
-	default:
-		return h.baseLspHandler.Handle(ctx, reply, r)
+	handled, err := h.handlers.Handle(ctx, reply, r)
+	if err != nil && handled {
+		return err
 	}
-	return nil
+	return h.baseLspHandler.Handle(ctx, reply, r)
 }

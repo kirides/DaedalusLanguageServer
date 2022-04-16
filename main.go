@@ -82,18 +82,8 @@ func main() {
 	conn := connectLanguageServer(&rwc{os.Stdin, os.Stdout})
 	lspHandler := langserver.NewLspHandler(conn, log)
 
-	handlers := []jsonrpc2.Handler{
-		lspHandler.TextDocumentSyncHandler,
-		lspHandler.Handle,
-	}
 	conn.Go(ctx, func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
-		var err error
-		for _, h := range handlers {
-			err = h(ctx, reply, req)
-			if err == nil {
-				return nil // handled
-			}
-		}
+		err := lspHandler.Handle(ctx, reply, req)
 		if err != nil {
 			if errors.Is(err, langserver.ErrUnhandled) {
 				log.Debugf("%v\n", err)
