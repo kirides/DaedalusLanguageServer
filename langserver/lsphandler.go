@@ -100,8 +100,13 @@ func fieldsToCompletionItems(fields []Symbol) []lsp.CompletionItem {
 	return result
 }
 
-func (h *LspHandler) getTypeFieldsAsCompletionItems(ctx context.Context, symbolName string) ([]lsp.CompletionItem, error) {
-	sym, ok := h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(symbolName), SymbolVariable|SymbolClass|SymbolInstance|SymbolPrototype)
+func (h *LspHandler) getTypeFieldsAsCompletionItems(ctx context.Context, symbolName string, locals map[string]Symbol) ([]lsp.CompletionItem, error) {
+	symName := strings.ToUpper(symbolName)
+	sym, ok := locals[symName]
+	if !ok {
+		sym, ok = h.parsedDocuments.LookupGlobalSymbol(symName, SymbolVariable|SymbolClass|SymbolInstance|SymbolPrototype)
+	}
+
 	if !ok {
 		return []lsp.CompletionItem{}, nil
 	}
@@ -109,10 +114,10 @@ func (h *LspHandler) getTypeFieldsAsCompletionItems(ctx context.Context, symbolN
 		return fieldsToCompletionItems(clsSym.Fields), nil
 	}
 	if protoSym, ok := sym.(ProtoTypeOrInstanceSymbol); ok {
-		return h.getTypeFieldsAsCompletionItems(ctx, protoSym.Parent)
+		return h.getTypeFieldsAsCompletionItems(ctx, protoSym.Parent, locals)
 	}
 	if varSym, ok := sym.(VariableSymbol); ok {
-		return h.getTypeFieldsAsCompletionItems(ctx, varSym.Type)
+		return h.getTypeFieldsAsCompletionItems(ctx, varSym.Type, locals)
 	}
 	return []lsp.CompletionItem{}, nil
 }
@@ -122,13 +127,27 @@ func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.
 	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
 	if err == nil {
 		doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
+		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
+
 		proto, _, err := doc.GetParentSymbolReference(params.Position)
 		if err == nil && proto != "" {
-			return h.getTypeFieldsAsCompletionItems(ctx, proto)
+			locals := map[string]Symbol{}
+			for _, fn := range parsedDoc.Functions {
+				if fn.BodyDefinition.InBBox(di) {
+					for _, p := range fn.Parameters {
+						locals[strings.ToUpper(p.Name())] = p
+					}
+					for _, p := range fn.LocalVariables {
+						locals[strings.ToUpper(p.Name())] = p
+					}
+					break
+				}
+			}
+
+			return h.getTypeFieldsAsCompletionItems(ctx, proto, locals)
 		}
 
 		localSortIdx := 0
-		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 		for _, fn := range parsedDoc.Functions {
 			if fn.BodyDefinition.InBBox(di) {
 				for _, p := range fn.Parameters {
