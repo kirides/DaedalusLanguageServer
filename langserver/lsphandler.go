@@ -127,6 +127,7 @@ func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.
 			return h.getTypeFieldsAsCompletionItems(ctx, proto)
 		}
 
+		localSortIdx := 0
 		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 		for _, fn := range parsedDoc.Functions {
 			if fn.BodyDefinition.InBBox(di) {
@@ -135,6 +136,9 @@ func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.
 					if err != nil {
 						continue
 					}
+					localSortIdx++
+					ci.Detail += " (parameter)"
+					ci.SortText = fmt.Sprintf("%000d", localSortIdx)
 					result = append(result, ci)
 				}
 				for _, p := range fn.LocalVariables {
@@ -142,6 +146,9 @@ func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.
 					if err != nil {
 						continue
 					}
+					localSortIdx++
+					ci.Detail += " (local)"
+					ci.SortText = fmt.Sprintf("%000d", localSortIdx)
 					result = append(result, ci)
 				}
 				break
