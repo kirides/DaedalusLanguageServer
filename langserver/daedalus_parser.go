@@ -308,6 +308,12 @@ func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) []strin
 		return []string{}
 	}
 	srcContent := string(decodedContent)
+
+	// Auronen: On Linux and macOS replace backslashes with forwardslashes
+	if runtime.GOOS != "windows" {
+		srcContent = strings.Replace(srcContent, "\\", string(os.PathSeparator), -1)
+	}
+
 	scanner := bufio.NewScanner(strings.NewReader(srcContent))
 
 	resolvedPaths := []string{}
