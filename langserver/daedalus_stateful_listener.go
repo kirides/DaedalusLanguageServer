@@ -49,6 +49,7 @@ var varDeclContextType = reflect.TypeOf((*parser.IVarDeclContext)(nil)).Elem()
 var classDefContextType = reflect.TypeOf((*parser.IClassDefContext)(nil)).Elem()
 var prototypeDefContextType = reflect.TypeOf((*parser.IPrototypeDefContext)(nil)).Elem()
 var instanceDefContextType = reflect.TypeOf((*parser.IInstanceDefContext)(nil)).Elem()
+var instanceDeclContextType = reflect.TypeOf((*parser.IInstanceDeclContext)(nil)).Elem()
 
 func symbolDefinitionForRuleContext(ctx antlr.ParserRuleContext) SymbolDefinition {
 	return NewSymbolDefinition(ctx.GetStart().GetLine(), ctx.GetStart().GetColumn(), ctx.GetStop().GetLine(), ctx.GetStop().GetColumn())
@@ -197,6 +198,25 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 			l.GlobalVariables[strings.ToUpper(s.Name())] = s.(VariableSymbol)
 		}
 	}
+
+	instances := ctx.GetTypedRuleContexts(instanceDeclContextType)
+	for _, ic := range instances {
+		c, ok := ic.(*parser.InstanceDeclContext)
+		if !ok {
+			continue
+		}
+		for _, name := range c.AllNameNode() {
+			psym := NewPrototypeOrInstanceSymbol(
+				name.GetText(),
+				c.ParentReference().GetText(),
+				l.source,
+				"",
+				symbolDefinitionForRuleContext(name),
+				symbolDefinitionForRuleContext(c.ParentReference()),
+				true)
+			l.Instances[strings.ToUpper(psym.Name())] = psym
+		}
+	}
 }
 
 // EnterBlockDef ...
@@ -260,7 +280,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 		}
 		psym := NewPrototypeOrInstanceSymbol(
 			c.NameNode().GetText(),
-			c.ParentReference().(*parser.ParentReferenceContext).Identifier().GetText(),
+			c.ParentReference().GetText(),
 			l.source,
 			"",
 			symbolDefinitionForRuleContext(c.NameNode()),
@@ -277,13 +297,13 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 		}
 		psym := NewPrototypeOrInstanceSymbol(
 			c.NameNode().GetText(),
-			c.ParentReference().(*parser.ParentReferenceContext).Identifier().GetText(),
+			c.ParentReference().GetText(),
 			l.source,
 			"",
 			symbolDefinitionForRuleContext(c.NameNode()),
 			symbolDefinitionForRuleContext(c.StatementBlock()),
 			true)
-		l.Prototypes[strings.ToUpper(psym.Name())] = psym
+		l.Instances[strings.ToUpper(psym.Name())] = psym
 	}
 }
 

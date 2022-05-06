@@ -108,6 +108,7 @@ func NewClassSymbol(name, source, documentation string, definiton SymbolDefiniti
 // NewPrototypeOrInstanceSymbol ...
 func NewPrototypeOrInstanceSymbol(name, parent, source, documentation string, definiton SymbolDefinition, bodyDef SymbolDefinition, isInstance bool) ProtoTypeOrInstanceSymbol {
 	return ProtoTypeOrInstanceSymbol{
+		Parent: parent,
 		symbolBase: symbolBase{
 			NameValue:           name,
 			SymbolSource:        source,

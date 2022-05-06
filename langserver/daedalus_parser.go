@@ -224,11 +224,13 @@ func (p *ParseResult) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolT
 type parseResultsManager struct {
 	parseResults map[string]*ParseResult
 	mtx          sync.RWMutex
+	logger       Logger
 }
 
-func newParseResultsManager() *parseResultsManager {
+func newParseResultsManager(logger Logger) *parseResultsManager {
 	return &parseResultsManager{
 		parseResults: make(map[string]*ParseResult),
+		logger:       logger,
 	}
 }
 
@@ -296,7 +298,7 @@ func (m *parseResultsManager) Update(documentURI, content string) (*ParseResult,
 	return r, nil
 }
 
-func resolveSrcPaths(srcFile, prefixDir string) []string {
+func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) []string {
 	fileBytes, err := os.ReadFile(srcFile)
 	if err != nil {
 		return []string{}
@@ -346,8 +348,8 @@ func resolveSrcPaths(srcFile, prefixDir string) []string {
 				resolvedPaths = append(resolvedPaths, absPath)
 			}
 		} else if ext == ".src" {
-			fmt.Fprintf(os.Stderr, "Collecting scripts from %q\n", filepath.Join(prefixDir, dir, fname))
-			resolvedPaths = append(resolvedPaths, resolveSrcPaths(filepath.Join(prefixDir, line), filepath.Join(prefixDir, dir))...)
+			m.logger.Infof("Collecting scripts from %q", filepath.Join(prefixDir, dir, fname))
+			resolvedPaths = append(resolvedPaths, m.resolveSrcPaths(filepath.Join(prefixDir, line), filepath.Join(prefixDir, dir))...)
 		}
 	}
 
@@ -413,8 +415,8 @@ func (m *parseResultsManager) validateFiles(resolvedPaths []string) map[string][
 }
 
 func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error) {
-	resolvedPaths := resolveSrcPaths(srcFile, filepath.Dir(srcFile))
-	fmt.Fprintf(os.Stderr, "Parsing %q. This might take a while.\n", srcFile)
+	resolvedPaths := m.resolveSrcPaths(srcFile, filepath.Dir(srcFile))
+	m.logger.Infof("Parsing %q. This might take a while.", srcFile)
 
 	results := make([]*ParseResult, 0, len(resolvedPaths))
 
@@ -474,6 +476,6 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "Done parsing %q: %d scripts.\n", srcFile, len(results))
+	m.logger.Infof("Done parsing %q: %d scripts.", srcFile, len(results))
 	return results, nil
 }

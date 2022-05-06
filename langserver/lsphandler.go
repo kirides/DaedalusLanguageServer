@@ -31,7 +31,7 @@ var (
 // NewLspHandler ...
 func NewLspHandler(conn jsonrpc2.Conn, logger Logger) *LspHandler {
 	bufferManager := NewBufferManager()
-	parsedDocuments := newParseResultsManager()
+	parsedDocuments := newParseResultsManager(logger)
 	return &LspHandler{
 		baseLspHandler: baseLspHandler{
 			logger: logger,
@@ -101,11 +101,10 @@ func fieldsToCompletionItems(fields []Symbol) []lsp.CompletionItem {
 }
 
 func (h *LspHandler) getTypeFieldsAsCompletionItems(ctx context.Context, symbolName string) ([]lsp.CompletionItem, error) {
-	sym, ok := h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(symbolName), SymbolAll)
+	sym, ok := h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(symbolName), SymbolVariable|SymbolClass|SymbolInstance|SymbolPrototype)
 	if !ok {
 		return []lsp.CompletionItem{}, nil
 	}
-	h.logger.Infof("GetPrototype: %#v", sym)
 	if clsSym, ok := sym.(ClassSymbol); ok {
 		return fieldsToCompletionItems(clsSym.Fields), nil
 	}
@@ -422,9 +421,9 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 	}()
 
 	if h.initialDiagnostics != nil && len(h.initialDiagnostics) > 0 {
-		fmt.Fprintf(os.Stderr, "Publishing initial diagnostics (%d).\n", len(h.initialDiagnostics))
+		h.LogInfo("Publishing initial diagnostics (%d).", len(h.initialDiagnostics))
 		for k, v := range h.initialDiagnostics {
-			fmt.Fprintf(os.Stderr, "> %s\n", k)
+			h.LogInfo("> %s", k)
 			h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
 				URI:         lsp.DocumentURI(uri.File(k)),
 				Diagnostics: v,
