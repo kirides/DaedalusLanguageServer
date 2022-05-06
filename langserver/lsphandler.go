@@ -74,6 +74,8 @@ func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
 	switch s.(type) {
 	case VariableSymbol:
 		return lsp.CompletionItemKindVariable, nil
+	case ArrayVariableSymbol:
+		return lsp.CompletionItemKindVariable, nil
 	case ConstantSymbol:
 		return lsp.CompletionItemKindConstant, nil
 	case FunctionSymbol:
@@ -86,10 +88,46 @@ func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
 	return lsp.CompletionItemKind(-1), fmt.Errorf("Symbol not found")
 }
 
+func fieldsToCompletionItems(fields []Symbol) []lsp.CompletionItem {
+	result := make([]lsp.CompletionItem, 0, len(fields))
+	for _, v := range fields {
+		ci, err := completionItemFromSymbol(v)
+		if err != nil {
+			continue
+		}
+		result = append(result, ci)
+	}
+	return result
+}
+
+func (h *LspHandler) getTypeFieldsAsCompletionItems(ctx context.Context, symbolName string) ([]lsp.CompletionItem, error) {
+	sym, ok := h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(symbolName), SymbolAll)
+	if !ok {
+		return []lsp.CompletionItem{}, nil
+	}
+	h.logger.Infof("GetPrototype: %#v", sym)
+	if clsSym, ok := sym.(ClassSymbol); ok {
+		return fieldsToCompletionItems(clsSym.Fields), nil
+	}
+	if protoSym, ok := sym.(ProtoTypeOrInstanceSymbol); ok {
+		return h.getTypeFieldsAsCompletionItems(ctx, protoSym.Parent)
+	}
+	if varSym, ok := sym.(VariableSymbol); ok {
+		return h.getTypeFieldsAsCompletionItems(ctx, varSym.Type)
+	}
+	return []lsp.CompletionItem{}, nil
+}
+
 func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	result := make([]lsp.CompletionItem, 0, 200)
 	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
 	if err == nil {
+		doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
+		proto, _, err := doc.GetParentSymbolReference(params.Position)
+		if err == nil && proto != "" {
+			return h.getTypeFieldsAsCompletionItems(ctx, proto)
+		}
+
 		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 		for _, fn := range parsedDoc.Functions {
 			if fn.BodyDefinition.InBBox(di) {
@@ -160,6 +198,7 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Sy
 
 func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.SignatureHelp, error) {
 	doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
+
 	methodCallLine := doc.GetMethodCall(params.Position)
 	// The expected method call turned out to be a `func void something( ... )` -> a function definition
 	if rxFunctionDef.MatchString(methodCallLine) {

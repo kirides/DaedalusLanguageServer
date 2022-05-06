@@ -61,6 +61,20 @@ func NewVariableSymbol(name, varType, source, documentation string, definiton Sy
 	}
 }
 
+// NewVariableSymbol ...
+func NewArrayVariableSymbol(name, varType, sizeText, source, documentation string, definiton SymbolDefinition) ArrayVariableSymbol {
+	return ArrayVariableSymbol{
+		Type:          varType,
+		ArraySizeText: sizeText,
+		symbolBase: symbolBase{
+			NameValue:           name,
+			SymbolSource:        source,
+			SymbolDocumentation: documentation,
+			SymbolDefinition:    definiton,
+		},
+	}
+}
+
 // NewConstantSymbol ...
 func NewConstantSymbol(name, varType, source, documentation string, definiton SymbolDefinition, value string) ConstantSymbol {
 	return ConstantSymbol{
@@ -78,7 +92,7 @@ func NewConstantSymbol(name, varType, source, documentation string, definiton Sy
 }
 
 // NewClassSymbol ...
-func NewClassSymbol(name, source, documentation string, definiton SymbolDefinition, bodyDef SymbolDefinition, fields []VariableSymbol) ClassSymbol {
+func NewClassSymbol(name, source, documentation string, definiton SymbolDefinition, bodyDef SymbolDefinition, fields []Symbol) ClassSymbol {
 	return ClassSymbol{
 		symbolBase: symbolBase{
 			NameValue:           name,
@@ -150,6 +164,18 @@ func (s VariableSymbol) String() string {
 	return "var " + s.Type + " " + s.Name()
 }
 
+// VariableSymbol ...
+type ArrayVariableSymbol struct {
+	Type          string
+	ArraySizeText string
+	symbolBase
+}
+
+// String ...
+func (s ArrayVariableSymbol) String() string {
+	return "var " + s.Type + "[" + s.ArraySizeText + "]" + " " + s.Name()
+}
+
 // ConstantSymbol ...
 type ConstantSymbol struct {
 	Value string
@@ -163,7 +189,7 @@ func (s ConstantSymbol) String() string {
 
 // ClassSymbol ...
 type ClassSymbol struct {
-	Fields []VariableSymbol
+	Fields []Symbol
 	symbolBase
 	BodyDefinition SymbolDefinition
 }

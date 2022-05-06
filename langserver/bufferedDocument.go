@@ -1,6 +1,7 @@
 package langserver
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -58,6 +59,74 @@ func (m BufferedDocument) GetWordRangeAtPosition(position lsp.Position) string {
 		start++ // skip the first bad character
 	}
 	return doc[start : start+(end-start)]
+}
+
+func (m BufferedDocument) GetParentSymbolReference(position lsp.Position) (parent string, partial string, err error) {
+	doc := string(m)
+	c := doc
+	currentLine := 0
+	offset := 0
+	line := int(position.Line)
+	startOfLine := 0
+	for currentLine < line && offset < len(doc) {
+		currentLine++
+		lineEnd := strings.IndexRune(c, '\n')
+		if lineEnd == -1 {
+			break
+		}
+		offset += lineEnd
+		if len(c) < lineEnd+1 {
+			break
+		}
+		offset++
+		c = c[lineEnd+1:]
+	}
+
+	startOfLine = offset
+	if position.Character > 0 {
+		offset += int(position.Character)
+	}
+
+	lineContent := doc[startOfLine:offset]
+
+	o := len(lineContent) - 1
+	start := o
+
+	foundDot := false
+	for o >= 0 {
+		token := lineContent[o]
+		r := rune(token)
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' {
+			o--
+			continue
+		}
+		if r == '.' {
+			foundDot = true
+		}
+		break
+	}
+	if !foundDot {
+		return "", "", fmt.Errorf("not found")
+	}
+	idxDot := o
+	o--
+	foundIdentifier := false
+	for o >= 0 {
+		token := lineContent[o]
+		r := rune(token)
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' {
+			o--
+			foundIdentifier = true
+			continue
+		}
+		break
+	}
+
+	if foundIdentifier {
+		o++
+		return lineContent[o:idxDot], lineContent[idxDot:start], nil
+	}
+	return "", "", fmt.Errorf("not found")
 }
 
 // GetMethodCall ...

@@ -209,7 +209,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 		if !ok {
 			continue
 		}
-		cFields := []VariableSymbol{}
+		cFields := []Symbol{}
 		for _, iv := range c.AllVarDecl() {
 			v := iv.(*parser.VarDeclContext)
 			for _, ivv := range v.AllVarValueDecl() {
@@ -217,6 +217,17 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 				cFields = append(cFields,
 					NewVariableSymbol(vv.NameNode().GetText(),
 						v.TypeReference().GetText(),
+						l.source,
+						"",
+						symbolDefinitionForRuleContext(vv.NameNode())),
+				)
+			}
+			for _, ivv := range v.AllVarArrayDecl() {
+				vv := ivv.(*parser.VarArrayDeclContext)
+
+				cFields = append(cFields,
+					NewVariableSymbol(vv.NameNode().GetText(),
+						v.TypeReference().GetText()+"["+vv.ArraySize().GetText()+"]",
 						l.source,
 						"",
 						symbolDefinitionForRuleContext(vv.NameNode())),
