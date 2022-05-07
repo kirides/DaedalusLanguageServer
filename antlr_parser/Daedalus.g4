@@ -33,7 +33,8 @@ fragment IdStart : GermanCharacter | [a-zA-Z_];
 fragment IdStartNumeric : Digit+ IdStart;
 fragment IdContinue : IdStart | IdSpecial | Digit;
 fragment IdSpecial : [@^];
-fragment GermanCharacter : [\u00DF\u00E4\u00F6\u00FC];
+//                             ß     Ä     ä     Ö     ö     Ü     ü
+fragment GermanCharacter : [\u00DF\u00C4\u00E4\u00D6\u00F6\u00DC\u00FC];
 fragment Digit : [0-9];
 fragment PointFloat : Digit* '.' Digit+ | Digit+ '.';
 fragment ExponentFloat : (Digit+ | PointFloat) Exponent;
