@@ -8,6 +8,13 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
+type nopLogger struct{}
+
+func (nopLogger) Debugf(template string, args ...interface{}) {}
+func (nopLogger) Infof(template string, args ...interface{})  {}
+func (nopLogger) Warnf(template string, args ...interface{})  {}
+func (nopLogger) Errorf(template string, args ...interface{}) {}
+
 func TestParseSingleScript(t *testing.T) {
 	script := `
 	/// Summary line 1
@@ -22,7 +29,8 @@ func TestParseSingleScript(t *testing.T) {
 		HookEngineF(oCNpc__OnDamage_Hit, 7, _DMG_OnDmg_Pre);
 		dmg = 1;
 	};`
-	m := newParseResultsManager()
+
+	m := newParseResultsManager(nopLogger{})
 	result := m.ParseScript("C:\\temp", script)
 	b, _ := json.MarshalIndent(result, "", "  ")
 	t.Logf("%s\n", b)
@@ -32,14 +40,15 @@ func TestParseSingleScriptFromFile(t *testing.T) {
 	fileBody, _ := os.ReadFile(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\LeGo\Int64.d`)
 	script, _ := charmap.Windows1252.NewDecoder().Bytes(fileBody)
 
-	m := newParseResultsManager()
+	m := newParseResultsManager(nopLogger{})
 	result := m.ParseScript("C:\\temp", string(script))
 	b, _ := json.MarshalIndent(result, "", "  ")
 	t.Logf("%s\n", b)
 }
 
 func TestGothicSrc(t *testing.T) {
-	paths := resolveSrcPaths(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\Gothic.src`, `E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content`)
+	m := newParseResultsManager(nopLogger{})
+	paths := m.resolveSrcPaths(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\Gothic.src`, `E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content`)
 
 	// result := ParseScript("C:\\temp", string(script))
 	b, _ := json.MarshalIndent(paths, "", "  ")
