@@ -54,57 +54,11 @@ func NewLspHandler(conn jsonrpc2.Conn, logger Logger) *LspHandler {
 	}
 }
 
-func completionItemFromSymbol(s Symbol) (lsp.CompletionItem, error) {
-	kind, err := completionItemKindForSymbol(s)
-	if err != nil {
-		return lsp.CompletionItem{}, err
-	}
-	return lsp.CompletionItem{
-		Kind:   kind,
-		Label:  s.Name(),
-		Detail: s.String(),
-		Documentation: lsp.MarkupContent{
-			Kind:  lsp.PlainText,
-			Value: s.Documentation(),
-		},
-	}, nil
-}
-
-func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
-	switch s.(type) {
-	case VariableSymbol:
-		return lsp.CompletionItemKindVariable, nil
-	case ArrayVariableSymbol:
-		return lsp.CompletionItemKindVariable, nil
-	case ConstantSymbol:
-		return lsp.CompletionItemKindConstant, nil
-	case FunctionSymbol:
-		return lsp.CompletionItemKindFunction, nil
-	case ClassSymbol:
-		return lsp.CompletionItemKindClass, nil
-	case ProtoTypeOrInstanceSymbol:
-		return lsp.CompletionItemKindClass, nil
-	}
-	return lsp.CompletionItemKind(-1), fmt.Errorf("Symbol not found")
-}
-
-func fieldsToCompletionItems(fields []Symbol) []lsp.CompletionItem {
-	result := make([]lsp.CompletionItem, 0, len(fields))
-	for _, v := range fields {
-		ci, err := completionItemFromSymbol(v)
-		if err != nil {
-			continue
-		}
-		result = append(result, ci)
-	}
-	return result
-}
-
-func (h *LspHandler) getTypeFieldsAsCompletionItems(ctx context.Context, symbolName string, locals map[string]Symbol) ([]lsp.CompletionItem, error) {
+func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string, locals map[string]Symbol) ([]lsp.CompletionItem, error) {
 	symName := strings.ToUpper(symbolName)
 	sym, ok := locals[symName]
 	if !ok {
-		sym, ok = h.parsedDocuments.LookupGlobalSymbol(symName, SymbolVariable|SymbolClass|SymbolInstance|SymbolPrototype)
+		sym, ok = docs.LookupGlobalSymbol(symName, SymbolVariable|SymbolClass|SymbolInstance|SymbolPrototype)
 	}
 
 	if !ok {
@@ -114,39 +68,29 @@ func (h *LspHandler) getTypeFieldsAsCompletionItems(ctx context.Context, symbolN
 		return fieldsToCompletionItems(clsSym.Fields), nil
 	}
 	if protoSym, ok := sym.(ProtoTypeOrInstanceSymbol); ok {
-		return h.getTypeFieldsAsCompletionItems(ctx, protoSym.Parent, locals)
+		return getTypeFieldsAsCompletionItems(docs, protoSym.Parent, locals)
 	}
 	if varSym, ok := sym.(VariableSymbol); ok {
-		return h.getTypeFieldsAsCompletionItems(ctx, varSym.Type, locals)
+		return getTypeFieldsAsCompletionItems(docs, varSym.Type, locals)
 	}
 	return []lsp.CompletionItem{}, nil
 }
 
-func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	result := make([]lsp.CompletionItem, 0, 200)
 	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
 	if err == nil {
 		doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
 		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 
+		// dot-completion
 		proto, _, err := doc.GetParentSymbolReference(params.Position)
 		if err == nil && proto != "" {
-			locals := map[string]Symbol{}
-			for _, fn := range parsedDoc.Functions {
-				if fn.BodyDefinition.InBBox(di) {
-					for _, p := range fn.Parameters {
-						locals[strings.ToUpper(p.Name())] = p
-					}
-					for _, p := range fn.LocalVariables {
-						locals[strings.ToUpper(p.Name())] = p
-					}
-					break
-				}
-			}
-
-			return h.getTypeFieldsAsCompletionItems(ctx, proto, locals)
+			locals := parsedDoc.ScopedVariables(di)
+			return getTypeFieldsAsCompletionItems(h.parsedDocuments, proto, locals)
 		}
 
+		// locally scoped variables ordered at the top
 		localSortIdx := 0
 		for _, fn := range parsedDoc.Functions {
 			if fn.BodyDefinition.InBBox(di) {
@@ -174,6 +118,7 @@ func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.
 			}
 		}
 	}
+
 	h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
 		ci, err := completionItemFromSymbol(s)
 		if err != nil {
@@ -186,6 +131,25 @@ func (h *LspHandler) getTextDocumentCompletion(ctx context.Context, params *lsp.
 	return result, nil
 }
 
+func (h *LspHandler) lookUpScopedSymbol(documentURI, identifier string, position lsp.Position) Symbol {
+	p, err := h.parsedDocuments.Get(documentURI)
+	if err != nil {
+		return nil
+	}
+
+	di := DefinitionIndex{Line: int(position.Line), Column: int(position.Character)}
+
+	var sym Symbol
+	p.WalkScopedVariables(di, func(s Symbol) bool {
+		if strings.EqualFold(s.Name(), identifier) {
+			sym = s
+			return false
+		}
+		return true
+	})
+	return sym
+}
+
 func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Symbol, error) {
 	doc := h.bufferManager.GetBuffer(documentURI)
 	if doc == "" {
@@ -193,23 +157,8 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Sy
 	}
 	identifier := doc.GetWordRangeAtPosition(position)
 
-	p, err := h.parsedDocuments.Get(documentURI)
-	if err == nil {
-		di := DefinitionIndex{Line: int(position.Line), Column: int(position.Character)}
-		for _, f := range p.Functions {
-			if f.BodyDefinition.InBBox(di) {
-				for _, param := range f.Parameters {
-					if strings.EqualFold(param.Name(), identifier) {
-						return param, nil
-					}
-				}
-				for _, local := range f.LocalVariables {
-					if strings.EqualFold(local.Name(), identifier) {
-						return local, nil
-					}
-				}
-			}
-		}
+	if v := h.lookUpScopedSymbol(documentURI, identifier, position); v != nil {
+		return v, nil
 	}
 
 	symbol, found := h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(identifier), SymbolAll)
@@ -309,7 +258,7 @@ func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextD
 }
 
 func (h *LspHandler) handleTextDocumentCompletion(req RpcContext, data lsp.CompletionParams) error {
-	items, err := h.getTextDocumentCompletion(req.Context(), &data)
+	items, err := h.getTextDocumentCompletion(&data)
 	replyEither(req.Context(), req, items, err)
 	return nil
 }
