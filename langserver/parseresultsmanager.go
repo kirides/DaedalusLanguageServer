@@ -92,14 +92,14 @@ func (m *parseResultsManager) Update(documentURI, content string) (*ParseResult,
 	return r, nil
 }
 
-func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) []string {
+func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) ([]string, error) {
 	fileBytes, err := os.ReadFile(srcFile)
 	if err != nil {
-		return []string{}
+		return nil, err
 	}
 	decodedContent, err := charmap.Windows1252.NewDecoder().Bytes(fileBytes)
 	if err != nil {
-		return []string{}
+		return nil, err
 	}
 	srcContent := string(decodedContent)
 
@@ -149,11 +149,14 @@ func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) []strin
 			}
 		} else if ext == ".src" {
 			m.logger.Infof("Collecting scripts from %q", filepath.Join(prefixDir, dir, fname))
-			resolvedPaths = append(resolvedPaths, m.resolveSrcPaths(filepath.Join(prefixDir, line), filepath.Join(prefixDir, dir))...)
+			inner, err := m.resolveSrcPaths(filepath.Join(prefixDir, line), filepath.Join(prefixDir, dir))
+			if err == nil {
+				resolvedPaths = append(resolvedPaths, inner...)
+			}
 		}
 	}
 
-	return resolvedPaths
+	return resolvedPaths, nil
 }
 
 var (
@@ -214,8 +217,34 @@ func (m *parseResultsManager) validateFiles(resolvedPaths []string) map[string][
 	return results
 }
 
+func (m *parseResultsManager) validateFile(dPath string) ([]SyntaxError, error) {
+	buf := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(buf)
+
+	decoder := decoderPool.Get().(*encoding.Decoder)
+	defer decoderPool.Put(decoder)
+
+	f, err := os.Open(dPath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	decoder.Reset()
+	translated := decoder.Reader(f)
+	buf.Reset()
+	_, err = buf.ReadFrom(translated)
+	if err != nil {
+		return nil, err
+	}
+	return m.ValidateScript(dPath, buf.String()), nil
+}
+
 func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error) {
-	resolvedPaths := m.resolveSrcPaths(srcFile, filepath.Dir(srcFile))
+	resolvedPaths, err := m.resolveSrcPaths(srcFile, filepath.Dir(srcFile))
+	if err != nil {
+		return nil, err
+	}
 	m.logger.Infof("Parsing %q. This might take a while.", srcFile)
 
 	results := make([]*ParseResult, 0, len(resolvedPaths))
@@ -278,4 +307,38 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 
 	m.logger.Infof("Done parsing %q: %d scripts.", srcFile, len(results))
 	return results, nil
+}
+
+func (m *parseResultsManager) ParseFile(dFile string) (*ParseResult, error) {
+	buf := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(buf)
+
+	decoder := decoderPool.Get().(*encoding.Decoder)
+	defer decoderPool.Put(decoder)
+
+	f, err := os.Open(dFile)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	decoder.Reset()
+	translated := decoder.Reader(f)
+	buf.Reset()
+	_, err = buf.ReadFrom(translated)
+	if err != nil {
+		return nil, err
+	}
+
+	parsed := m.ParseScript(dFile, buf.String())
+
+	m.mtx.Lock()
+	m.parseResults[parsed.Source] = parsed
+	m.mtx.Unlock()
+
+	validations, err := m.validateFile(parsed.Source)
+
+	if err == nil && len(validations) > 0 {
+		parsed.SyntaxErrors = append(parsed.SyntaxErrors, validations...)
+	}
+	return parsed, nil
 }

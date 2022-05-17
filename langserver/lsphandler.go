@@ -362,6 +362,22 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				return
 			}
 
+			if _, err := os.Stat(filepath.Join("_externals", "externals.src")); err == nil {
+				customBuiltins, err := h.parsedDocuments.ParseSource(filepath.Join("_externals", "externals.src"))
+				if err != nil {
+					h.LogError("Error parsing %q: %v", filepath.Join("_externals", "externals.src"), err)
+				} else {
+					resultsX = append(resultsX, customBuiltins...)
+				}
+			} else if _, err := os.Stat(filepath.Join("_externals", "externals.d")); err == nil {
+				parsed, err := h.parsedDocuments.ParseFile(filepath.Join("_externals", "externals.d"))
+				if err != nil {
+					h.LogError("Error parsing %q: %v", filepath.Join("_externals", "externals.d"), err)
+				} else {
+					resultsX = append(resultsX, parsed)
+				}
+			}
+
 			for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
 				if _, err := os.Stat(v); err == nil {
 					results, err := h.parsedDocuments.ParseSource(v)
