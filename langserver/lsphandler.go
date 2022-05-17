@@ -209,30 +209,40 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 
 	funcSymbol, found := h.parsedDocuments.LookupGlobalSymbol(word, SymbolFunction)
 	if !found {
-		return lsp.SignatureHelp{}, fmt.Errorf("no functino symbol found")
+		return lsp.SignatureHelp{}, fmt.Errorf("no function symbol found")
 	}
 	sigCtx := methodCallLine[idxParen+1:]
 	fn := funcSymbol.(FunctionSymbol)
 
 	var fnParams []lsp.ParameterInformation
 	for _, p := range fn.Parameters {
+		doc := findJavadocParam(fn.Documentation(), p.Name())
+		var mdDoc interface{}
+		if doc != "" {
+			mdDoc = &lsp.MarkupContent{
+				Kind:  lsp.Markdown,
+				Value: fmt.Sprintf("**%s** - *%s*", p.Name(), doc),
+			}
+		}
 		fnParams = append(fnParams, lsp.ParameterInformation{
-			Label: p.String(),
+			Label:         p.String(),
+			Documentation: mdDoc,
 		})
 	}
 
+	paramIdx := uint32(strings.Count(sigCtx, ","))
 	return lsp.SignatureHelp{
 		Signatures: []lsp.SignatureInformation{
 			{
 				Documentation: &lsp.MarkupContent{
 					Kind:  lsp.Markdown,
-					Value: fn.Documentation(),
+					Value: simpleJavadocMD(fn),
 				},
 				Label:      fn.String(),
 				Parameters: fnParams,
 			},
 		},
-		ActiveParameter: uint32(strings.Count(sigCtx, ",")),
+		ActiveParameter: paramIdx,
 		ActiveSignature: 0,
 	}, nil
 }
@@ -284,7 +294,7 @@ func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocume
 		},
 		Contents: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
-			Value: strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(found.Documentation(), "\r", ""), "\n", "  \n") + "\n```daedalus\n" + found.String() + "\n```"),
+			Value: strings.TrimSpace(simpleJavadocMD(found) + "\n```daedalus\n" + found.String() + "\n```"),
 		},
 	}, nil)
 }

@@ -16,8 +16,8 @@ func completionItemFromSymbol(s Symbol) (lsp.CompletionItem, error) {
 		Label:  s.Name(),
 		Detail: s.String(),
 		Documentation: lsp.MarkupContent{
-			Kind:  lsp.PlainText,
-			Value: s.Documentation(),
+			Kind:  lsp.Markdown,
+			Value: simpleJavadocMD(s),
 		},
 	}, nil
 }
