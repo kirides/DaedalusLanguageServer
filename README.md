@@ -1,4 +1,6 @@
+## Usage
 
+see: https://github.com/kirides/vscode-daedalus
 
 ## Custom externals
 
