@@ -362,19 +362,26 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				return
 			}
 
-			if _, err := os.Stat(filepath.Join("_externals", "externals.src")); err == nil {
-				customBuiltins, err := h.parsedDocuments.ParseSource(filepath.Join("_externals", "externals.src"))
+			externalsSrc := filepath.Join("_externals", "externals.src")
+			externalsDaedalus := filepath.Join("_externals", "externals.d")
+			if _, err := os.Stat(externalsSrc); err == nil {
+				customBuiltins, err := h.parsedDocuments.ParseSource(externalsSrc)
 				if err != nil {
-					h.LogError("Error parsing %q: %v", filepath.Join("_externals", "externals.src"), err)
+					h.LogError("Error parsing %q: %v", externalsSrc, err)
 				} else {
 					resultsX = append(resultsX, customBuiltins...)
 				}
-			} else if _, err := os.Stat(filepath.Join("_externals", "externals.d")); err == nil {
-				parsed, err := h.parsedDocuments.ParseFile(filepath.Join("_externals", "externals.d"))
+			} else if _, err := os.Stat(externalsDaedalus); err == nil {
+				abs, err := filepath.Abs(externalsDaedalus)
 				if err != nil {
-					h.LogError("Error parsing %q: %v", filepath.Join("_externals", "externals.d"), err)
+					h.LogError("Error parsing %q: %v", externalsDaedalus, err)
 				} else {
-					resultsX = append(resultsX, parsed)
+					parsed, err := h.parsedDocuments.ParseFile(abs)
+					if err != nil {
+						h.LogError("Error parsing %q: %v", abs, err)
+					} else {
+						resultsX = append(resultsX, parsed)
+					}
 				}
 			}
 
