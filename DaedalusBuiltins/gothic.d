@@ -1,3 +1,9 @@
+var C_NPC hero;
+var C_NPC self;
+var C_NPC other;
+var C_NPC victim;
+var C_ITEM item;
+var instance NULL;
 var instance instance_help;
 func string IntToString(var int par0) {};
 func string FloatToString(var float par0) {};
@@ -53,41 +59,41 @@ func void CreateInvItem(var instance par0, var int par1) {};
 func void CreateInvItems(var instance par0, var int par1, var int par2) {};
 func int Npc_GetInvItem(var c_npc self, var int iteminstance) {};
 func int Npc_GetInvItembyslot(var c_npc self, var int category, var int slotnr) {};
-func int Npc_RemoveInvItem(var instance par0, var int par1) {};
-func int Npc_RemoveInvItems(var instance par0, var int par1, var int par2) {};
-func void Npc_ClearInventory(var instance par0) {};
-func int Npc_IsInState(var instance par0, var func par1) {};
-func int Npc_WasInState(var instance par0, var func par1) {};
-func int Npc_IsInroutine(var instance par0, var func par1) {};
-func void AI_SetnpcstoState(var instance par0, var func par1, var int par2) {};
-func int Npc_HasDetectedNpc(var instance par0, var instance par1) {};
-func void Npc_SetAttitude(var instance par0, var int par1) {};
-func void Npc_SettempAttitude(var instance par0, var int par1) {};
-func int Npc_GetAttitude(var instance par0, var instance par1) {};
-func int Npc_GetpermAttitude(var instance par0, var instance par1) {};
-func void Npc_ChangeAttribute(var instance npc, var int atr, var int val) {};
-func int Npc_Getcomrades(var instance par0) {};
-func int Npc_Isnear(var instance par0, var instance par1) {};
-func int Npc_GetDisttonpc(var instance par0, var instance par1) {};
-func int Npc_GetHeightToNpc(var instance par0, var instance par1) {};
-func int Npc_GetHeightToItem(var instance par0, var instance par1) {};
-func int Npc_GetDisttoplayer(var instance par0) {};
-func int Npc_GetDisttoItem(var instance par0, var instance par1) {};
-func int Npc_GetDisttowp(var instance par0, var string par1) {};
-func int Npc_CanSeeNpc(var instance par0, var instance par1) {};
-func int Npc_CanSeeNpcFreeLOS(var instance par0, var instance par1) {};
-func int Npc_CanSeeItem(var instance par0, var instance par1) {};
-func int Npc_IsPlayer(var instance par0) {};
-func int Npc_KnowsPlayer(var instance par0, var instance par1) {};
-func void Npc_SetKnowsPlayer(var instance par0, var instance par1) {};
-func int Npc_IsInfightMode(var instance par0, var int par1) {};
-func int Npc_Isaiming(var instance par0, var instance par1) {};
-func int Npc_startItemreactmodules(var instance par0, var instance par1, var instance par2) {};
-func int Npc_Hasoffered(var instance par0, var instance par1, var int par2) {};
+func int Npc_RemoveInvItem(var C_NPC npc, var int par1) {};
+func int Npc_RemoveInvItems(var C_NPC npc, var int par1, var int par2) {};
+func void Npc_ClearInventory(var C_NPC npc) {};
+func int Npc_IsInState(var C_NPC npc, var func par1) {};
+func int Npc_WasInState(var C_NPC npc, var func par1) {};
+func int Npc_IsInroutine(var C_NPC npc, var func par1) {};
+func void AI_SetnpcstoState(var C_NPC npc, var func par1, var int par2) {};
+func int Npc_HasDetectedNpc(var C_NPC npc, var instance par1) {};
+func void Npc_SetAttitude(var C_NPC npc, var int par1) {};
+func void Npc_SettempAttitude(var C_NPC npc, var int par1) {};
+func int Npc_GetAttitude(var C_NPC npc, var instance par1) {};
+func int Npc_GetpermAttitude(var C_NPC npc, var instance par1) {};
+func void Npc_ChangeAttribute(var C_NPC npc, var int atr, var int val) {};
+func int Npc_Getcomrades(var C_NPC npc) {};
+func int Npc_Isnear(var C_NPC npc, var instance par1) {};
+func int Npc_GetDisttonpc(var C_NPC npc, var C_NPC par1) {};
+func int Npc_GetHeightToNpc(var C_NPC npc, var C_NPC oth) {};
+func int Npc_GetHeightToItem(var C_NPC npc, var C_ITEM itm) {};
+func int Npc_GetDisttoplayer(var C_NPC npc) {};
+func int Npc_GetDisttoItem(var C_NPC npc, var C_ITEM itm) {};
+func int Npc_GetDisttowp(var C_NPC npc, var string par1) {};
+func int Npc_CanSeeNpc(var C_NPC npc, var instance par1) {};
+func int Npc_CanSeeNpcFreeLOS(var C_NPC npc, var instance par1) {};
+func int Npc_CanSeeItem(var C_NPC npc, var instance par1) {};
+func int Npc_IsPlayer(var C_NPC npc) {};
+func int Npc_KnowsPlayer(var C_NPC npc, var instance par1) {};
+func void Npc_SetKnowsPlayer(var C_NPC npc, var instance par1) {};
+func int Npc_IsInfightMode(var C_NPC npc, var int par1) {};
+func int Npc_Isaiming(var C_NPC npc, var instance par1) {};
+func int Npc_startItemreactmodules(var C_NPC npc, var instance par1, var instance par2) {};
+func int Npc_Hasoffered(var C_NPC npc, var instance par1, var int par2) {};
 func void equipItem(var instance par0, var int par1) {};
-func void Npc_SettofistMode(var instance par0) {};
-func void Npc_SettofightMode(var instance par0, var int par1) {};
-func int Npc_Isdead(var instance par0) {};
+func void Npc_SettofistMode(var C_NPC npc) {};
+func void Npc_SettofightMode(var C_NPC npc, var int par1) {};
+func int Npc_Isdead(var C_NPC npc) {};
 func void AI_StartState(var instance par0, var func par1, var int par2, var string par3) {};
 func void AI_ContinueRoutine(var instance par0) {};
 func int Npc_GetStateTime(var instance par0) {};
@@ -101,7 +107,18 @@ func void AI_Wait(var instance par0, var float par1) {};
 func void AI_WaitMs(var instance par0, var int par1) {};
 func void AI_WaitTillEnd(var instance par0, var instance par1) {};
 func void AI_AlignToWP(var instance par0) {};
-func void AI_SetWalkMode(var instance par0, var int par1) {};
+/// @slf - Target Npc  
+/// @walkMode - The Walkmode, one of the values below
+/// 
+/// Constant           | Value
+/// ---                | ---
+/// `NPC_RUN`          | 0
+/// `NPC_WALK`         | 1
+/// `NPC_SNEAK`	       | 2
+/// `NPC_RUN_WEAPON`   | 0 + 128
+/// `NPC_WALK_WEAPON`  | 1 + 128
+/// `NPC_SNEAK_WEAPON` | 2 + 128
+func void AI_SetWalkMode(var instance slf, var int walkMode) {};
 func void AI_PlayAni(var instance par0, var string par1) {};
 func void AI_PlayAniBS(var instance par0, var string par1, var int par2) {};
 func void AI_GoToWP(var instance par0, var string par1) {};
@@ -250,7 +267,7 @@ func int Wld_IsRaining() {};
 func void Wld_SetTime(var int par0, var int par1) {};
 func void Wld_InsertNpc(var int par0, var string par1) {};
 func void Wld_SpawnNpcRange(var instance par0, var int par1, var int par2, var float par3) {};
-func void Wld_PlayEffect(var string par0, var instance par1, var instance par2, var int par3, var int par4, var int par5, var int par6) {};
+func void Wld_PlayEffect(var string effectInstance, var instance originVob, var instance targetVob, var int effectLevel, var int damage, var int damageType, var int bIsProjectile) {};
 func void Wld_StopEffect(var string par0) {};
 func void AI_PlayFx(var instance par0, var instance par1, var string par2) {};
 func void AI_StopFx(var instance par0, var string par1) {};
@@ -298,7 +315,7 @@ func void PERC_SetRange(var int par0, var int par1) {};
 func void Npc_SetPercTime(var instance par0, var float par1) {};
 func void Npc_PercEnable(var instance par0, var int par1, var func par2) {};
 func void Npc_PercDisable(var instance par0, var int par1) {};
-func void Npc_SendPassivePerc(var instance par0, var int par1, var instance par2, var instance par3) {};
+func void Npc_SendPassivePerc(var instance slf, var int perc, var C_NPC vic, var C_NPC oth) {};
 func void Npc_SendSinglePerc(var instance par0, var instance par1, var int par2) {};
 func void Npc_PerceiveAll(var instance par0) {};
 func void Wld_AssignRoomToGuild(var string par0, var int par1) {};
