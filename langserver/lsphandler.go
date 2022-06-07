@@ -117,6 +117,16 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 				break
 			}
 		}
+		for _, fn := range parsedDoc.Instances {
+			if fn.BodyDefinition.InBBox(di) {
+				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]Symbol{})
+			}
+		}
+		for _, fn := range parsedDoc.Prototypes {
+			if fn.BodyDefinition.InBBox(di) {
+				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]Symbol{})
+			}
+		}
 	}
 
 	h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
