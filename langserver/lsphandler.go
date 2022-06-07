@@ -356,43 +356,41 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 	case lsp.MethodInitialized:
 		go func() {
 			exe, _ := os.Executable()
-			resultsX, err := h.parsedDocuments.ParseSource(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"))
-			if err != nil {
-				h.LogError("Error parsing %q: %v", filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src"), err)
-				return
+			var resultsX []*ParseResult
+			if f, err := findFile(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
+				resultsX, err = h.parsedDocuments.ParseSource(f)
+				if err != nil {
+					h.LogError("Error parsing %q: %v", f, err)
+					return
+				}
 			}
 
-			externalsSrc := filepath.Join("_externals", "externals.src")
-			externalsDaedalus := filepath.Join("_externals", "externals.d")
-			if _, err := os.Stat(externalsSrc); err == nil {
+			if externalsSrc, err := findFile(filepath.Join("_externals", "externals.src")); err == nil {
 				customBuiltins, err := h.parsedDocuments.ParseSource(externalsSrc)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", externalsSrc, err)
 				} else {
 					resultsX = append(resultsX, customBuiltins...)
 				}
-			} else if _, err := os.Stat(externalsDaedalus); err == nil {
-				abs, err := filepath.Abs(externalsDaedalus)
+			} else if externalsDaedalus, err := findFile(filepath.Join("_externals", "externals.d")); err == nil {
+				parsed, err := h.parsedDocuments.ParseFile(externalsDaedalus)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", externalsDaedalus, err)
 				} else {
-					parsed, err := h.parsedDocuments.ParseFile(abs)
-					if err != nil {
-						h.LogError("Error parsing %q: %v", abs, err)
-					} else {
-						resultsX = append(resultsX, parsed)
-					}
+					resultsX = append(resultsX, parsed)
 				}
 			}
 
 			for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
-				if _, err := os.Stat(v); err == nil {
-					results, err := h.parsedDocuments.ParseSource(v)
+				if full, err := findFile(v); err == nil {
+					results, err := h.parsedDocuments.ParseSource(full)
 					if err != nil {
-						h.LogError("Error parsing %s: %v", v, err)
+						h.LogError("Error parsing %s: %v", full, err)
 						return
 					}
 					resultsX = append(resultsX, results...)
+				} else {
+					h.LogInfo("Did not parse %q: %v", v, err)
 				}
 			}
 
@@ -417,7 +415,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 
 	if !h.initialized {
 		reply(ctx, nil, jsonrpc2.Errorf(jsonrpc2.ServerNotInitialized, "Not initialized yet"))
-		return fmt.Errorf("Not initialized yet")
+		return fmt.Errorf("not initialized yet")
 	}
 
 	// Recover if something bad happens in the handlers...
