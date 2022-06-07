@@ -390,7 +390,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					}
 					resultsX = append(resultsX, results...)
 				} else {
-					h.LogInfo("Did not parse %q: %v", v, err)
+					h.LogDebug("Did not parse %q: %v", v, err)
 				}
 			}
 
