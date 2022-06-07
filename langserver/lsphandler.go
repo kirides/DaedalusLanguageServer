@@ -2,15 +2,22 @@ package langserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"go.lsp.dev/jsonrpc2"
 	lsp "go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
+
+type LspConfig struct {
+	FileEncoding    string `json:"fileEncoding"`
+	SrcFileEncoding string `json:"srcFileEncoding"`
+}
 
 // LspHandler ...
 type LspHandler struct {
@@ -19,6 +26,9 @@ type LspHandler struct {
 	parsedDocuments    *parseResultsManager
 	initialDiagnostics map[string][]lsp.Diagnostic
 	handlers           RpcMux
+	config             LspConfig
+	onceParseAll       sync.Once
+
 	baseLspHandler
 	initialized bool
 }
@@ -318,9 +328,17 @@ func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentDidSave, MakeHandler(h.TextDocumentSync.handleTextDocumentDidSave))
 }
 
+func prettyJSON(val interface{}) string {
+	v, err := json.MarshalIndent(val, "", "  ")
+	if err != nil {
+		return "{}"
+	}
+	return string(v)
+}
+
 // Deliver ...
 func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonrpc2.Request) error {
-	h.LogDebug("Requested '%s'\n", r.Method())
+	h.LogDebug("Requested %q", r.Method())
 
 	// if r.Params != nil {
 	// 	var paramsMap map[string]interface{}
@@ -353,61 +371,25 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		h.initialized = true
 		h.onInitialized()
 		return nil
+	case lsp.MethodWorkspaceDidChangeConfiguration:
+		var params struct {
+			Settings struct {
+				DaedalusLanguageServer LspConfig `json:"daedalusLanguageServer"`
+			} `json:"settings"`
+		}
+
+		var configRaw map[string]interface{}
+		_ = json.Unmarshal(r.Params(), &configRaw)
+		h.LogDebug("%s (debug): %v", r.Method(), prettyJSON(configRaw))
+
+		_ = json.Unmarshal(r.Params(), &params)
+		h.config = params.Settings.DaedalusLanguageServer
+		h.LogInfo("%s: %v", r.Method(), prettyJSON(configRaw))
+
+		h.parsedDocuments.SetFileEncoding(h.config.FileEncoding)
+		h.parsedDocuments.SetSrcEncoding(h.config.SrcFileEncoding)
+		return nil
 	case lsp.MethodInitialized:
-		go func() {
-			exe, _ := os.Executable()
-			var resultsX []*ParseResult
-			if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
-				resultsX, err = h.parsedDocuments.ParseSource(f)
-				if err != nil {
-					h.LogError("Error parsing %q: %v", f, err)
-					return
-				}
-			}
-
-			if externalsSrc, err := findPath(filepath.Join("_externals", "externals.src")); err == nil {
-				customBuiltins, err := h.parsedDocuments.ParseSource(externalsSrc)
-				if err != nil {
-					h.LogError("Error parsing %q: %v", externalsSrc, err)
-				} else {
-					resultsX = append(resultsX, customBuiltins...)
-				}
-			} else if externalsDaedalus, err := findPath(filepath.Join("_externals", "externals.d")); err == nil {
-				parsed, err := h.parsedDocuments.ParseFile(externalsDaedalus)
-				if err != nil {
-					h.LogError("Error parsing %q: %v", externalsDaedalus, err)
-				} else {
-					resultsX = append(resultsX, parsed)
-				}
-			}
-
-			for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
-				if full, err := findPath(v); err == nil {
-					results, err := h.parsedDocuments.ParseSource(full)
-					if err != nil {
-						h.LogError("Error parsing %s: %v", full, err)
-						return
-					}
-					resultsX = append(resultsX, results...)
-				} else {
-					h.LogDebug("Did not parse %q: %v", v, err)
-				}
-			}
-
-			var diagnostics []lsp.Diagnostic
-			tmpDiags := make(map[string][]lsp.Diagnostic)
-
-			for _, p := range resultsX {
-				if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
-					diagnostics = make([]lsp.Diagnostic, 0, len(p.SyntaxErrors))
-					for _, se := range p.SyntaxErrors {
-						diagnostics = append(diagnostics, se.Diagnostic())
-					}
-					tmpDiags[p.Source] = diagnostics
-				}
-			}
-			h.initialDiagnostics = tmpDiags
-		}()
 		return nil
 	}
 
@@ -425,6 +407,66 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 			h.LogWarn("Recovered from panic at %s: %v\n", r.Method, err)
 		}
 	}()
+
+	if r.Method() == lsp.MethodTextDocumentDidOpen {
+		h.onceParseAll.Do(func() {
+			h.LogInfo("Starting parsing of sources...")
+			go func() {
+				exe, _ := os.Executable()
+				var resultsX []*ParseResult
+				if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
+					resultsX, err = h.parsedDocuments.ParseSource(f)
+					if err != nil {
+						h.LogError("Error parsing %q: %v", f, err)
+						return
+					}
+				}
+
+				if externalsSrc, err := findPath(filepath.Join("_externals", "externals.src")); err == nil {
+					customBuiltins, err := h.parsedDocuments.ParseSource(externalsSrc)
+					if err != nil {
+						h.LogError("Error parsing %q: %v", externalsSrc, err)
+					} else {
+						resultsX = append(resultsX, customBuiltins...)
+					}
+				} else if externalsDaedalus, err := findPath(filepath.Join("_externals", "externals.d")); err == nil {
+					parsed, err := h.parsedDocuments.ParseFile(externalsDaedalus)
+					if err != nil {
+						h.LogError("Error parsing %q: %v", externalsDaedalus, err)
+					} else {
+						resultsX = append(resultsX, parsed)
+					}
+				}
+
+				for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
+					if full, err := findPath(v); err == nil {
+						results, err := h.parsedDocuments.ParseSource(full)
+						if err != nil {
+							h.LogError("Error parsing %s: %v", full, err)
+							return
+						}
+						resultsX = append(resultsX, results...)
+					} else {
+						h.LogDebug("Did not parse %q: %v", v, err)
+					}
+				}
+
+				var diagnostics []lsp.Diagnostic
+				tmpDiags := make(map[string][]lsp.Diagnostic)
+
+				for _, p := range resultsX {
+					if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
+						diagnostics = make([]lsp.Diagnostic, 0, len(p.SyntaxErrors))
+						for _, se := range p.SyntaxErrors {
+							diagnostics = append(diagnostics, se.Diagnostic())
+						}
+						tmpDiags[p.Source] = diagnostics
+					}
+				}
+				h.initialDiagnostics = tmpDiags
+			}()
+		})
+	}
 
 	if h.initialDiagnostics != nil && len(h.initialDiagnostics) > 0 {
 		h.LogInfo("Publishing initial diagnostics (%d).", len(h.initialDiagnostics))

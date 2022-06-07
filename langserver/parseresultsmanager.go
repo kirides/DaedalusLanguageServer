@@ -18,13 +18,49 @@ type parseResultsManager struct {
 	parseResults map[string]*ParseResult
 	mtx          sync.RWMutex
 	logger       Logger
+
+	fileEncoding encoding.Encoding
+	srcEncoding  encoding.Encoding
+	decoderPool  *sync.Pool
 }
 
 func newParseResultsManager(logger Logger) *parseResultsManager {
 	return &parseResultsManager{
 		parseResults: make(map[string]*ParseResult),
 		logger:       logger,
+		fileEncoding: charmap.Windows1252,
+		srcEncoding:  charmap.Windows1252,
+		decoderPool:  &sync.Pool{New: func() interface{} { return charmap.Windows1252.NewDecoder() }},
 	}
+}
+
+var encodings = map[string]encoding.Encoding{
+	"WINDOWS-1250": charmap.Windows1250,
+	"WINDOWS-1251": charmap.Windows1251,
+	"WINDOWS-1252": charmap.Windows1252,
+	"WINDOWS-1253": charmap.Windows1253,
+	"WINDOWS-1254": charmap.Windows1254,
+	"WINDOWS-1255": charmap.Windows1255,
+	"WINDOWS-1256": charmap.Windows1256,
+	"WINDOWS-1257": charmap.Windows1257,
+	"WINDOWS-1258": charmap.Windows1258,
+}
+
+func (m *parseResultsManager) SetFileEncoding(enc string) error {
+	if e, ok := encodings[strings.ToUpper(enc)]; ok {
+		m.fileEncoding = e
+		m.decoderPool = &sync.Pool{New: func() interface{} { return e.NewDecoder() }}
+		return nil
+	}
+	return fmt.Errorf("unknown encoding %q", enc)
+}
+
+func (m *parseResultsManager) SetSrcEncoding(enc string) error {
+	if e, ok := encodings[strings.ToUpper(enc)]; ok {
+		m.srcEncoding = e
+		return nil
+	}
+	return fmt.Errorf("unknown encoding %q", enc)
 }
 
 func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error {
@@ -96,7 +132,7 @@ func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) ([]stri
 	if err != nil {
 		return nil, err
 	}
-	decodedContent, err := charmap.Windows1252.NewDecoder().Bytes(fileBytes)
+	decodedContent, err := m.srcEncoding.NewDecoder().Bytes(fileBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +200,7 @@ func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) ([]stri
 }
 
 var (
-	bufferPool  = sync.Pool{New: func() interface{} { b := new(bytes.Buffer); b.Grow(2048); return b }}
-	decoderPool = sync.Pool{New: func() interface{} { return charmap.Windows1252.NewDecoder() }}
+	bufferPool = sync.Pool{New: func() interface{} { b := new(bytes.Buffer); b.Grow(2048); return b }}
 )
 
 func (m *parseResultsManager) validateFiles(resolvedPaths []string) map[string][]SyntaxError {
@@ -190,8 +225,8 @@ func (m *parseResultsManager) validateFiles(resolvedPaths []string) map[string][
 			buf := bufferPool.Get().(*bytes.Buffer)
 			defer bufferPool.Put(buf)
 
-			decoder := decoderPool.Get().(*encoding.Decoder)
-			defer decoderPool.Put(decoder)
+			decoder := m.decoderPool.Get().(*encoding.Decoder)
+			defer m.decoderPool.Put(decoder)
 
 			for r := range chanPaths {
 				f, err := os.Open(r)
@@ -225,8 +260,8 @@ func (m *parseResultsManager) validateFile(dPath string) ([]SyntaxError, error) 
 	buf := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buf)
 
-	decoder := decoderPool.Get().(*encoding.Decoder)
-	defer decoderPool.Put(decoder)
+	decoder := m.decoderPool.Get().(*encoding.Decoder)
+	defer m.decoderPool.Put(decoder)
 
 	f, err := os.Open(dPath)
 	if err != nil {
@@ -272,8 +307,8 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 			buf := bufferPool.Get().(*bytes.Buffer)
 			defer bufferPool.Put(buf)
 
-			decoder := decoderPool.Get().(*encoding.Decoder)
-			defer decoderPool.Put(decoder)
+			decoder := m.decoderPool.Get().(*encoding.Decoder)
+			defer m.decoderPool.Put(decoder)
 
 			for r := range chanPaths {
 				f, err := os.Open(r)
@@ -317,8 +352,8 @@ func (m *parseResultsManager) ParseFile(dFile string) (*ParseResult, error) {
 	buf := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buf)
 
-	decoder := decoderPool.Get().(*encoding.Decoder)
-	defer decoderPool.Put(decoder)
+	decoder := m.decoderPool.Get().(*encoding.Decoder)
+	defer m.decoderPool.Put(decoder)
 
 	f, err := os.Open(dFile)
 	if err != nil {
