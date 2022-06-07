@@ -304,7 +304,7 @@ func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocume
 		},
 		Contents: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
-			Value: strings.TrimSpace(simpleJavadocMD(found) + "\n```daedalus\n" + found.String() + "\n```"),
+			Value: strings.TrimSpace(simpleJavadocMD(found) + "\n\n```daedalus\n" + found.String() + "\n```"),
 		},
 	}, nil)
 }
