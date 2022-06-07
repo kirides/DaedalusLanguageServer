@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -105,15 +104,20 @@ func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) ([]stri
 
 	// Auronen: On Linux and macOS replace backslashes with forwardslashes
 	if runtime.GOOS != "windows" {
-		srcContent = strings.Replace(srcContent, "\\", string(os.PathSeparator), -1)
+		srcContent = strings.ReplaceAll(srcContent, "\\", string(os.PathSeparator))
 	}
 
 	scanner := bufio.NewScanner(strings.NewReader(srcContent))
 
 	resolvedPaths := []string{}
 	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.TrimSpace(line) == "" {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		if strings.HasPrefix(line, "//") {
+			// likely a comment, like "// LeGo" or "// Ikarus"
+			m.logger.Debugf("resolveSrcPaths(%q): skipping line %q", srcFile, line)
 			continue
 		}
 		dir := filepath.Dir(line)
@@ -122,30 +126,30 @@ func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) ([]stri
 
 		if ext == ".d" {
 			if strings.Contains(fname, "*") {
-				rxFilePath := regexp.MustCompile(strings.ReplaceAll(regexp.QuoteMeta(strings.ToLower(fname)), "\\*", ".*"))
-
-				entries, err := os.ReadDir(filepath.Join(prefixDir, dir))
+				files, err := ResolvePathsCaseInsensitive(filepath.Join(prefixDir, dir), fname)
 				if err != nil {
+					m.logger.Warnf("resolveSrcPaths(%q): could not resolve filename %q", srcFile, filepath.Join(prefixDir, dir, fname))
 					continue
 				}
-				for _, e := range entries {
-					if e.IsDir() {
+				for _, e := range files {
+					if stat, err := os.Stat(e); err != nil || stat.IsDir() {
+						m.logger.Debugf("resolveSrcPaths(%q): ignoring entry %q (error or director)", srcFile, e)
 						continue
 					}
-					if rxFilePath.MatchString(strings.ToLower(e.Name())) {
-						absPath, err := filepath.Abs(filepath.Join(prefixDir, dir, e.Name()))
-						if err != nil {
-							continue
-						}
-						resolvedPaths = append(resolvedPaths, absPath)
-					}
+
+					resolvedPaths = append(resolvedPaths, e)
 				}
 			} else {
-				absPath, err := filepath.Abs(filepath.Join(prefixDir, dir, fname))
+				found, err := findPath(filepath.Join(prefixDir, dir, fname))
 				if err != nil {
+					m.logger.Warnf("resolveSrcPaths(%q): file not found on disk %q", srcFile, filepath.Join(prefixDir, dir, fname))
 					continue
 				}
-				resolvedPaths = append(resolvedPaths, absPath)
+				if stat, err := os.Stat(found); err != nil || stat.IsDir() {
+					m.logger.Debugf("resolveSrcPaths(%q): ignoring entry %q (error or director)", srcFile, found)
+					continue
+				}
+				resolvedPaths = append(resolvedPaths, found)
 			}
 		} else if ext == ".src" {
 			m.logger.Infof("Collecting scripts from %q", filepath.Join(prefixDir, dir, fname))

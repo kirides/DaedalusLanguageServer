@@ -357,7 +357,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		go func() {
 			exe, _ := os.Executable()
 			var resultsX []*ParseResult
-			if f, err := findFile(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
+			if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
 				resultsX, err = h.parsedDocuments.ParseSource(f)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", f, err)
@@ -365,14 +365,14 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				}
 			}
 
-			if externalsSrc, err := findFile(filepath.Join("_externals", "externals.src")); err == nil {
+			if externalsSrc, err := findPath(filepath.Join("_externals", "externals.src")); err == nil {
 				customBuiltins, err := h.parsedDocuments.ParseSource(externalsSrc)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", externalsSrc, err)
 				} else {
 					resultsX = append(resultsX, customBuiltins...)
 				}
-			} else if externalsDaedalus, err := findFile(filepath.Join("_externals", "externals.d")); err == nil {
+			} else if externalsDaedalus, err := findPath(filepath.Join("_externals", "externals.d")); err == nil {
 				parsed, err := h.parsedDocuments.ParseFile(externalsDaedalus)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", externalsDaedalus, err)
@@ -382,7 +382,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 			}
 
 			for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
-				if full, err := findFile(v); err == nil {
+				if full, err := findPath(v); err == nil {
 					results, err := h.parsedDocuments.ParseSource(full)
 					if err != nil {
 						h.LogError("Error parsing %s: %v", full, err)
