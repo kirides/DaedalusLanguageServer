@@ -127,6 +127,16 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 				break
 			}
 		}
+		for _, fn := range parsedDoc.Instances {
+			if fn.BodyDefinition.InBBox(di) {
+				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]Symbol{})
+			}
+		}
+		for _, fn := range parsedDoc.Prototypes {
+			if fn.BodyDefinition.InBBox(di) {
+				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]Symbol{})
+			}
+		}
 	}
 
 	h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
@@ -304,7 +314,7 @@ func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocume
 		},
 		Contents: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
-			Value: strings.TrimSpace(simpleJavadocMD(found) + "\n```daedalus\n" + found.String() + "\n```"),
+			Value: strings.TrimSpace(simpleJavadocMD(found) + "\n\n```daedalus\n" + found.String() + "\n```"),
 		},
 	}, nil)
 }
