@@ -188,8 +188,14 @@ func (m *parseResultsManager) resolveSrcPaths(srcFile, prefixDir string) ([]stri
 				resolvedPaths = append(resolvedPaths, found)
 			}
 		} else if ext == ".src" {
-			m.logger.Infof("Collecting scripts from %q", filepath.Join(prefixDir, dir, fname))
-			inner, err := m.resolveSrcPaths(filepath.Join(prefixDir, line), filepath.Join(prefixDir, dir))
+			found, err := findPath(filepath.Join(prefixDir, dir, fname))
+			if err != nil {
+				m.logger.Warnf("resolveSrcPaths(%q): file not found on disk %q", srcFile, filepath.Join(prefixDir, dir, fname))
+				continue
+			}
+			m.logger.Infof("Collecting scripts from %q", found)
+
+			inner, err := m.resolveSrcPaths(found, filepath.Dir(found))
 			if err == nil {
 				resolvedPaths = append(resolvedPaths, inner...)
 			}
