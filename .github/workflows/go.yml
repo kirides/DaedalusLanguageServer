@@ -1,0 +1,61 @@
+name: Go
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+      GOOS: ${{matrix.os}}
+      GOARCH: ${{matrix.arch}}
+
+jobs:
+  
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        os: [linux, win32, darwin]
+        arch: [i386, amd64, arm64]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Cache Go modules
+      uses: actions/cache@preview
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-build-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.OS }}-build-${{ env.cache-name }}-
+          ${{ runner.OS }}-build-
+          ${{ runner.OS }}-
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: try building
+      run: go build -v -o /tmp/delete_me123456 ./...
+
+    # - name: Test
+    #  run: go test -v ./...
+
+    - name: Setup final build env
+      run: |
+        export tagName=${GITHUB_REF/refs\/tags\//}
+        echo "Tag: ${tagName}"
+        echo "RELEASE_VERSION=${tagName}" >> $GITHUB_ENV
+        echo "GOARCH=${{ matrix.os }}" >> $GITHUB_ENV
+        echo "GOOS=${{ matrix.arch }}" >> $GITHUB_ENV
+
+    - name: Build Windows
+      if: matrix.os == 'win32'
+      run: go build -v -o DaedalusLanguageServer.${{ matrix.arch }}.exe -ldflags '-extldflags "-static" -s -w"
+
+    - name: Build Unix
+      if: matrix.os != 'win32'
+      run: go build -v -o DaedalusLanguageServer.${{ matrix.os }}.${{ matrix.arch }} -ldflags '-extldflags "-static" -s -w"
