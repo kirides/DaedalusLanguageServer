@@ -1,0 +1,71 @@
+name: Go
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        os: [linux, windows, darwin]
+        arch: [amd64, arm64]
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: try building
+      run: go build -v ./...
+
+    # - name: Test
+    #  run: go test -v ./...
+
+    - name: Setup final build env
+      run: |
+        export tagName=${GITHUB_REF/refs\/tags\//}
+        echo "Tag: ${tagName}"
+        echo "RELEASE_VERSION=${tagName}" >> $GITHUB_ENV
+        echo "GOARCH=${{ matrix.arch }}" >> $GITHUB_ENV
+        echo "GOOS=${{ matrix.os }}" >> $GITHUB_ENV
+
+    - name: Build Windows
+      if: matrix.os == 'windows'
+      run: |
+        export RELEASE_FILE=DaedalusLanguageServer.$GOARCH.exe
+        echo "RELEASE_FILE=$RELEASE_FILE" >> $GITHUB_ENV
+        go build -v -o $RELEASE_FILE -ldflags "-s -w"
+
+    - name: Build linux
+      if: matrix.os != 'windows'
+      run: |
+        export RELEASE_FILE=DaedalusLanguageServer.$GOOS.$GOARCH
+        echo "RELEASE_FILE=$RELEASE_FILE" >> $GITHUB_ENV
+        go build -v -o $RELEASE_FILE -ldflags '-extldflags "-static" -s -w'
+
+    - name: Calculate distribution hash
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        sha256sum "$RELEASE_FILE" > "$RELEASE_FILE.sha256"
+        cat "$RELEASE_FILE.sha256"
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-${{matrix.arch}}
+        path: |
+          ${{ env.RELEASE_FILE }}
+          ${{ env.RELEASE_FILE }}.sha256
