@@ -1,14 +1,14 @@
 name: Go
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags:
+      - 'v*'
 
-env:
-      GOOS: ${{matrix.os}}
-      GOARCH: ${{matrix.arch}}
+defaults:
+  run:
+    shell: bash
 
 jobs:
   
@@ -54,8 +54,28 @@ jobs:
 
     - name: Build Windows
       if: matrix.os == 'win32'
-      run: go build -v -o DaedalusLanguageServer.${{ matrix.arch }}.exe -ldflags '-extldflags "-static" -s -w"
+      run: |
+        export RELEASE_FILE=DaedalusLanguageServer.$GOARCH.exe
+        echo "$RELEASE_FILE" >> $GITHUB_ENV
+        go build -v -o $RELEASE_FILE -ldflags '-s -w"
 
     - name: Build Unix
       if: matrix.os != 'win32'
-      run: go build -v -o DaedalusLanguageServer.${{ matrix.os }}.${{ matrix.arch }} -ldflags '-extldflags "-static" -s -w"
+      run: |
+        export RELEASE_FILE=DaedalusLanguageServer.$GOOS.$GOARCH
+        echo "$RELEASE_FILE" >> $GITHUB_ENV
+        go build -v -o $RELEASE_FILE -ldflags '-extldflags "-static" -s -w"
+
+    - name: Calculate distribution hash
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        sha256sum "$RELEASE_FILE" > "$RELEASE_FILE.sha256"
+        cat "$RELEASE_FILE.sha256"
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-${{matrix.arch}}
+        path: |
+          ${{ env.RELEASE_FILE }}
+          ${{ env.RELEASE_FILE }}.sha256
