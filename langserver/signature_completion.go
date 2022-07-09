@@ -47,7 +47,7 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 					sortIdx := getHighestSortIndex(result)
 					result = append(result, getDefaultC_NPCCompletions(docs, sortIdx)...)
 				} else if strings.EqualFold(in, "C_ITEM") {
-					sortIdx := getHighestSortIndex(ci)
+					sortIdx := getHighestSortIndex(result)
 					result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 				}
 
@@ -108,10 +108,10 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 			result = append(result, ci...)
 
 			if strings.EqualFold(varType, "C_NPC") {
-				sortIdx := getHighestSortIndex(ci)
+				sortIdx := getHighestSortIndex(result)
 				result = append(result, getDefaultC_NPCCompletions(docs, sortIdx)...)
 			} else if strings.EqualFold(varType, "C_ITEM") { // Also offer item global instance
-				sortIdx := getHighestSortIndex(ci)
+				sortIdx := getHighestSortIndex(result)
 				result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 			}
 
