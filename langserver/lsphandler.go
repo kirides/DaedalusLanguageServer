@@ -93,6 +93,14 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 		doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
 		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 
+		scci, err := getSignatureCompletions(params, h)
+		if err != nil {
+			h.logger.Debugf("signature completion error %v: ", err)
+		}
+		if len(scci) > 0 {
+			return scci, nil
+		}
+
 		// dot-completion
 		proto, _, err := doc.GetParentSymbolReference(params.Position)
 		if err == nil && proto != "" {
@@ -191,48 +199,12 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Sy
 }
 
 func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.SignatureHelp, error) {
-	doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
-
-	methodCallLine := doc.GetMethodCall(params.Position)
-	// The expected method call turned out to be a `func void something( ... )` -> a function definition
-	if rxFunctionDef.MatchString(methodCallLine) {
-		return lsp.SignatureHelp{}, nil
+	fnCtx, err := getFunctionCallContext(h, params.TextDocument.URI, params.Position)
+	if err != nil {
+		return lsp.SignatureHelp{}, err
 	}
 
-	methodCallLine = rxStringValues.ReplaceAllLiteralString(methodCallLine, "")
-	oldLen := -1
-	for len(methodCallLine) != oldLen {
-		oldLen = len(methodCallLine)
-		methodCallLine = rxFuncCall.ReplaceAllLiteralString(methodCallLine, "")
-	}
-
-	// If for some reason the parenthesis of the methodcall went missing
-	idxParen := strings.LastIndexByte(methodCallLine, '(')
-	if idxParen < 0 {
-		return lsp.SignatureHelp{}, fmt.Errorf("the parenthesis of the methodcall went missing")
-	}
-
-	word := ""
-	for i := idxParen - 1; i > 0; i-- {
-		if !isIdentifier(methodCallLine[i]) {
-			start := i + 1
-			if start+idxParen > len(methodCallLine) {
-				return lsp.SignatureHelp{}, fmt.Errorf("idx out of bounds. Bad format :/")
-			}
-			word = methodCallLine[start : start+idxParen]
-		}
-	}
-	if word == "" {
-		word = methodCallLine[:idxParen]
-	}
-	word = strings.ToUpper(strings.TrimSpace(word))
-
-	funcSymbol, found := h.parsedDocuments.LookupGlobalSymbol(word, SymbolFunction)
-	if !found {
-		return lsp.SignatureHelp{}, fmt.Errorf("no function symbol found")
-	}
-	sigCtx := methodCallLine[idxParen+1:]
-	fn := funcSymbol.(FunctionSymbol)
+	fn := fnCtx.Function
 
 	var fnParams []lsp.ParameterInformation
 	for _, p := range fn.Parameters {
@@ -250,7 +222,6 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 		})
 	}
 
-	paramIdx := uint32(strings.Count(sigCtx, ","))
 	return lsp.SignatureHelp{
 		Signatures: []lsp.SignatureInformation{
 			{
@@ -262,7 +233,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 				Parameters: fnParams,
 			},
 		},
-		ActiveParameter: paramIdx,
+		ActiveParameter: uint32(fnCtx.ParamIdx),
 		ActiveSignature: 0,
 	}, nil
 }

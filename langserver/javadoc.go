@@ -130,3 +130,25 @@ func findJavadocParam(doc, key string) string {
 
 	return ""
 }
+
+func parseJavadocWithinTokens(doc, open, close string) (instances []string, remaining string) {
+
+	idxOpen := strings.Index(doc, open)
+	if idxOpen == -1 {
+		return nil, doc
+	}
+
+	idxClose := strings.Index(doc, close)
+	if idxClose == -1 || idxClose < idxOpen {
+		return nil, doc
+	}
+
+	rem := doc[idxClose+1:]
+
+	instances = strings.Split(doc[idxOpen+1:idxClose], ",")
+	for i := 0; i < len(instances); i++ {
+		instances[i] = strings.TrimSpace(instances[i])
+	}
+
+	return instances, strings.TrimSpace(rem)
+}

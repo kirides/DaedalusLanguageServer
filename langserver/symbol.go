@@ -32,15 +32,19 @@ type FunctionSymbol struct {
 	BodyDefinition SymbolDefinition
 }
 
+func newSymbolBase(name, source, doc string, def SymbolDefinition) symbolBase {
+	return symbolBase{
+		NameValue:           name,
+		SymbolSource:        source,
+		SymbolDocumentation: doc,
+		SymbolDefinition:    def,
+	}
+}
+
 // NewFunctionSymbol ...
 func NewFunctionSymbol(name, source, doc string, def SymbolDefinition, retType string, bodyDef SymbolDefinition, params []VariableSymbol, locals []Symbol) FunctionSymbol {
 	return FunctionSymbol{
-		symbolBase: symbolBase{
-			NameValue:           name,
-			SymbolSource:        source,
-			SymbolDocumentation: doc,
-			SymbolDefinition:    def,
-		},
+		symbolBase:     newSymbolBase(name, source, doc, def),
 		ReturnType:     retType,
 		BodyDefinition: bodyDef,
 		Parameters:     params,
@@ -51,13 +55,8 @@ func NewFunctionSymbol(name, source, doc string, def SymbolDefinition, retType s
 // NewVariableSymbol ...
 func NewVariableSymbol(name, varType, source, documentation string, definiton SymbolDefinition) VariableSymbol {
 	return VariableSymbol{
-		Type: varType,
-		symbolBase: symbolBase{
-			NameValue:           name,
-			SymbolSource:        source,
-			SymbolDocumentation: documentation,
-			SymbolDefinition:    definiton,
-		},
+		Type:       varType,
+		symbolBase: newSymbolBase(name, source, documentation, definiton),
 	}
 }
 
@@ -66,40 +65,22 @@ func NewArrayVariableSymbol(name, varType, sizeText, source, documentation strin
 	return ArrayVariableSymbol{
 		Type:          varType,
 		ArraySizeText: sizeText,
-		symbolBase: symbolBase{
-			NameValue:           name,
-			SymbolSource:        source,
-			SymbolDocumentation: documentation,
-			SymbolDefinition:    definiton,
-		},
+		symbolBase:    newSymbolBase(name, source, documentation, definiton),
 	}
 }
 
 // NewConstantSymbol ...
 func NewConstantSymbol(name, varType, source, documentation string, definiton SymbolDefinition, value string) ConstantSymbol {
 	return ConstantSymbol{
-		VariableSymbol: VariableSymbol{
-			Type: varType,
-			symbolBase: symbolBase{
-				NameValue:           name,
-				SymbolSource:        source,
-				SymbolDocumentation: documentation,
-				SymbolDefinition:    definiton,
-			},
-		},
-		Value: value,
+		VariableSymbol: NewVariableSymbol(name, varType, source, documentation, definiton),
+		Value:          value,
 	}
 }
 
 // NewClassSymbol ...
 func NewClassSymbol(name, source, documentation string, definiton SymbolDefinition, bodyDef SymbolDefinition, fields []Symbol) ClassSymbol {
 	return ClassSymbol{
-		symbolBase: symbolBase{
-			NameValue:           name,
-			SymbolSource:        source,
-			SymbolDocumentation: documentation,
-			SymbolDefinition:    definiton,
-		},
+		symbolBase:     newSymbolBase(name, source, documentation, definiton),
 		BodyDefinition: bodyDef,
 		Fields:         fields,
 	}
@@ -108,13 +89,8 @@ func NewClassSymbol(name, source, documentation string, definiton SymbolDefiniti
 // NewPrototypeOrInstanceSymbol ...
 func NewPrototypeOrInstanceSymbol(name, parent, source, documentation string, definiton SymbolDefinition, bodyDef SymbolDefinition, isInstance bool) ProtoTypeOrInstanceSymbol {
 	return ProtoTypeOrInstanceSymbol{
-		Parent: parent,
-		symbolBase: symbolBase{
-			NameValue:           name,
-			SymbolSource:        source,
-			SymbolDocumentation: documentation,
-			SymbolDefinition:    definiton,
-		},
+		Parent:         parent,
+		symbolBase:     newSymbolBase(name, source, documentation, definiton),
 		IsInstance:     isInstance,
 		BodyDefinition: bodyDef,
 	}
@@ -165,6 +141,11 @@ func (s VariableSymbol) String() string {
 	return "var " + s.Type + " " + s.Name()
 }
 
+// GetType ...
+func (s VariableSymbol) GetType() string {
+	return s.Type
+}
+
 // VariableSymbol ...
 type ArrayVariableSymbol struct {
 	Type          string
@@ -177,6 +158,11 @@ func (s ArrayVariableSymbol) String() string {
 	return "var " + s.Type + "[" + s.ArraySizeText + "]" + " " + s.Name()
 }
 
+// GetType ...
+func (s ArrayVariableSymbol) GetType() string {
+	return s.Type
+}
+
 // ConstantSymbol ...
 type ConstantSymbol struct {
 	Value string
@@ -186,6 +172,11 @@ type ConstantSymbol struct {
 // String ...
 func (s ConstantSymbol) String() string {
 	return "const " + s.Type + " " + s.Name() + " = " + s.Value
+}
+
+// GetType ...
+func (s ConstantSymbol) GetType() string {
+	return s.Type
 }
 
 // ClassSymbol ...
