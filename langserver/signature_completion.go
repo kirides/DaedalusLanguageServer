@@ -66,7 +66,10 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 		} else if strings.HasPrefix(docu, "[") { // if enum list directive
 			enums, _ := parseJavadocWithinTokens(docu, "[", "]")
 
-			localSortIndex := 0
+			ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
+			result = append(result, ci...)
+
+			localSortIndex := getHighestSortIndex(result)
 			for _, enum := range enums {
 				symb, ok := docs.LookupGlobalSymbol(strings.ToUpper(enum), SymbolConstant)
 				if !ok {
@@ -91,16 +94,30 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 			ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
 			result = append(result, ci...)
 
+			types := SymbolConstant
+			if strings.EqualFold(varType, "int") {
+				types |= SymbolInstance
+			}
+
 			docs.WalkGlobalSymbols(func(s Symbol) error {
-				if strings.EqualFold(s.(ConstantSymbol).Type, varType) {
-					ci, err := completionItemFromSymbol(s)
+				if typer, ok := s.(interface{ GetType() string }); ok {
+					if strings.EqualFold(typer.GetType(), varType) {
+						ci, err := completionItemFromSymbol(s)
+						if err != nil {
+							return nil
+						}
+						result = append(result, ci)
+					}
+				}
+				if inst, ok := s.(ProtoTypeOrInstanceSymbol); ok {
+					ci, err := completionItemFromSymbol(inst)
 					if err != nil {
 						return nil
 					}
 					result = append(result, ci)
 				}
 				return nil
-			}, SymbolConstant)
+			}, types)
 
 			return result, nil
 		} else { // it is an instance
