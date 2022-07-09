@@ -36,6 +36,7 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 			done := map[string]struct{}{}
 			for _, in := range instances {
 				if _, ok := done[in]; ok {
+					// only process each type once
 					continue
 				}
 				done[in] = struct{}{}
@@ -46,8 +47,8 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 					sortIdx := getHighestSortIndex(result)
 					result = append(result, getDefaultC_NPCCompletions(docs, sortIdx)...)
 				} else if strings.EqualFold(in, "C_ITEM") {
-					// TODO: implement
-					// result = append(result, getDefaultC_ITEMCompletion(docs))
+					sortIdx := getHighestSortIndex(ci)
+					result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 				}
 
 				docs.WalkGlobalSymbols(func(s Symbol) error {
@@ -110,8 +111,8 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 				sortIdx := getHighestSortIndex(ci)
 				result = append(result, getDefaultC_NPCCompletions(docs, sortIdx)...)
 			} else if strings.EqualFold(varType, "C_ITEM") { // Also offer item global instance
-				// TODO: implement
-				// result = append(result, getDefaultC_ITEMCompletion(docs))
+				sortIdx := getHighestSortIndex(ci)
+				result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 			}
 
 			docs.WalkGlobalSymbols(func(s Symbol) error {
@@ -212,17 +213,25 @@ func globalSignatureCompletionItem(docs *parseResultsManager, symName string, so
 	return ci, true
 }
 
-func getDefaultC_NPCCompletions(docs *parseResultsManager, sortIdx int) (completions []lsp.CompletionItem) {
-	result := make([]lsp.CompletionItem, 0, 3)
+func getCompletions(docs *parseResultsManager, sortIdx int, typ string, values []string) (completions []lsp.CompletionItem) {
+	result := make([]lsp.CompletionItem, 0, len(values))
 
-	for _, v := range []string{"HERO", "SELF", "OTHER"} {
-		if ci, ok := globalSignatureCompletionItem(docs, v, sortIdx+1, "C_NPC"); ok {
+	for _, v := range values {
+		if ci, ok := globalSignatureCompletionItem(docs, v, sortIdx+1, typ); ok {
 			sortIdx++
 			result = append(result, ci)
 		}
 	}
 
 	return result
+}
+
+func getDefaultC_NPCCompletions(docs *parseResultsManager, sortIdx int) (completions []lsp.CompletionItem) {
+	return getCompletions(docs, sortIdx, "C_NPC", []string{"HERO", "SELF", "OTHER", "VICTIM"})
+}
+
+func getDefaultC_ITEMCompletions(docs *parseResultsManager, sortIdx int) (completions []lsp.CompletionItem) {
+	return getCompletions(docs, sortIdx, "C_ITEM", []string{"ITEM"})
 }
 
 func getHighestSortIndex(items []lsp.CompletionItem) int {
@@ -297,12 +306,4 @@ func getLocalsAndParams(h *LspHandler, docURI lsp.URI, pos lsp.Position, varType
 		}
 	}
 	return result
-}
-
-func checkSymbolType(s Symbol, typ string) bool {
-	if typer, ok := s.(interface{ GetType() string }); ok {
-		return strings.EqualFold(typer.GetType(), typ)
-	}
-
-	return false
 }
