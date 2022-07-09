@@ -25,12 +25,47 @@ func appendMarkdownEscaped(sb *strings.Builder, text string) {
 		sb.WriteRune(v)
 	}
 }
+
 func formatParams(sb *strings.Builder, param, desc string) {
 	sb.WriteString("- **")
 	appendMarkdownEscaped(sb, param)
 	sb.WriteString("** - *")
-	appendMarkdownEscaped(sb, desc)
-	sb.WriteString("*\n")
+
+	if strings.HasPrefix(desc, "{") || strings.HasPrefix(desc, "[") {
+		insts, desc := parseJavadocWithinTokens(desc, "{", "}")
+		enums, desc := parseJavadocWithinTokens(desc, "[", "]")
+		appendMarkdownEscaped(sb, desc)
+		sb.WriteString("*  \n")
+
+		if len(insts) != 0 {
+			sb.WriteString("Types: ")
+			for i := 0; i < len(insts); i++ {
+				insts[i] = "`" + insts[i] + "`"
+			}
+			sb.WriteString(strings.Join(insts, ", "))
+			sb.WriteString("\n")
+		}
+		if len(enums) != 0 {
+			sb.WriteString("Valid Values: ")
+			for i := 0; i < len(enums); i++ {
+				enums[i] = "`" + enums[i] + "`"
+			}
+			sb.WriteString(strings.Join(enums, ", "))
+			sb.WriteString("\n")
+		}
+
+	} else {
+		appendMarkdownEscaped(sb, desc)
+		sb.WriteString("*\n")
+	}
+}
+
+func cleanUpParamDesc(desc string) string {
+	if strings.HasPrefix(desc, "{") || strings.HasPrefix(desc, "[") {
+		_, desc = parseJavadocWithinTokens(desc, "{", "}")
+		_, desc = parseJavadocWithinTokens(desc, "[", "]")
+	}
+	return desc
 }
 
 func parseJavadocMdEscaped(sym Symbol) javadoc {

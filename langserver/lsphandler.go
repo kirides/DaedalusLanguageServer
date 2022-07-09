@@ -213,7 +213,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 		if doc != "" {
 			mdDoc = &lsp.MarkupContent{
 				Kind:  lsp.Markdown,
-				Value: fmt.Sprintf("**%s** - *%s*", p.Name(), doc),
+				Value: fmt.Sprintf("**%s** - *%s*", p.Name(), cleanUpParamDesc(doc)),
 			}
 		}
 		fnParams = append(fnParams, lsp.ParameterInformation{
