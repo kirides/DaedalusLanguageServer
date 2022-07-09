@@ -29,10 +29,10 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 	varType := symbol.Parameters[paramIndex].Type
 	docu := findJavadocParam(symbol.Documentation(), symbol.Parameters[paramIndex].Name())
 
-	// TODO: Sort these after matching parameters & locals
 	if strings.HasPrefix(docu, "{") || strings.HasPrefix(docu, "[") {
-		if strings.Contains(docu, "{") { // if instance list directive
+		if strings.HasPrefix(docu, "{") { // if instance list directive
 			instances, _ := parseJavadocWithinTokens(docu, "{", "}")
+
 			done := map[string]struct{}{}
 			for _, in := range instances {
 				if _, ok := done[in]; ok {
@@ -62,8 +62,9 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 					return nil
 				}, SymbolInstance)
 			}
-		} else if strings.Contains(docu, "[") { // if enum list directive
+		} else if strings.HasPrefix(docu, "[") { // if enum list directive
 			enums, _ := parseJavadocWithinTokens(docu, "[", "]")
+
 			localSortIndex := 0
 			for _, enum := range enums {
 				symb, ok := docs.LookupGlobalSymbol(strings.ToUpper(enum), SymbolConstant)

@@ -166,6 +166,24 @@ func findJavadocParam(doc, key string) string {
 	return ""
 }
 
+// dedupI returns a slice without any duplicates (insensitive)
+func dedupI(in []string) []string {
+	var result []string
+	for _, v := range in {
+		add := true
+		for _, existing := range result {
+			if strings.EqualFold(existing, v) {
+				add = false
+				break
+			}
+		}
+		if add {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
 func parseJavadocWithinTokens(doc, open, close string) (instances []string, remaining string) {
 
 	idxOpen := strings.Index(doc, open)
@@ -181,9 +199,10 @@ func parseJavadocWithinTokens(doc, open, close string) (instances []string, rema
 	rem := doc[idxClose+1:]
 
 	instances = strings.Split(doc[idxOpen+1:idxClose], ",")
+
 	for i := 0; i < len(instances); i++ {
 		instances[i] = strings.TrimSpace(instances[i])
 	}
 
-	return instances, strings.TrimSpace(rem)
+	return dedupI(instances), strings.TrimSpace(rem)
 }
