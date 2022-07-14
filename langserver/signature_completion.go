@@ -187,21 +187,20 @@ func getFunctionCallContext(h *LspHandler, docUri lsp.URI, pos lsp.Position) (ca
 	if idxParen < 0 {
 		return callContext{}, errors.New("parenthesis went missing")
 	}
-	word := ""
-	for i := idxParen - 1; i > 0; i-- {
-		if !isIdentifier(methodCallLine[i]) {
-			start := i + 1
-			if start+idxParen > len(methodCallLine) {
+
+	fnName := strings.TrimSpace(methodCallLine[:idxParen])
+	for i := len(fnName) - 1; i > 0; i-- {
+		if !isIdentifier(fnName[i]) {
+			if i+1 >= len(fnName) {
 				return callContext{}, errors.New("index out of bounds")
 			}
-			word = methodCallLine[start : start+idxParen]
+			fnName = fnName[i+1:]
+			break
 		}
 	}
-	if word == "" {
-		word = methodCallLine[:idxParen]
-	}
-	word = strings.ToUpper(strings.TrimSpace(word))
-	funcSymbol, found := h.parsedDocuments.LookupGlobalSymbol(word, SymbolFunction)
+
+	fnName = strings.ToUpper(strings.TrimSpace(fnName))
+	funcSymbol, found := h.parsedDocuments.LookupGlobalSymbol(fnName, SymbolFunction)
 	if !found {
 		return callContext{}, errors.New("no function symbol found")
 	}
