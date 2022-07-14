@@ -10,6 +10,9 @@ import (
 )
 
 func checkInheritance(docs *parseResultsManager, symbol Symbol, symToImplement string) bool {
+	if strings.EqualFold(symbol.Name(), symToImplement) {
+		return true
+	}
 	sym, ok := symbol.(ProtoTypeOrInstanceSymbol)
 	if ok {
 		if strings.EqualFold(sym.Parent, symToImplement) {
@@ -23,127 +26,139 @@ func checkInheritance(docs *parseResultsManager, symbol Symbol, symToImplement s
 	return false
 }
 
+func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, docu, varType string, docs *parseResultsManager, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+	if strings.HasPrefix(docu, "{") { // if instance list directive
+		instances, _ := parseJavadocWithinTokens(docu, "{", "}")
+
+		done := map[string]struct{}{}
+		for _, in := range instances {
+			if _, ok := done[in]; ok {
+				// only process each type once
+				continue
+			}
+			done[in] = struct{}{}
+
+			ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, in)
+			result = append(result, ci...)
+			if strings.EqualFold(in, "C_NPC") {
+				sortIdx := getHighestSortIndex(result)
+				result = append(result, getDefaultC_NPCCompletions(docs, sortIdx)...)
+			} else if strings.EqualFold(in, "C_ITEM") {
+				sortIdx := getHighestSortIndex(result)
+				result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
+			}
+
+			docs.WalkGlobalSymbols(func(s Symbol) error {
+				if checkInheritance(docs, s, in) {
+					ci, err := completionItemFromSymbol(s)
+					if err != nil {
+						return nil
+					}
+					ci.Detail += " (" + strings.ToUpper(in) + " instance)"
+					result = append(result, ci)
+				}
+				return nil
+			}, SymbolInstance)
+		}
+	} else if strings.HasPrefix(docu, "[") { // if enum list directive
+		enums, _ := parseJavadocWithinTokens(docu, "[", "]")
+
+		ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
+		result = append(result, ci...)
+
+		localSortIndex := getHighestSortIndex(result)
+		for _, enum := range enums {
+			symb, ok := docs.LookupGlobalSymbol(strings.ToUpper(enum), SymbolConstant)
+			if !ok {
+				continue
+			}
+			ci, err := completionItemFromSymbol(symb)
+			if err != nil {
+				continue
+			}
+			localSortIndex++
+			ci.Detail += " (enum)"
+			ci.SortText = fmt.Sprintf("%000d", localSortIndex)
+			result = append(result, ci)
+		}
+	}
+	return result, nil
+}
+
+func getCompletionItemsSimple(result []lsp.CompletionItem, h *LspHandler, varType string, docs *parseResultsManager, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+	ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
+	result = append(result, ci...)
+
+	types := SymbolConstant | SymbolVariable | SymbolFunction
+	if strings.EqualFold(varType, "int") {
+		// instance, prototype and class all qualify as "int"
+		types |= SymbolInstance | SymbolClass
+	}
+
+	docs.WalkGlobalSymbols(func(s Symbol) error {
+		useIt := false
+		if typer, ok := s.(interface{ GetType() string }); ok {
+			if strings.EqualFold(typer.GetType(), varType) {
+				useIt = true
+			}
+		} else if _, ok := s.(ProtoTypeOrInstanceSymbol); ok {
+			useIt = true
+		} else if _, ok := s.(ClassSymbol); ok {
+			useIt = true
+		}
+		if useIt {
+			ci, err := completionItemFromSymbol(s)
+			if err != nil {
+				return nil
+			}
+			result = append(result, ci)
+		}
+		return nil
+	}, types)
+
+	return result, nil
+}
+
+func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varType string, docs *parseResultsManager, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+	ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
+	result = append(result, ci...)
+
+	if strings.EqualFold(varType, "C_NPC") {
+		sortIdx := getHighestSortIndex(result)
+		result = append(result, getDefaultC_NPCCompletions(docs, sortIdx)...)
+	} else if strings.EqualFold(varType, "C_ITEM") { // Also offer item global instance
+		sortIdx := getHighestSortIndex(result)
+		result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
+	}
+
+	docs.WalkGlobalSymbols(func(s Symbol) error {
+		if checkInheritance(docs, s, varType) {
+			ci, err := completionItemFromSymbol(s)
+			if err != nil {
+				return nil
+			}
+			result = append(result, ci)
+		}
+		return nil
+	}, SymbolInstance)
+	return result, nil
+}
+
 func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol FunctionSymbol, paramIndex int, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+	// Pre-allocate buffer
 	result := make([]lsp.CompletionItem, 0, 200)
 
 	varType := symbol.Parameters[paramIndex].Type
 	docu := findJavadocParam(symbol.Documentation(), symbol.Parameters[paramIndex].Name())
 
 	if strings.HasPrefix(docu, "{") || strings.HasPrefix(docu, "[") {
-		if strings.HasPrefix(docu, "{") { // if instance list directive
-			instances, _ := parseJavadocWithinTokens(docu, "{", "}")
-
-			done := map[string]struct{}{}
-			for _, in := range instances {
-				if _, ok := done[in]; ok {
-					// only process each type once
-					continue
-				}
-				done[in] = struct{}{}
-
-				ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, in)
-				result = append(result, ci...)
-				if strings.EqualFold(in, "C_NPC") {
-					sortIdx := getHighestSortIndex(result)
-					result = append(result, getDefaultC_NPCCompletions(docs, sortIdx)...)
-				} else if strings.EqualFold(in, "C_ITEM") {
-					sortIdx := getHighestSortIndex(result)
-					result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
-				}
-
-				docs.WalkGlobalSymbols(func(s Symbol) error {
-					if checkInheritance(docs, s, in) {
-						ci, err := completionItemFromSymbol(s)
-						if err != nil {
-							return nil
-						}
-						ci.Detail += " (" + strings.ToUpper(in) + " instance)"
-						result = append(result, ci)
-					}
-					return nil
-				}, SymbolInstance)
-			}
-		} else if strings.HasPrefix(docu, "[") { // if enum list directive
-			enums, _ := parseJavadocWithinTokens(docu, "[", "]")
-
-			ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
-			result = append(result, ci...)
-
-			localSortIndex := getHighestSortIndex(result)
-			for _, enum := range enums {
-				symb, ok := docs.LookupGlobalSymbol(strings.ToUpper(enum), SymbolConstant)
-				if !ok {
-					continue
-				}
-				ci, err := completionItemFromSymbol(symb)
-				if err != nil {
-					continue
-				}
-				localSortIndex++
-				ci.Detail += " (enum)"
-				ci.SortText = fmt.Sprintf("%000d", localSortIndex)
-				result = append(result, ci)
-			}
-		}
-		return result, nil
+		return getCompletionItemsByJavadoc(result, h, docu, varType, docs, params)
 	} else {
 		h.logger.Debugf("varType: %s", varType)
 		if strings.EqualFold(varType, "int") || strings.EqualFold(varType, "string") || strings.EqualFold(varType, "float") {
-
-			ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
-			result = append(result, ci...)
-
-			types := SymbolConstant | SymbolVariable | SymbolFunction
-			if strings.EqualFold(varType, "int") {
-				// instance, prototype and class all qualify as "int"
-				types |= SymbolInstance | SymbolClass
-			}
-
-			docs.WalkGlobalSymbols(func(s Symbol) error {
-				useIt := false
-				if typer, ok := s.(interface{ GetType() string }); ok {
-					if strings.EqualFold(typer.GetType(), varType) {
-						useIt = true
-					}
-				} else if _, ok := s.(ProtoTypeOrInstanceSymbol); ok {
-					useIt = true
-				} else if _, ok := s.(ClassSymbol); ok {
-					useIt = true
-				}
-				if useIt {
-					ci, err := completionItemFromSymbol(s)
-					if err != nil {
-						return nil
-					}
-					result = append(result, ci)
-				}
-				return nil
-			}, types)
-
-			return result, nil
+			return getCompletionItemsSimple(result, h, varType, docs, params)
 		} else { // it is an instance
-			ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
-			result = append(result, ci...)
-
-			if strings.EqualFold(varType, "C_NPC") {
-				sortIdx := getHighestSortIndex(result)
-				result = append(result, getDefaultC_NPCCompletions(docs, sortIdx)...)
-			} else if strings.EqualFold(varType, "C_ITEM") { // Also offer item global instance
-				sortIdx := getHighestSortIndex(result)
-				result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
-			}
-
-			docs.WalkGlobalSymbols(func(s Symbol) error {
-				if checkInheritance(docs, s, varType) {
-					ci, err := completionItemFromSymbol(s)
-					if err != nil {
-						return nil
-					}
-					result = append(result, ci)
-				}
-				return nil
-			}, SymbolInstance)
-			return result, nil
+			return getCompletionItemsComplex(result, h, varType, docs, params)
 		}
 	}
 }
