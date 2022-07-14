@@ -88,8 +88,7 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 		return result, nil
 	} else {
 		h.logger.Debugf("varType: %s", varType)
-		// TODO: Add support for floats (zParserExtender)
-		if strings.EqualFold(varType, "int") || strings.EqualFold(varType, "string") /*|| strings.EqualFold(varType, "float")*/ {
+		if strings.EqualFold(varType, "int") || strings.EqualFold(varType, "string") || strings.EqualFold(varType, "float") {
 
 			ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
 			result = append(result, ci...)
