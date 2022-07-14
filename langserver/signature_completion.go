@@ -94,23 +94,25 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 			ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
 			result = append(result, ci...)
 
-			types := SymbolConstant
+			types := SymbolConstant | SymbolVariable | SymbolFunction
 			if strings.EqualFold(varType, "int") {
-				types |= SymbolInstance
+				// instance, prototype and class all qualify as "int"
+				types |= SymbolInstance | SymbolClass
 			}
 
 			docs.WalkGlobalSymbols(func(s Symbol) error {
+				useIt := false
 				if typer, ok := s.(interface{ GetType() string }); ok {
 					if strings.EqualFold(typer.GetType(), varType) {
-						ci, err := completionItemFromSymbol(s)
-						if err != nil {
-							return nil
-						}
-						result = append(result, ci)
+						useIt = true
 					}
+				} else if _, ok := s.(ProtoTypeOrInstanceSymbol); ok {
+					useIt = true
+				} else if _, ok := s.(ClassSymbol); ok {
+					useIt = true
 				}
-				if inst, ok := s.(ProtoTypeOrInstanceSymbol); ok {
-					ci, err := completionItemFromSymbol(inst)
+				if useIt {
+					ci, err := completionItemFromSymbol(s)
 					if err != nil {
 						return nil
 					}

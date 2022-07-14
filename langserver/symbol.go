@@ -32,6 +32,11 @@ type FunctionSymbol struct {
 	BodyDefinition SymbolDefinition
 }
 
+// GetType ...
+func (s FunctionSymbol) GetType() string {
+	return s.ReturnType
+}
+
 func newSymbolBase(name, source, doc string, def SymbolDefinition) symbolBase {
 	return symbolBase{
 		NameValue:           name,
