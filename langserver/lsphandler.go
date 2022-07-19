@@ -15,10 +15,11 @@ import (
 )
 
 type LspConfig struct {
-	FileEncoding    string `json:"fileEncoding"`
-	SrcFileEncoding string `json:"srcFileEncoding"`
-	LogLevel        string `json:"loglevel"`
-	PprofAddr       string `json:"pprofAddr"`
+	FileEncoding     string `json:"fileEncoding"`
+	SrcFileEncoding  string `json:"srcFileEncoding"`
+	LogLevel         string `json:"loglevel"`
+	PprofAddr        string `json:"pprofAddr"`
+	NumParserThreads int    `json:"numParserThreads"`
 }
 
 // LspHandler ...
@@ -378,6 +379,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 
 		h.parsedDocuments.SetFileEncoding(h.config.FileEncoding)
 		h.parsedDocuments.SetSrcEncoding(h.config.SrcFileEncoding)
+		h.parsedDocuments.NumParserThreads = h.config.NumParserThreads
 
 		for _, v := range h.onConfigChangedHandlers {
 			v(h.config)
