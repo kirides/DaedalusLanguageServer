@@ -3,7 +3,6 @@ package langserver
 import (
 	"bytes"
 	"langsrv/langserver/parser"
-	"reflect"
 	"strings"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
@@ -42,14 +41,6 @@ func NewDaedalusStatefulListener(source string, knownSymbols symbolWalker) *Daed
 		knownSymbols:    knownSymbols,
 	}
 }
-
-var constDefContextType = reflect.TypeOf((*parser.IConstDefContext)(nil)).Elem()
-var varDeclContextType = reflect.TypeOf((*parser.IVarDeclContext)(nil)).Elem()
-
-var classDefContextType = reflect.TypeOf((*parser.IClassDefContext)(nil)).Elem()
-var prototypeDefContextType = reflect.TypeOf((*parser.IPrototypeDefContext)(nil)).Elem()
-var instanceDefContextType = reflect.TypeOf((*parser.IInstanceDefContext)(nil)).Elem()
-var instanceDeclContextType = reflect.TypeOf((*parser.IInstanceDeclContext)(nil)).Elem()
 
 func symbolDefinitionForRuleContext(ctx antlr.ParserRuleContext) SymbolDefinition {
 	return NewSymbolDefinition(ctx.GetStart().GetLine(), ctx.GetStart().GetColumn(), ctx.GetStop().GetLine(), ctx.GetStop().GetColumn())
@@ -178,34 +169,20 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 // EnterInlineDef ...
 func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) {
 
-	consts := ctx.GetTypedRuleContexts(constDefContextType) // Does not really work somehow ...
-	for _, ic := range consts {
-		c, ok := ic.(*parser.ConstDefContext)
-		if !ok {
-			continue
-		}
+	walkSymbols(ctx, func(c *parser.ConstDefContext) {
 		for _, s := range l.constsFromContext(c) {
 			l.GlobalConstants[strings.ToUpper(s.Name())] = s.(ConstantSymbol)
 		}
-	}
-	vars := ctx.GetTypedRuleContexts(varDeclContextType) // Does not really work somehow ...
-	for _, iv := range vars {
-		v, ok := iv.(*parser.VarDeclContext)
-		if !ok {
-			continue
-		}
+	})
+
+	walkSymbols(ctx, func(v *parser.VarDeclContext) {
 		for _, s := range l.variablesFromContext(v) {
 			l.GlobalVariables[strings.ToUpper(s.Name())] = s.(VariableSymbol)
 		}
-	}
+	})
 
-	instances := ctx.GetTypedRuleContexts(instanceDeclContextType)
-	for _, ic := range instances {
-		c, ok := ic.(*parser.InstanceDeclContext)
-		if !ok {
-			continue
-		}
-		for _, name := range c.AllNameNode() {
+	walkSymbols(ctx, func(c *parser.InstanceDeclContext) {
+		walkSymbols(c, func(name parser.INameNodeContext) {
 			psym := NewPrototypeOrInstanceSymbol(
 				name.GetText(),
 				c.ParentReference().GetText(),
@@ -215,6 +192,14 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 				symbolDefinitionForRuleContext(c.ParentReference()),
 				true)
 			l.Instances[strings.ToUpper(psym.Name())] = psym
+		})
+	})
+}
+
+func walkSymbols[T antlr.ParserRuleContext](rule antlr.RuleNode, walkFn func(symbol T)) {
+	for _, v := range rule.GetChildren() {
+		if s, ok := v.(T); ok {
+			walkFn(s)
 		}
 	}
 }
@@ -223,17 +208,10 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 	// Classes
 
-	classes := ctx.GetTypedRuleContexts(classDefContextType)
-	for _, ic := range classes {
-		c, ok := ic.(*parser.ClassDefContext)
-		if !ok {
-			continue
-		}
+	walkSymbols(ctx, func(c *parser.ClassDefContext) {
 		cFields := []Symbol{}
-		for _, iv := range c.AllVarDecl() {
-			v := iv.(*parser.VarDeclContext)
-			for _, ivv := range v.AllVarValueDecl() {
-				vv := ivv.(*parser.VarValueDeclContext)
+		walkSymbols(c, func(v *parser.VarDeclContext) {
+			walkSymbols(v, func(vv *parser.VarValueDeclContext) {
 				cFields = append(cFields,
 					NewVariableSymbol(vv.NameNode().GetText(),
 						v.TypeReference().GetText(),
@@ -241,10 +219,9 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 						"",
 						symbolDefinitionForRuleContext(vv.NameNode())),
 				)
-			}
-			for _, ivv := range v.AllVarArrayDecl() {
-				vv := ivv.(*parser.VarArrayDeclContext)
+			})
 
+			walkSymbols(v, func(vv *parser.VarArrayDeclContext) {
 				cFields = append(cFields,
 					NewVariableSymbol(vv.NameNode().GetText(),
 						v.TypeReference().GetText()+"["+vv.ArraySize().GetText()+"]",
@@ -252,8 +229,9 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 						"",
 						symbolDefinitionForRuleContext(vv.NameNode())),
 				)
-			}
-		}
+			})
+		})
+
 		csym := NewClassSymbol(c.NameNode().GetText(),
 			l.source,
 			l.symbolSummaryForContext(c.AllSymbolSummary()),
@@ -270,14 +248,9 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 			},
 			cFields)
 		l.Classes[strings.ToUpper(csym.Name())] = csym
-	}
+	})
 
-	prototypes := ctx.GetTypedRuleContexts(prototypeDefContextType)
-	for _, ic := range prototypes {
-		c, ok := ic.(*parser.PrototypeDefContext)
-		if !ok {
-			continue
-		}
+	walkSymbols(ctx, func(c *parser.PrototypeDefContext) {
 		psym := NewPrototypeOrInstanceSymbol(
 			c.NameNode().GetText(),
 			c.ParentReference().GetText(),
@@ -287,14 +260,9 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 			symbolDefinitionForRuleContext(c.StatementBlock()),
 			false)
 		l.Prototypes[strings.ToUpper(psym.Name())] = psym
-	}
+	})
 
-	instances := ctx.GetTypedRuleContexts(instanceDefContextType)
-	for _, ic := range instances {
-		c, ok := ic.(*parser.InstanceDefContext)
-		if !ok {
-			continue
-		}
+	walkSymbols(ctx, func(c *parser.InstanceDefContext) {
 		psym := NewPrototypeOrInstanceSymbol(
 			c.NameNode().GetText(),
 			c.ParentReference().GetText(),
@@ -304,7 +272,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 			symbolDefinitionForRuleContext(c.StatementBlock()),
 			true)
 		l.Instances[strings.ToUpper(psym.Name())] = psym
-	}
+	})
 }
 
 func (l *DaedalusStatefulListener) findVarsConstsInStatements(root antlr.Tree) []Symbol {
@@ -330,15 +298,15 @@ func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefConte
 	params := []VariableSymbol{}
 	locals := l.findVarsConstsInStatements(statements)
 
-	for _, s := range ctx.ParameterList().(*parser.ParameterListContext).AllParameterDecl() {
-		pdef := s.(*parser.ParameterDeclContext)
+	walkSymbols(ctx.ParameterList(), func(pdef *parser.ParameterDeclContext) {
 		params = append(params,
 			NewVariableSymbol(pdef.NameNode().GetText(),
 				pdef.TypeReference().GetText(),
 				l.source,
 				"",
 				symbolDefinitionForRuleContext(pdef.NameNode())))
-	}
+	})
+
 	fnc := NewFunctionSymbol(ctx.NameNode().GetText(),
 		l.source,
 		l.symbolSummaryForContext(ctx.GetParent().(*parser.BlockDefContext).AllSymbolSummary()),
