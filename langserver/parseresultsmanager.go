@@ -22,6 +22,8 @@ type parseResultsManager struct {
 	fileEncoding encoding.Encoding
 	srcEncoding  encoding.Encoding
 	decoderPool  *sync.Pool
+
+	parser Parser
 }
 
 func newParseResultsManager(logger Logger) *parseResultsManager {
@@ -31,6 +33,7 @@ func newParseResultsManager(logger Logger) *parseResultsManager {
 		fileEncoding: charmap.Windows1252,
 		srcEncoding:  charmap.Windows1252,
 		decoderPool:  &sync.Pool{New: func() interface{} { return charmap.Windows1252.NewDecoder() }},
+		parser:       newRegularParser(),
 	}
 }
 

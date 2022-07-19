@@ -1,62 +1,65 @@
 package langserver
 
 import (
-	"langsrv/langserver/parser"
 	"sync"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
 
+type DaedalusGrammarParser interface {
+	RemoveErrorListeners()
+	AddErrorListener(antlr.ErrorListener)
+	SetInputStream(antlr.TokenStream)
+	GetInterpreter() *antlr.ParserATNSimulator
+
+	NewDaedalusFile() antlr.Tree
+}
+
+type Parser interface {
+	Parse(source, content string, listener antlr.ParseTreeListener, errListener antlr.ErrorListener)
+}
+
 type parserPool struct {
 	inner sync.Pool
 }
 
-func newParserPool() *parserPool {
+func newParserPool(newFn func() DaedalusGrammarParser) *parserPool {
 	return &parserPool{
-		inner: sync.Pool{
-			New: func() interface{} { return parser.NewDaedalusParser(nil) },
-		},
+		inner: sync.Pool{New: func() interface{} { return newFn() }},
 	}
 }
-func (p *parserPool) Get() *parser.DaedalusParser {
-	return p.inner.Get().(*parser.DaedalusParser)
+func (p *parserPool) Get() DaedalusGrammarParser {
+	return p.inner.Get().(DaedalusGrammarParser)
 }
-func (p *parserPool) Put(v *parser.DaedalusParser) {
+func (p *parserPool) Put(v DaedalusGrammarParser) {
 	p.inner.Put(v)
 }
 
-var pooledParsers = newParserPool()
-
 // ParseAndValidateScript ...
 func (m *parseResultsManager) ParseAndValidateScript(source, content string) *ParseResult {
-	r := m.ParseScript(source, content)
-	e := m.ValidateScript(source, content)
-	if len(e) > 0 {
-		r.SyntaxErrors = append(r.SyntaxErrors, e...)
+	stateful := NewDaedalusStatefulListener(source, m)
+	validating := NewDaedalusValidatingListener(source, m)
+	errListener := &SyntaxErrorListener{}
+	m.parser.Parse(source, content, combineListeners(stateful, validating), errListener)
+
+	result := &ParseResult{
+		SyntaxErrors:    errListener.SyntaxErrors,
+		GlobalVariables: stateful.GlobalVariables,
+		GlobalConstants: stateful.GlobalConstants,
+		Functions:       stateful.Functions,
+		Classes:         stateful.Classes,
+		Prototypes:      stateful.Prototypes,
+		Instances:       stateful.Instances,
+		Source:          source,
 	}
-	return r
+	return result
 }
 
 // ParseScript ...
 func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
-	inputStream := antlr.NewInputStream(content)
-	lexer := parser.NewDaedalusLexer(inputStream)
-	tokenStream := antlr.NewCommonTokenStream(lexer, 0)
-	p := pooledParsers.Get()
-	defer func() {
-		p.SetInputStream(nil)
-		pooledParsers.Put(p)
-	}()
-	p.SetInputStream(tokenStream)
-
-	errListener := &SyntaxErrorListener{}
-	p.RemoveErrorListeners()
-	p.AddErrorListener(errListener)
-	// Use SLL prediction
-	p.Interpreter.SetPredictionMode(antlr.PredictionModeSLL)
 	listener := NewDaedalusStatefulListener(source, m)
-
-	antlr.NewParseTreeWalker().Walk(listener, p.DaedalusFile())
+	errListener := &SyntaxErrorListener{}
+	m.parser.Parse(source, content, listener, errListener)
 
 	result := &ParseResult{
 		SyntaxErrors:    errListener.SyntaxErrors,
@@ -73,24 +76,9 @@ func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 
 // ValidateScript ...
 func (m *parseResultsManager) ValidateScript(source, content string) []SyntaxError {
-	inputStream := antlr.NewInputStream(content)
-	lexer := parser.NewDaedalusLexer(inputStream)
-	tokenStream := antlr.NewCommonTokenStream(lexer, 0)
-	p := pooledParsers.Get()
-	defer func() {
-		p.SetInputStream(nil)
-		pooledParsers.Put(p)
-	}()
-	p.SetInputStream(tokenStream)
-
-	errListener := &SyntaxErrorListener{}
-	p.RemoveErrorListeners()
-	p.AddErrorListener(errListener)
-	// Use SLL prediction
-	p.Interpreter.SetPredictionMode(antlr.PredictionModeSLL)
 	listener := NewDaedalusValidatingListener(source, m)
-
-	antlr.NewParseTreeWalker().Walk(listener, p.DaedalusFile())
+	errListener := &SyntaxErrorListener{}
+	m.parser.Parse(source, content, listener, errListener)
 
 	return errListener.SyntaxErrors
 }
