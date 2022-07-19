@@ -29,6 +29,7 @@ func (p *pprofServer) ChangeAddr(addr string) {
 	addr = fmt.Sprintf("%d.%d.%d.%d:%d", a, b, c, d, port)
 
 	p.pprofAddr = addr
+	p.Stop()
 	p.Start()
 }
 
