@@ -9,14 +9,14 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strings"
 	"syscall"
 
 	"langsrv/langserver"
 
 	"go.uber.org/zap"
 
-	"net/http"
-	// _ "net/http/pprof"
+	_ "net/http/pprof"
 
 	"go.lsp.dev/jsonrpc2"
 )
@@ -71,16 +71,41 @@ func main() {
 
 	logBuildInfo(log)
 
+	pprofServer := &pprofServer{}
+	defer pprofServer.Stop()
+
 	if *pprofPort > 0 {
-		go func() {
-			http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", *pprofPort), nil)
-		}()
+		pprofServer.ChangeAddr(fmt.Sprintf("127.0.0.1:%d", *pprofPort))
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer stop()
 
 	conn := connectLanguageServer(&rwc{os.Stdin, os.Stdout})
 	lspHandler := langserver.NewLspHandler(conn, log)
+
+	lspHandler.OnConfigChanged(func(config langserver.LspConfig) {
+		level := strings.ToLower(config.LogLevel)
+		switch {
+		case strings.HasPrefix(level, "d"):
+			logCfg.Level.SetLevel(zap.DebugLevel)
+		case strings.HasPrefix(level, "w"):
+			logCfg.Level.SetLevel(zap.WarnLevel)
+		case strings.HasPrefix(level, "e"):
+			logCfg.Level.SetLevel(zap.ErrorLevel)
+		case strings.HasPrefix(level, "i"):
+			logCfg.Level.SetLevel(zap.InfoLevel)
+		default:
+			logCfg.Level.SetLevel(zap.InfoLevel)
+		}
+	})
+
+	lspHandler.OnConfigChanged(func(config langserver.LspConfig) {
+		if *pprofPort <= 0 {
+			// only when not set by args
+			log.Infof("Updating pprof address to %s", config.PprofAddr)
+			pprofServer.ChangeAddr(config.PprofAddr)
+		}
+	})
 
 	conn.Go(ctx, func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
 		err := lspHandler.Handle(ctx, reply, req)

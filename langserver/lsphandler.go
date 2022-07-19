@@ -17,6 +17,8 @@ import (
 type LspConfig struct {
 	FileEncoding    string `json:"fileEncoding"`
 	SrcFileEncoding string `json:"srcFileEncoding"`
+	LogLevel        string `json:"loglevel"`
+	PprofAddr       string `json:"pprofAddr"`
 }
 
 // LspHandler ...
@@ -28,6 +30,8 @@ type LspHandler struct {
 	handlers           RpcMux
 	config             LspConfig
 	onceParseAll       sync.Once
+
+	onConfigChangedHandlers []func(config LspConfig)
 
 	baseLspHandler
 	initialized bool
@@ -61,7 +65,12 @@ func NewLspHandler(conn jsonrpc2.Conn, logger Logger) *LspHandler {
 			bufferManager:   bufferManager,
 			parsedDocuments: parsedDocuments,
 		},
+		onConfigChangedHandlers: []func(config LspConfig){},
 	}
+}
+
+func (h *LspHandler) OnConfigChanged(handler func(config LspConfig)) {
+	h.onConfigChangedHandlers = append(h.onConfigChangedHandlers, handler)
 }
 
 func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string, locals map[string]Symbol) ([]lsp.CompletionItem, error) {
@@ -369,6 +378,11 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 
 		h.parsedDocuments.SetFileEncoding(h.config.FileEncoding)
 		h.parsedDocuments.SetSrcEncoding(h.config.SrcFileEncoding)
+
+		for _, v := range h.onConfigChangedHandlers {
+			v(h.config)
+		}
+
 		return nil
 	case lsp.MethodInitialized:
 		return nil
