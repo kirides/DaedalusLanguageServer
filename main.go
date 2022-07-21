@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"syscall"
 
 	"langsrv/langserver"
@@ -107,13 +109,53 @@ func main() {
 		}
 	})
 
+	runningRequests := &sync.Map{}
+	cancelRequest := func(id string) {
+		v, ok := runningRequests.LoadAndDelete(id)
+		if !ok {
+			return
+		}
+		v.(context.CancelFunc)()
+	}
+	addRequest := func(ctx context.Context, id string) context.Context {
+		ctx, cancel := context.WithCancel(ctx)
+		runningRequests.Store(id, cancel)
+		return ctx
+	}
+
 	conn.Go(ctx, func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
+		if req.Method() == "$/cancelRequest" {
+			var idPayload struct {
+				Request struct {
+					ID string `json:"id"`
+				} `json:"request"`
+			}
+			if err := json.Unmarshal(req.Params(), &idPayload); err != nil {
+				log.Warnf("invalid request, missing \"id\"")
+				return nil
+			}
+			log.Debugf("cancelling request %s", idPayload.Request.ID)
+			cancelRequest(idPayload.Request.ID)
+			return nil
+		}
+		if r, ok := req.(*jsonrpc2.Call); ok {
+			id := r.ID()
+			idVal, err := (&id).MarshalJSON()
+			if err != nil {
+				log.Warnf("invalid call, missing \"id\". err %v", err)
+				return nil
+			}
+			idStr := strings.Trim(string(idVal), "\"")
+
+			ctx = addRequest(ctx, idStr)
+			defer cancelRequest(idStr)
+		}
 		err := lspHandler.Handle(ctx, reply, req)
 		if err != nil {
 			if errors.Is(err, langserver.ErrUnhandled) {
-				log.Debugf("%v\n", err)
+				log.Debugw(err.Error(), "method", req.Method(), "request", string(req.Params()))
 			} else {
-				log.Errorf("%s: %v\n", req.Method(), err)
+				log.Errorf("%s: %v", req.Method(), err)
 			}
 		}
 		return nil // unhandled
