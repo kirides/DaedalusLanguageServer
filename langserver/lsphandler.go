@@ -25,16 +25,15 @@ type LspConfig struct {
 
 // LspHandler ...
 type LspHandler struct {
-	TextDocumentSync   *textDocumentSync
-	bufferManager      *BufferManager
-	parsedDocuments    *parseResultsManager
-	initialDiagnostics map[string][]lsp.Diagnostic
-	handlers           RpcMux
-	config             LspConfig
-	onceParseAll       sync.Once
+	TextDocumentSync *textDocumentSync
+	bufferManager    *BufferManager
+	parsedDocuments  *parseResultsManager
+	handlers         RpcMux
+	config           LspConfig
+	onceParseAll     sync.Once
 
 	onConfigChangedHandlers []func(config LspConfig)
-
+	parsedKnownSrcFiles     concurrentSet[string]
 	baseLspHandler
 	initialized bool
 }
@@ -588,26 +587,40 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 
 	if r.Method() == lsp.MethodTextDocumentDidOpen {
 		h.onceParseAll.Do(func() {
-			h.LogInfo("Starting parsing of sources...")
-			go func() {
-				exe, _ := os.Executable()
-				var resultsX []*ParseResult
-				if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
-					resultsX, err = h.parsedDocuments.ParseSource(f)
-					if err != nil {
-						h.LogError("Error parsing %q: %v", f, err)
-						return
-					}
+			exe, _ := os.Executable()
+			var resultsX []*ParseResult
+			if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
+				resultsX, err = h.parsedDocuments.ParseSource(f)
+				if err != nil {
+					h.LogError("Error parsing %q: %v", f, err)
+					return
 				}
+			}
+			_ = resultsX
+		})
+		var openParams lsp.DidOpenTextDocumentParams
+		json.Unmarshal(r.Params(), &openParams)
+		go func() {
+			wd := h.uriToFilename(openParams.TextDocument.URI)
+			if wd == "" {
+				h.LogError("Error locating current file")
+				return
+			}
 
-				if externalsSrc, err := findPath(filepath.Join("_externals", "externals.src")); err == nil {
+			var resultsX []*ParseResult
+			if externalsSrc, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.src")); err == nil {
+				if !h.parsedKnownSrcFiles.Contains(externalsSrc) {
+					h.parsedKnownSrcFiles.Store(externalsSrc)
 					customBuiltins, err := h.parsedDocuments.ParseSource(externalsSrc)
 					if err != nil {
 						h.LogError("Error parsing %q: %v", externalsSrc, err)
 					} else {
 						resultsX = append(resultsX, customBuiltins...)
 					}
-				} else if externalsDaedalus, err := findPath(filepath.Join("_externals", "externals.d")); err == nil {
+				}
+			} else if externalsDaedalus, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.d")); err == nil {
+				if !h.parsedKnownSrcFiles.Contains(externalsDaedalus) {
+					h.parsedKnownSrcFiles.Store(externalsDaedalus)
 					parsed, err := h.parsedDocuments.ParseFile(externalsDaedalus)
 					if err != nil {
 						h.LogError("Error parsing %q: %v", externalsDaedalus, err)
@@ -615,47 +628,41 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 						resultsX = append(resultsX, parsed)
 					}
 				}
+			}
 
-				for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
-					if full, err := findPath(v); err == nil {
-						results, err := h.parsedDocuments.ParseSource(full)
-						if err != nil {
-							h.LogError("Error parsing %s: %v", full, err)
-							return
-						}
-						resultsX = append(resultsX, results...)
-					} else {
-						h.LogDebug("Did not parse %q: %v", v, err)
+			for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
+				if full, err := findPathAnywhereUpToRoot(wd, v); err == nil {
+					if h.parsedKnownSrcFiles.Contains(full) {
+						continue
 					}
-				}
-
-				var diagnostics []lsp.Diagnostic
-				tmpDiags := make(map[string][]lsp.Diagnostic)
-
-				for _, p := range resultsX {
-					if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
-						diagnostics = make([]lsp.Diagnostic, 0, len(p.SyntaxErrors))
-						for _, se := range p.SyntaxErrors {
-							diagnostics = append(diagnostics, se.Diagnostic())
-						}
-						tmpDiags[p.Source] = diagnostics
+					h.parsedKnownSrcFiles.Store(full)
+					results, err := h.parsedDocuments.ParseSource(full)
+					if err != nil {
+						h.LogError("Error parsing %s: %v", full, err)
+						return
 					}
+					resultsX = append(resultsX, results...)
+				} else {
+					h.LogDebug("Did not parse %q: %v", v, err)
 				}
-				h.initialDiagnostics = tmpDiags
-			}()
-		})
-	}
+			}
 
-	if h.initialDiagnostics != nil && len(h.initialDiagnostics) > 0 {
-		h.LogInfo("Publishing initial diagnostics (%d).", len(h.initialDiagnostics))
-		for k, v := range h.initialDiagnostics {
-			h.LogInfo("> %s", k)
-			h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
-				URI:         lsp.DocumentURI(uri.File(k)),
-				Diagnostics: v,
-			})
-		}
-		h.initialDiagnostics = map[string][]lsp.Diagnostic{}
+			var diagnostics = make([]lsp.Diagnostic, 0)
+			for _, p := range resultsX {
+				if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
+					diagnostics = diagnostics[:0]
+
+					for _, se := range p.SyntaxErrors {
+						diagnostics = append(diagnostics, se.Diagnostic())
+					}
+					h.LogInfo("> %s", p.Source)
+					h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
+						URI:         lsp.DocumentURI(uri.File(p.Source)),
+						Diagnostics: diagnostics,
+					})
+				}
+			}
+		}()
 	}
 
 	handled, err := h.handlers.Handle(ctx, reply, r)

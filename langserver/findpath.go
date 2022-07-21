@@ -55,6 +55,23 @@ func findPath(file string) (string, error) {
 	return matches[0], nil
 }
 
+func findPathAnywhereUpToRoot(dir, segment string) (string, error) {
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", err
+	}
+	p, err := findPath(filepath.Join(dir, segment))
+	if err == nil {
+		return p, nil
+	}
+
+	nextDir := filepath.Dir(absDir)
+	if nextDir == absDir {
+		return "", fmt.Errorf("could not find %q anywhere", segment)
+	}
+	return findPathAnywhereUpToRoot(nextDir, segment)
+}
+
 func InsensitiveRxPattern(path string) string {
 	p := strings.Builder{}
 	for _, r := range path {
