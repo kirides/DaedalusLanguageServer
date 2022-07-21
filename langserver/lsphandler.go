@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"unicode"
 
 	"go.lsp.dev/jsonrpc2"
 	lsp "go.lsp.dev/protocol"
@@ -409,6 +410,20 @@ func (h *LspHandler) handleDocumentSymbol(req RpcContext, params lsp.DocumentSym
 	req.Reply(req.Context(), result, nil)
 	return nil
 }
+func stringContainsAllAnywhere(value, set string) bool {
+	found := true
+
+	for _, v := range set {
+		if !(strings.ContainsRune(value, unicode.ToLower(v)) ||
+			strings.ContainsRune(value, unicode.ToUpper(v))) {
+			found = false
+			break
+		}
+	}
+
+	return found
+}
+
 func (h *LspHandler) handleWorkspaceSymbol(req RpcContext, params lsp.WorkspaceSymbolParams) error {
 	numSymbols := h.parsedDocuments.CountSymbols()
 	result := make([]lsp.SymbolInformation, 0, numSymbols)
@@ -421,10 +436,16 @@ func (h *LspHandler) handleWorkspaceSymbol(req RpcContext, params lsp.WorkspaceS
 			h.logger.Debugf("request cancelled", "method", req.Request().Method())
 			return req.Context().Err()
 		}
+		if qlower == "" {
+			result = collectWorkspaceSymbols(result, s)
+			return nil
+		}
+
+		// pre filtering
 		buffer = buffer[:0]
 		buffer = collectWorkspaceSymbols(buffer, s)
 		for _, v := range buffer {
-			if strings.Contains(strings.ToLower(v.Name), qlower) {
+			if stringContainsAllAnywhere(v.Name, params.Query) {
 				result = append(result, v)
 			}
 		}
