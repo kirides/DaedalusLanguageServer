@@ -16,6 +16,33 @@ type ParseResult struct {
 	SyntaxErrors    []SyntaxError
 }
 
+func (r *ParseResult) CountSymbols() int64 {
+	numSymbols := int64(len(r.Classes)) +
+		int64(len(r.Functions)) +
+		int64(len(r.GlobalConstants)) +
+		int64(len(r.GlobalVariables)) +
+		int64(len(r.Instances)) +
+		int64(len(r.Prototypes))
+
+	for _, v := range r.Classes {
+		numSymbols += int64(len(v.Fields))
+	}
+
+	for _, v := range r.Instances {
+		numSymbols += int64(len(v.Fields))
+	}
+	for _, v := range r.Prototypes {
+		numSymbols += int64(len(v.Fields))
+	}
+
+	// for _, v := range r.Functions {
+	// 	numSymbols += int64(len(v.Parameters))
+	// 	numSymbols += int64(len(v.LocalVariables))
+	// }
+
+	return numSymbols
+}
+
 func (parsedDoc *ParseResult) WalkScopedVariables(di DefinitionIndex, walkFn func(Symbol) bool) {
 	for _, fn := range parsedDoc.Functions {
 		if fn.BodyDefinition.InBBox(di) {

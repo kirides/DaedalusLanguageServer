@@ -68,6 +68,18 @@ func (m *parseResultsManager) SetSrcEncoding(enc string) error {
 	return fmt.Errorf("unknown encoding %q", enc)
 }
 
+func (m *parseResultsManager) CountSymbols() int64 {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	n := int64(0)
+	for _, p := range m.parseResults {
+		n += p.CountSymbols()
+	}
+
+	return n
+}
+
 func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()

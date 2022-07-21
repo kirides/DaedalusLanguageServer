@@ -248,12 +248,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 	}, nil
 }
 
-func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.Location, error) {
-	symbol, err := h.lookUpSymbol(h.uriToFilename(params.TextDocument.URI), params.Position)
-	if err != nil {
-		return lsp.Location{}, err
-	}
-
+func getSymbolLocation(symbol Symbol) lsp.Location {
 	return lsp.Location{
 		URI: uri.File(symbol.Source()),
 		Range: lsp.Range{
@@ -265,7 +260,16 @@ func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextD
 				Character: uint32(symbol.Definition().Start.Column + len(symbol.Name())),
 				Line:      uint32(symbol.Definition().Start.Line - 1),
 			},
-		}}, nil
+		}}
+}
+
+func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.Location, error) {
+	symbol, err := h.lookUpSymbol(h.uriToFilename(params.TextDocument.URI), params.Position)
+	if err != nil {
+		return lsp.Location{}, err
+	}
+
+	return getSymbolLocation(symbol), nil
 }
 
 func (h *LspHandler) handleTextDocumentCompletion(req RpcContext, data lsp.CompletionParams) error {
@@ -307,6 +311,134 @@ func (h *LspHandler) handleTextDocumentSignatureHelp(req RpcContext, data lsp.Te
 	return req.Reply(req.Context(), result, nil)
 }
 
+func getSymbolKind(s Symbol) lsp.SymbolKind {
+	switch s.(type) {
+	case ArrayVariableSymbol:
+		return lsp.SymbolKindArray
+	case ClassSymbol:
+		return lsp.SymbolKindClass
+	case ProtoTypeOrInstanceSymbol:
+		return lsp.SymbolKindClass
+	case FunctionSymbol:
+		return lsp.SymbolKindFunction
+	case ConstantSymbol:
+		return lsp.SymbolKindConstant
+	case VariableSymbol:
+		return lsp.SymbolKindVariable
+	}
+	return lsp.SymbolKindNull
+}
+
+func getDocumentSymbol(s Symbol) lsp.DocumentSymbol {
+	rn := getSymbolLocation(s).Range
+	return lsp.DocumentSymbol{
+		Name:           s.Name(),
+		Kind:           getSymbolKind(s),
+		Range:          rn,
+		SelectionRange: rn,
+	}
+}
+
+func getSymbolInformation(s Symbol) lsp.SymbolInformation {
+	return lsp.SymbolInformation{
+		Name:     s.Name(),
+		Kind:     getSymbolKind(s),
+		Location: getSymbolLocation(s),
+	}
+}
+
+func collectDocumentSymbols(result []lsp.DocumentSymbol, s Symbol) []lsp.DocumentSymbol {
+	mainSymb := getDocumentSymbol(s)
+
+	if cls, ok := s.(ClassSymbol); ok {
+		for _, v := range cls.Fields {
+			si := getDocumentSymbol(v)
+			mainSymb.Children = append(mainSymb.Children, si)
+		}
+	} else if cls, ok := s.(ProtoTypeOrInstanceSymbol); ok {
+		for _, v := range cls.Fields {
+			si := getDocumentSymbol(v)
+			mainSymb.Children = append(mainSymb.Children, si)
+		}
+	}
+	result = append(result, mainSymb)
+	return result
+}
+
+func collectWorkspaceSymbols(result []lsp.SymbolInformation, s Symbol) []lsp.SymbolInformation {
+	mainSymb := getSymbolInformation(s)
+	result = append(result, mainSymb)
+
+	if cls, ok := s.(ClassSymbol); ok {
+		for _, v := range cls.Fields {
+			si := getSymbolInformation(v)
+			si.ContainerName = s.Name()
+			result = append(result, si)
+		}
+	} else if cls, ok := s.(ProtoTypeOrInstanceSymbol); ok {
+		for _, v := range cls.Fields {
+			si := getSymbolInformation(v)
+			si.ContainerName = s.Name()
+			result = append(result, si)
+		}
+	}
+	return result
+}
+
+func (h *LspHandler) handleDocumentSymbol(req RpcContext, params lsp.DocumentSymbolParams) error {
+	r, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
+	if err != nil {
+		req.Reply(req.Context(), nil, err)
+		return err
+	}
+	numSymbols := r.CountSymbols()
+	result := make([]lsp.DocumentSymbol, 0, numSymbols)
+
+	err = r.WalkGlobalSymbols(func(s Symbol) error {
+		if req.Context().Err() != nil {
+			h.logger.Debugf("request cancelled", "method", req.Request().Method())
+			return req.Context().Err()
+		}
+		result = collectDocumentSymbols(result, s)
+		return nil
+	}, SymbolAll)
+	if err != nil {
+		return nil
+	}
+
+	req.Reply(req.Context(), result, nil)
+	return nil
+}
+func (h *LspHandler) handleWorkspaceSymbol(req RpcContext, params lsp.WorkspaceSymbolParams) error {
+	numSymbols := h.parsedDocuments.CountSymbols()
+	result := make([]lsp.SymbolInformation, 0, numSymbols)
+	buffer := make([]lsp.SymbolInformation, 0, 50)
+
+	qlower := strings.ToLower(params.Query)
+
+	err := h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
+		if req.Context().Err() != nil {
+			h.logger.Debugf("request cancelled", "method", req.Request().Method())
+			return req.Context().Err()
+		}
+		buffer = buffer[:0]
+		buffer = collectWorkspaceSymbols(buffer, s)
+		for _, v := range buffer {
+			if strings.Contains(strings.ToLower(v.Name), qlower) {
+				result = append(result, v)
+			}
+		}
+		return nil
+	}, SymbolAll)
+
+	if err != nil {
+		return nil
+	}
+
+	req.Reply(req.Context(), result, nil)
+	return nil
+}
+
 func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentCompletion, MakeHandler(h.handleTextDocumentCompletion))
 	h.handlers.Register(lsp.MethodTextDocumentDefinition, MakeHandler(h.handleTextDocumentDefinition))
@@ -317,6 +449,9 @@ func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentDidOpen, MakeHandler(h.TextDocumentSync.handleTextDocumentDidOpen))
 	h.handlers.Register(lsp.MethodTextDocumentDidChange, MakeHandler(h.TextDocumentSync.handleTextDocumentDidChange))
 	h.handlers.Register(lsp.MethodTextDocumentDidSave, MakeHandler(h.TextDocumentSync.handleTextDocumentDidSave))
+
+	h.handlers.Register(lsp.MethodTextDocumentDocumentSymbol, MakeHandler(h.handleDocumentSymbol))
+	h.handlers.Register(lsp.MethodWorkspaceSymbol, MakeHandler(h.handleWorkspaceSymbol))
 }
 
 func prettyJSON(val interface{}) string {
@@ -355,6 +490,8 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 						IncludeText: true,
 					},
 				},
+				WorkspaceSymbolProvider: true,
+				DocumentSymbolProvider:  true,
 			},
 		}, nil); err != nil {
 			return fmt.Errorf("not initialized")
@@ -480,6 +617,9 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 	handled, err := h.handlers.Handle(ctx, reply, r)
 	if err != nil && handled {
 		return err
+	}
+	if handled {
+		return nil
 	}
 	return h.baseLspHandler.Handle(ctx, reply, r)
 }
