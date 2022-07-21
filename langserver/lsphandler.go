@@ -356,12 +356,35 @@ func collectDocumentSymbols(result []lsp.DocumentSymbol, s Symbol) []lsp.Documen
 			si := getDocumentSymbol(v)
 			mainSymb.Children = append(mainSymb.Children, si)
 		}
+		mainSymb.Range = lsp.Range{
+			Start: mainSymb.Range.Start,
+			End: lsp.Position{
+				Line:      uint32(cls.BodyDefinition.End.Line) - 1,
+				Character: uint32(cls.BodyDefinition.End.Column),
+			},
+		}
 	} else if cls, ok := s.(ProtoTypeOrInstanceSymbol); ok {
 		for _, v := range cls.Fields {
 			si := getDocumentSymbol(v)
 			mainSymb.Children = append(mainSymb.Children, si)
 		}
+		mainSymb.Range = lsp.Range{
+			Start: mainSymb.Range.Start,
+			End: lsp.Position{
+				Line:      uint32(cls.BodyDefinition.End.Line) - 1,
+				Character: uint32(cls.BodyDefinition.End.Column),
+			},
+		}
+	} else if cls, ok := s.(FunctionSymbol); ok {
+		mainSymb.Range = lsp.Range{
+			Start: mainSymb.Range.Start,
+			End: lsp.Position{
+				Line:      uint32(cls.BodyDefinition.End.Line) - 1,
+				Character: uint32(cls.BodyDefinition.End.Column),
+			},
+		}
 	}
+
 	result = append(result, mainSymb)
 	return result
 }
