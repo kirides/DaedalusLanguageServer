@@ -588,15 +588,13 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 	if r.Method() == lsp.MethodTextDocumentDidOpen {
 		h.onceParseAll.Do(func() {
 			exe, _ := os.Executable()
-			var resultsX []*ParseResult
 			if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
-				resultsX, err = h.parsedDocuments.ParseSource(f)
+				_, err = h.parsedDocuments.ParseSource(f)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", f, err)
 					return
 				}
 			}
-			_ = resultsX
 		})
 		var openParams lsp.DidOpenTextDocumentParams
 		json.Unmarshal(r.Params(), &openParams)
@@ -653,7 +651,20 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					diagnostics = diagnostics[:0]
 
 					for _, se := range p.SyntaxErrors {
-						diagnostics = append(diagnostics, se.Diagnostic())
+						diag := se.Diagnostic()
+
+						// TODO: sometimes syntax errors are in here twice...
+						add := true
+						for _, v := range diagnostics {
+							if v.Range == diag.Range {
+								add = false
+								break
+							}
+						}
+						if !add {
+							continue
+						}
+						diagnostics = append(diagnostics, diag)
 					}
 					h.LogInfo("> %s", p.Source)
 					h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
