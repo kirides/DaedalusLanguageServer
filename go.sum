@@ -1,5 +1,7 @@
 github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220314183648-97c793e446ba h1:GzYOm7fQbUZvAWPPBKxGqCmzTXJ2AYuWz4187HVxjno=
 github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220314183648-97c793e446ba/go.mod h1:F7bn7fEU90QkQ3tnmaTx3LTKLEDqnwWODIYppRQ5hnY=
+github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220722192633-1df58f77820b h1:95LMjX7MgpSkIM18M4b4SLVs/fqWvJIUBI07E4ZtPN0=
+github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220722192633-1df58f77820b/go.mod h1:F7bn7fEU90QkQ3tnmaTx3LTKLEDqnwWODIYppRQ5hnY=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
