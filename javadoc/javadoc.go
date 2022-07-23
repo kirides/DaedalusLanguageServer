@@ -77,7 +77,7 @@ func formatParams(sb *strings.Builder, param, desc string) {
 			sig, err := getFuncSignatureString(fnSigdata)
 			if err == nil {
 				// I wanted daedalus syntax highlightin here, but it does not work for me
-				sb.WriteString("```daedalus\n" + sig + "\n```")
+				sb.WriteString("\n```daedalus\n" + sig + "\n```")
 			} else {
 				sb.WriteString("<invalid signature>")
 			}

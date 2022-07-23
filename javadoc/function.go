@@ -2,6 +2,7 @@ package javadoc
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
@@ -43,9 +44,9 @@ func getFuncSignatureString(input []string) (string, error) {
 func (fs Func) String() string {
 	pars := fs.Parameters
 	for i, p := range pars {
-		pars[i] = "var " + p
+		pars[i] = "var " + p + " p" + strconv.Itoa(i)
 	}
-	return "func " + fs.ReturnType + " [](" + strings.Join(pars, ",") + ")"
+	return "func " + fs.ReturnType + " fn(" + strings.Join(pars, ", ") + ")"
 
 }
 
