@@ -38,6 +38,9 @@ func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string
 func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	result := make([]lsp.CompletionItem, 0, 200)
 	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
+
+	partialIdentifier := ""
+
 	if err == nil {
 		doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
 		di := symbol.DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
@@ -56,12 +59,16 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 			locals := parsedDoc.ScopedVariables(di)
 			return getTypeFieldsAsCompletionItems(h.parsedDocuments, proto, locals)
 		}
+		partialIdentifier, _ = doc.GetIdentifier(params.Position)
 
 		// locally scoped variables ordered at the top
 		localSortIdx := 0
 		for _, fn := range parsedDoc.Functions {
 			if fn.BodyDefinition.InBBox(di) {
 				for _, p := range fn.Parameters {
+					if partialIdentifier != "" && !stringContainsAllAnywhere(p.Name(), partialIdentifier) {
+						continue
+					}
 					ci, err := completionItemFromSymbol(h.parsedDocuments, p)
 					if err != nil {
 						continue
@@ -72,6 +79,9 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 					result = append(result, ci)
 				}
 				for _, p := range fn.LocalVariables {
+					if partialIdentifier != "" && !stringContainsAllAnywhere(p.Name(), partialIdentifier) {
+						continue
+					}
 					ci, err := completionItemFromSymbol(h.parsedDocuments, p)
 					if err != nil {
 						continue
@@ -97,6 +107,9 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 	}
 
 	h.parsedDocuments.WalkGlobalSymbols(func(s symbol.Symbol) error {
+		if partialIdentifier != "" && !stringContainsAllAnywhere(s.Name(), partialIdentifier) {
+			return nil
+		}
 		ci, err := completionItemFromSymbol(h.parsedDocuments, s)
 		if err != nil {
 			return nil
