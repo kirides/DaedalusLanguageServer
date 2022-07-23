@@ -1,4 +1,4 @@
-package langserver
+package DaedalusLanguageServer
 
 type Logger interface {
 	Debugf(template string, args ...interface{})

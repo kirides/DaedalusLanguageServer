@@ -1,4 +1,4 @@
-package langserver
+package DaedalusLanguageServer
 
 import (
 	"context"
@@ -9,6 +9,12 @@ import (
 )
 
 type Handler func(RpcContext) error
+
+func NewMux() *RpcMux {
+	return &RpcMux{
+		pathToType: map[string]Handler{},
+	}
+}
 
 type RpcMux struct {
 	pathToType map[string]Handler

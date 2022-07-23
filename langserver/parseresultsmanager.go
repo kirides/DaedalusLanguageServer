@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/charmap"
@@ -19,7 +20,7 @@ import (
 type parseResultsManager struct {
 	parseResults map[string]*ParseResult
 	mtx          sync.RWMutex
-	logger       Logger
+	logger       dls.Logger
 
 	fileEncoding encoding.Encoding
 	srcEncoding  encoding.Encoding
@@ -29,7 +30,7 @@ type parseResultsManager struct {
 	NumParserThreads int
 }
 
-func newParseResultsManager(logger Logger) *parseResultsManager {
+func newParseResultsManager(logger dls.Logger) *parseResultsManager {
 	return &parseResultsManager{
 		parseResults:     make(map[string]*ParseResult),
 		logger:           logger,

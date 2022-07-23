@@ -10,8 +10,9 @@ import (
 	"sync"
 	"unicode"
 
+	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
-	"github.com/kirides/DaedalusLanguageServer/langserver/javadoc"
+	"github.com/kirides/DaedalusLanguageServer/javadoc"
 	"go.lsp.dev/jsonrpc2"
 	lsp "go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
@@ -33,7 +34,7 @@ type LspHandler struct {
 	TextDocumentSync *textDocumentSync
 	bufferManager    *BufferManager
 	parsedDocuments  *parseResultsManager
-	handlers         RpcMux
+	handlers         *dls.RpcMux
 	config           LspConfig
 	onceParseAll     sync.Once
 
@@ -49,7 +50,7 @@ var (
 )
 
 // NewLspHandler ...
-func NewLspHandler(conn jsonrpc2.Conn, logger Logger) *LspHandler {
+func NewLspHandler(conn jsonrpc2.Conn, logger dls.Logger) *LspHandler {
 	bufferManager := NewBufferManager()
 	parsedDocuments := newParseResultsManager(logger)
 	return &LspHandler{
@@ -57,9 +58,7 @@ func NewLspHandler(conn jsonrpc2.Conn, logger Logger) *LspHandler {
 			logger: logger,
 			conn:   conn,
 		},
-		handlers: RpcMux{
-			pathToType: map[string]Handler{},
-		},
+		handlers:        dls.NewMux(),
 		initialized:     false,
 		bufferManager:   bufferManager,
 		parsedDocuments: parsedDocuments,
@@ -287,13 +286,13 @@ func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextD
 	return getSymbolLocation(symbol), nil
 }
 
-func (h *LspHandler) handleTextDocumentCompletion(req RpcContext, data lsp.CompletionParams) error {
+func (h *LspHandler) handleTextDocumentCompletion(req dls.RpcContext, data lsp.CompletionParams) error {
 	items, err := h.getTextDocumentCompletion(&data)
 	req.ReplyEither(req.Context(), items, err)
 	return nil
 }
 
-func (h *LspHandler) handleTextDocumentDefinition(req RpcContext, data lsp.TextDocumentPositionParams) error {
+func (h *LspHandler) handleTextDocumentDefinition(req dls.RpcContext, data lsp.TextDocumentPositionParams) error {
 	found, err := h.handleGoToDefinition(req.Context(), &data)
 	if err != nil {
 		return req.Reply(req.Context(), nil, nil)
@@ -301,7 +300,7 @@ func (h *LspHandler) handleTextDocumentDefinition(req RpcContext, data lsp.TextD
 	return req.Reply(req.Context(), found, nil)
 }
 
-func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocumentPositionParams) error {
+func (h *LspHandler) handleTextDocumentHover(req dls.RpcContext, data lsp.TextDocumentPositionParams) error {
 	found, err := h.lookUpSymbol(h.uriToFilename(data.TextDocument.URI), data.Position)
 	if err != nil {
 		return req.Reply(req.Context(), nil, nil)
@@ -319,7 +318,7 @@ func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocume
 		},
 	}, nil)
 }
-func (h *LspHandler) handleTextDocumentSignatureHelp(req RpcContext, data lsp.TextDocumentPositionParams) error {
+func (h *LspHandler) handleTextDocumentSignatureHelp(req dls.RpcContext, data lsp.TextDocumentPositionParams) error {
 	result, err := h.handleSignatureInfo(req.Context(), &data)
 	if err != nil {
 		return req.Reply(req.Context(), nil, nil)
@@ -422,7 +421,7 @@ func collectWorkspaceSymbols(result []lsp.SymbolInformation, s symbol.Symbol) []
 	return result
 }
 
-func (h *LspHandler) handleDocumentSymbol(req RpcContext, params lsp.DocumentSymbolParams) error {
+func (h *LspHandler) handleDocumentSymbol(req dls.RpcContext, params lsp.DocumentSymbolParams) error {
 	r, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
@@ -460,7 +459,7 @@ func stringContainsAllAnywhere(value, set string) bool {
 	return found
 }
 
-func (h *LspHandler) handleWorkspaceSymbol(req RpcContext, params lsp.WorkspaceSymbolParams) error {
+func (h *LspHandler) handleWorkspaceSymbol(req dls.RpcContext, params lsp.WorkspaceSymbolParams) error {
 	numSymbols := h.parsedDocuments.CountSymbols()
 	result := make([]lsp.SymbolInformation, 0, numSymbols)
 	buffer := make([]lsp.SymbolInformation, 0, 50)
@@ -497,18 +496,18 @@ func (h *LspHandler) handleWorkspaceSymbol(req RpcContext, params lsp.WorkspaceS
 }
 
 func (h *LspHandler) onInitialized() {
-	h.handlers.Register(lsp.MethodTextDocumentCompletion, MakeHandler(h.handleTextDocumentCompletion))
-	h.handlers.Register(lsp.MethodTextDocumentDefinition, MakeHandler(h.handleTextDocumentDefinition))
-	h.handlers.Register(lsp.MethodTextDocumentHover, MakeHandler(h.handleTextDocumentHover))
-	h.handlers.Register(lsp.MethodTextDocumentSignatureHelp, MakeHandler(h.handleTextDocumentSignatureHelp))
+	h.handlers.Register(lsp.MethodTextDocumentCompletion, dls.MakeHandler(h.handleTextDocumentCompletion))
+	h.handlers.Register(lsp.MethodTextDocumentDefinition, dls.MakeHandler(h.handleTextDocumentDefinition))
+	h.handlers.Register(lsp.MethodTextDocumentHover, dls.MakeHandler(h.handleTextDocumentHover))
+	h.handlers.Register(lsp.MethodTextDocumentSignatureHelp, dls.MakeHandler(h.handleTextDocumentSignatureHelp))
 
 	// textDocument/didOpen/didSave/didChange
-	h.handlers.Register(lsp.MethodTextDocumentDidOpen, MakeHandler(h.TextDocumentSync.handleTextDocumentDidOpen))
-	h.handlers.Register(lsp.MethodTextDocumentDidChange, MakeHandler(h.TextDocumentSync.handleTextDocumentDidChange))
-	h.handlers.Register(lsp.MethodTextDocumentDidSave, MakeHandler(h.TextDocumentSync.handleTextDocumentDidSave))
+	h.handlers.Register(lsp.MethodTextDocumentDidOpen, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidOpen))
+	h.handlers.Register(lsp.MethodTextDocumentDidChange, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidChange))
+	h.handlers.Register(lsp.MethodTextDocumentDidSave, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidSave))
 
-	h.handlers.Register(lsp.MethodTextDocumentDocumentSymbol, MakeHandler(h.handleDocumentSymbol))
-	h.handlers.Register(lsp.MethodWorkspaceSymbol, MakeHandler(h.handleWorkspaceSymbol))
+	h.handlers.Register(lsp.MethodTextDocumentDocumentSymbol, dls.MakeHandler(h.handleDocumentSymbol))
+	h.handlers.Register(lsp.MethodWorkspaceSymbol, dls.MakeHandler(h.handleWorkspaceSymbol))
 }
 
 func prettyJSON(val interface{}) string {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
-	"github.com/kirides/DaedalusLanguageServer/langserver/javadoc"
+	"github.com/kirides/DaedalusLanguageServer/javadoc"
 
 	lsp "go.lsp.dev/protocol"
 )

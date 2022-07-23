@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	dls "github.com/kirides/DaedalusLanguageServer"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/uri"
 )
@@ -23,7 +24,7 @@ func (h *EmptyHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req j
 type baseLspHandler struct {
 	EmptyHandler
 	conn   jsonrpc2.Conn
-	logger Logger
+	logger dls.Logger
 }
 
 func (h *baseLspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {

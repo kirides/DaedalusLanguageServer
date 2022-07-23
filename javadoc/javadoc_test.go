@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+	"github.com/kirides/DaedalusLanguageServer/javadoc"
 	"github.com/kirides/DaedalusLanguageServer/langserver"
-	"github.com/kirides/DaedalusLanguageServer/langserver/javadoc"
 )
 
 func TestJavadocParam(t *testing.T) {
@@ -36,7 +36,9 @@ func TestJavadocParamWithParser(t *testing.T) {
 				symbol.Definition{},
 				"void",
 				symbol.Definition{},
-				[]symbol.Variable{},
+				[]symbol.Variable{
+					symbol.NewVariable("amount", "int", ".", "", symbol.Definition{}),
+				},
 				[]symbol.Symbol{},
 			),
 		},
