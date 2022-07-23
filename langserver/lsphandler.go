@@ -10,6 +10,8 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+	"github.com/kirides/DaedalusLanguageServer/langserver/javadoc"
 	"go.lsp.dev/jsonrpc2"
 	lsp "go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
@@ -83,7 +85,7 @@ func (h *LspHandler) OnConfigChanged(handler func(config LspConfig)) {
 	h.onConfigChangedHandlers = append(h.onConfigChangedHandlers, handler)
 }
 
-func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string, locals map[string]Symbol) ([]lsp.CompletionItem, error) {
+func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string, locals map[string]symbol.Symbol) ([]lsp.CompletionItem, error) {
 	symName := strings.ToUpper(symbolName)
 	sym, ok := locals[symName]
 	if !ok {
@@ -93,13 +95,13 @@ func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string
 	if !ok {
 		return []lsp.CompletionItem{}, nil
 	}
-	if clsSym, ok := sym.(ClassSymbol); ok {
+	if clsSym, ok := sym.(symbol.Class); ok {
 		return fieldsToCompletionItems(docs, clsSym.Fields), nil
 	}
-	if protoSym, ok := sym.(ProtoTypeOrInstanceSymbol); ok {
+	if protoSym, ok := sym.(symbol.ProtoTypeOrInstance); ok {
 		return getTypeFieldsAsCompletionItems(docs, protoSym.Parent, locals)
 	}
-	if varSym, ok := sym.(VariableSymbol); ok {
+	if varSym, ok := sym.(symbol.Variable); ok {
 		return getTypeFieldsAsCompletionItems(docs, varSym.Type, locals)
 	}
 	// no way for e.g. C_NPC arrays
@@ -114,7 +116,7 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
 	if err == nil {
 		doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
-		di := DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
+		di := symbol.DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 
 		scci, err := getSignatureCompletions(params, h)
 		if err != nil {
@@ -160,17 +162,17 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 		}
 		for _, fn := range parsedDoc.Instances {
 			if fn.BodyDefinition.InBBox(di) {
-				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]Symbol{})
+				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]symbol.Symbol{})
 			}
 		}
 		for _, fn := range parsedDoc.Prototypes {
 			if fn.BodyDefinition.InBBox(di) {
-				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]Symbol{})
+				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]symbol.Symbol{})
 			}
 		}
 	}
 
-	h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
+	h.parsedDocuments.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		ci, err := completionItemFromSymbol(h.parsedDocuments, s)
 		if err != nil {
 			return nil
@@ -182,16 +184,16 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 	return result, nil
 }
 
-func (h *LspHandler) lookUpScopedSymbol(documentURI, identifier string, position lsp.Position) Symbol {
+func (h *LspHandler) lookUpScopedSymbol(documentURI, identifier string, position lsp.Position) symbol.Symbol {
 	p, err := h.parsedDocuments.Get(documentURI)
 	if err != nil {
 		return nil
 	}
 
-	di := DefinitionIndex{Line: int(position.Line), Column: int(position.Character)}
+	di := symbol.DefinitionIndex{Line: int(position.Line), Column: int(position.Character)}
 
-	var sym Symbol
-	p.WalkScopedVariables(di, func(s Symbol) bool {
+	var sym symbol.Symbol
+	p.WalkScopedVariables(di, func(s symbol.Symbol) bool {
 		if strings.EqualFold(s.Name(), identifier) {
 			sym = s
 			return false
@@ -201,7 +203,7 @@ func (h *LspHandler) lookUpScopedSymbol(documentURI, identifier string, position
 	return sym
 }
 
-func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Symbol, error) {
+func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (symbol.Symbol, error) {
 	doc := h.bufferManager.GetBuffer(documentURI)
 	if doc == "" {
 		return nil, fmt.Errorf("document %q not found", documentURI)
@@ -231,12 +233,12 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 
 	var fnParams []lsp.ParameterInformation
 	for _, p := range fn.Parameters {
-		doc := findJavadocParam(fn.Documentation(), p.Name())
+		doc := javadoc.FindParam(fn.Documentation(), p.Name())
 		var mdDoc interface{}
 		if doc != "" {
 			mdDoc = &lsp.MarkupContent{
 				Kind:  lsp.Markdown,
-				Value: fmt.Sprintf("**%s** - *%s*", p.Name(), cleanUpParamDesc(doc)),
+				Value: fmt.Sprintf("**%s** - *%s*", p.Name(), javadoc.RemoveTokens(doc)),
 			}
 		}
 		fnParams = append(fnParams, lsp.ParameterInformation{
@@ -250,7 +252,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 			{
 				Documentation: &lsp.MarkupContent{
 					Kind:  lsp.Markdown,
-					Value: simpleJavadocMD(fn),
+					Value: javadoc.MarkdownSimple(fn),
 				},
 				Label:      fn.String(),
 				Parameters: fnParams,
@@ -261,7 +263,7 @@ func (h *LspHandler) handleSignatureInfo(ctx context.Context, params *lsp.TextDo
 	}, nil
 }
 
-func getSymbolLocation(symbol Symbol) lsp.Location {
+func getSymbolLocation(symbol symbol.Symbol) lsp.Location {
 	return lsp.Location{
 		URI: uri.File(symbol.Source()),
 		Range: lsp.Range{
@@ -287,7 +289,7 @@ func (h *LspHandler) handleGoToDefinition(ctx context.Context, params *lsp.TextD
 
 func (h *LspHandler) handleTextDocumentCompletion(req RpcContext, data lsp.CompletionParams) error {
 	items, err := h.getTextDocumentCompletion(&data)
-	replyEither(req.Context(), req, items, err)
+	req.ReplyEither(req.Context(), items, err)
 	return nil
 }
 
@@ -313,7 +315,7 @@ func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocume
 		},
 		Contents: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
-			Value: strings.TrimSpace(simpleJavadocMD(found) + "\n\n```daedalus\n" + h.parsedDocuments.getSymbolCode(found) + "\n```"),
+			Value: strings.TrimSpace(javadoc.MarkdownSimple(found) + "\n\n```daedalus\n" + h.parsedDocuments.getSymbolCode(found) + "\n```"),
 		},
 	}, nil)
 }
@@ -325,23 +327,23 @@ func (h *LspHandler) handleTextDocumentSignatureHelp(req RpcContext, data lsp.Te
 	return req.Reply(req.Context(), result, nil)
 }
 
-func getSymbolKind(s Symbol) lsp.SymbolKind {
+func getSymbolKind(s symbol.Symbol) lsp.SymbolKind {
 	switch s.(type) {
-	case ArrayVariableSymbol, ConstantArraySymbol:
+	case symbol.ArrayVariable, symbol.ConstantArray:
 		return lsp.SymbolKindArray
-	case ClassSymbol, ProtoTypeOrInstanceSymbol:
+	case symbol.Class, symbol.ProtoTypeOrInstance:
 		return lsp.SymbolKindClass
-	case FunctionSymbol:
+	case symbol.Function:
 		return lsp.SymbolKindFunction
-	case ConstantSymbol:
+	case symbol.Constant:
 		return lsp.SymbolKindConstant
-	case VariableSymbol:
+	case symbol.Variable:
 		return lsp.SymbolKindVariable
 	}
 	return lsp.SymbolKindNull
 }
 
-func getDocumentSymbol(s Symbol) lsp.DocumentSymbol {
+func getDocumentSymbol(s symbol.Symbol) lsp.DocumentSymbol {
 	rn := getSymbolLocation(s).Range
 	return lsp.DocumentSymbol{
 		Name:           s.Name(),
@@ -351,7 +353,7 @@ func getDocumentSymbol(s Symbol) lsp.DocumentSymbol {
 	}
 }
 
-func getSymbolInformation(s Symbol) lsp.SymbolInformation {
+func getSymbolInformation(s symbol.Symbol) lsp.SymbolInformation {
 	return lsp.SymbolInformation{
 		Name:     s.Name(),
 		Kind:     getSymbolKind(s),
@@ -359,10 +361,10 @@ func getSymbolInformation(s Symbol) lsp.SymbolInformation {
 	}
 }
 
-func collectDocumentSymbols(result []lsp.DocumentSymbol, s Symbol) []lsp.DocumentSymbol {
+func collectDocumentSymbols(result []lsp.DocumentSymbol, s symbol.Symbol) []lsp.DocumentSymbol {
 	mainSymb := getDocumentSymbol(s)
 
-	if cls, ok := s.(ClassSymbol); ok {
+	if cls, ok := s.(symbol.Class); ok {
 		for _, v := range cls.Fields {
 			si := getDocumentSymbol(v)
 			mainSymb.Children = append(mainSymb.Children, si)
@@ -374,7 +376,7 @@ func collectDocumentSymbols(result []lsp.DocumentSymbol, s Symbol) []lsp.Documen
 				Character: uint32(cls.BodyDefinition.End.Column),
 			},
 		}
-	} else if cls, ok := s.(ProtoTypeOrInstanceSymbol); ok {
+	} else if cls, ok := s.(symbol.ProtoTypeOrInstance); ok {
 		for _, v := range cls.Fields {
 			si := getDocumentSymbol(v)
 			mainSymb.Children = append(mainSymb.Children, si)
@@ -386,7 +388,7 @@ func collectDocumentSymbols(result []lsp.DocumentSymbol, s Symbol) []lsp.Documen
 				Character: uint32(cls.BodyDefinition.End.Column),
 			},
 		}
-	} else if cls, ok := s.(FunctionSymbol); ok {
+	} else if cls, ok := s.(symbol.Function); ok {
 		mainSymb.Range = lsp.Range{
 			Start: mainSymb.Range.Start,
 			End: lsp.Position{
@@ -400,17 +402,17 @@ func collectDocumentSymbols(result []lsp.DocumentSymbol, s Symbol) []lsp.Documen
 	return result
 }
 
-func collectWorkspaceSymbols(result []lsp.SymbolInformation, s Symbol) []lsp.SymbolInformation {
+func collectWorkspaceSymbols(result []lsp.SymbolInformation, s symbol.Symbol) []lsp.SymbolInformation {
 	mainSymb := getSymbolInformation(s)
 	result = append(result, mainSymb)
 
-	if cls, ok := s.(ClassSymbol); ok {
+	if cls, ok := s.(symbol.Class); ok {
 		for _, v := range cls.Fields {
 			si := getSymbolInformation(v)
 			si.ContainerName = s.Name()
 			result = append(result, si)
 		}
-	} else if cls, ok := s.(ProtoTypeOrInstanceSymbol); ok {
+	} else if cls, ok := s.(symbol.ProtoTypeOrInstance); ok {
 		for _, v := range cls.Fields {
 			si := getSymbolInformation(v)
 			si.ContainerName = s.Name()
@@ -429,7 +431,7 @@ func (h *LspHandler) handleDocumentSymbol(req RpcContext, params lsp.DocumentSym
 	numSymbols := r.CountSymbols()
 	result := make([]lsp.DocumentSymbol, 0, numSymbols)
 
-	err = r.WalkGlobalSymbols(func(s Symbol) error {
+	err = r.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		if req.Context().Err() != nil {
 			h.logger.Debugf("request cancelled", "method", req.Request().Method())
 			return req.Context().Err()
@@ -465,7 +467,7 @@ func (h *LspHandler) handleWorkspaceSymbol(req RpcContext, params lsp.WorkspaceS
 
 	qlower := strings.ToLower(params.Query)
 
-	err := h.parsedDocuments.WalkGlobalSymbols(func(s Symbol) error {
+	err := h.parsedDocuments.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		if req.Context().Err() != nil {
 			h.logger.Debugf("request cancelled", "method", req.Request().Method())
 			return req.Context().Err()

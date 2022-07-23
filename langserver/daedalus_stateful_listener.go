@@ -3,8 +3,10 @@ package langserver
 import (
 	"bytes"
 	"fmt"
-	"langsrv/langserver/parser"
 	"strings"
+
+	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
@@ -13,38 +15,38 @@ import (
 type DaedalusStatefulListener struct {
 	parser.BaseDaedalusListener
 	knownSymbols    symbolWalker
-	Instances       map[string]ProtoTypeOrInstanceSymbol
-	GlobalVariables map[string]Symbol
-	Functions       map[string]FunctionSymbol
-	Classes         map[string]ClassSymbol
-	Prototypes      map[string]ProtoTypeOrInstanceSymbol
+	Instances       map[string]symbol.ProtoTypeOrInstance
+	GlobalVariables map[string]symbol.Symbol
+	GlobalConstants map[string]symbol.Symbol
+	Functions       map[string]symbol.Function
+	Classes         map[string]symbol.Class
+	Prototypes      map[string]symbol.ProtoTypeOrInstance
 	summaryBuilder  *bytes.Buffer
-	GlobalConstants map[string]Symbol
 	source          string
 }
 
 type symbolWalker interface {
-	WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error
-	LookupGlobalSymbol(name string, types SymbolType) (Symbol, bool)
+	WalkGlobalSymbols(walkFn func(symbol.Symbol) error, types SymbolType) error
+	LookupGlobalSymbol(name string, types SymbolType) (symbol.Symbol, bool)
 }
 
 // NewDaedalusStatefulListener ...
 func NewDaedalusStatefulListener(source string, knownSymbols symbolWalker) *DaedalusStatefulListener {
 	return &DaedalusStatefulListener{
 		source:          source,
-		GlobalVariables: map[string]Symbol{},
-		GlobalConstants: map[string]Symbol{},
-		Functions:       map[string]FunctionSymbol{},
-		Classes:         map[string]ClassSymbol{},
-		Prototypes:      map[string]ProtoTypeOrInstanceSymbol{},
-		Instances:       map[string]ProtoTypeOrInstanceSymbol{},
+		GlobalVariables: map[string]symbol.Symbol{},
+		GlobalConstants: map[string]symbol.Symbol{},
+		Functions:       map[string]symbol.Function{},
+		Classes:         map[string]symbol.Class{},
+		Prototypes:      map[string]symbol.ProtoTypeOrInstance{},
+		Instances:       map[string]symbol.ProtoTypeOrInstance{},
 		summaryBuilder:  &bytes.Buffer{},
 		knownSymbols:    knownSymbols,
 	}
 }
 
-func symbolDefinitionForRuleContext(ctx antlr.ParserRuleContext) SymbolDefinition {
-	return NewSymbolDefinition(ctx.GetStart().GetLine(), ctx.GetStart().GetColumn(), ctx.GetStop().GetLine(), ctx.GetStop().GetColumn())
+func symbolDefinitionForRuleContext(ctx antlr.ParserRuleContext) symbol.Definition {
+	return symbol.NewDefinition(ctx.GetStart().GetLine(), ctx.GetStart().GetColumn(), ctx.GetStop().GetLine(), ctx.GetStop().GetColumn())
 }
 
 func (l *DaedalusStatefulListener) symbolSummaryForContext(ctx antlr.ParserRuleContext) string {
@@ -64,8 +66,8 @@ func (l *DaedalusStatefulListener) symbolSummaryForContext(ctx antlr.ParserRuleC
 	return l.summaryBuilder.String()
 }
 
-func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext) []Symbol {
-	result := []Symbol{}
+func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext) []symbol.Symbol {
+	result := []symbol.Symbol{}
 	summary := ""
 	if p, ok := v.GetParent().(parser.IInlineDefContext); ok {
 		summary = l.symbolSummaryForContext(p)
@@ -74,7 +76,7 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 	for _, ch := range v.GetChildren() {
 		if val, ok := ch.(*parser.VarValueDeclContext); ok {
 			result = append(result,
-				NewVariableSymbol(val.NameNode().GetText(),
+				symbol.NewVariable(val.NameNode().GetText(),
 					v.TypeReference().GetText(),
 					l.source,
 					summary, // documentation
@@ -84,7 +86,7 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 			for _, ival := range innerVal.AllVarValueDecl() {
 				val := ival.(*parser.VarValueDeclContext)
 				result = append(result,
-					NewVariableSymbol(val.NameNode().GetText(),
+					symbol.NewVariable(val.NameNode().GetText(),
 						v.TypeReference().GetText(),
 						l.source,
 						summary, // documentation
@@ -93,7 +95,7 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 			}
 		} else if innerVal, ok := ch.(*parser.VarArrayDeclContext); ok {
 			result = append(result,
-				NewArrayVariableSymbol(innerVal.NameNode().GetText(),
+				symbol.NewArrayVariable(innerVal.NameNode().GetText(),
 					v.TypeReference().GetText(),
 					innerVal.ArraySize().GetText(),
 					l.source,
@@ -131,8 +133,8 @@ func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c *parser.ConstArray
 	return result.String()
 }
 
-func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) []Symbol {
-	result := []Symbol{}
+func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) []symbol.Symbol {
+	result := []symbol.Symbol{}
 	summary := ""
 	if p, ok := c.GetParent().(parser.IInlineDefContext); ok {
 		summary = l.symbolSummaryForContext(p)
@@ -140,7 +142,7 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 
 	walkSymbols(c, func(cv *parser.ConstValueDefContext) error {
 		result = append(result,
-			NewConstantSymbol(cv.NameNode().GetText(),
+			symbol.NewConstant(cv.NameNode().GetText(),
 				c.TypeReference().GetText(),
 				l.source,
 				summary, // documentation
@@ -152,7 +154,7 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 
 	walkSymbols(c, func(innerVal *parser.ConstArrayDefContext) error {
 		result = append(result,
-			NewConstantArraySymbol(innerVal.NameNode().GetText(),
+			symbol.NewConstantArray(innerVal.NameNode().GetText(),
 				c.TypeReference().GetText(),
 				innerVal.ArraySize().GetText(),
 				l.source,
@@ -179,7 +181,7 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 			}
 		} else if c, ok := ch.(*parser.InstanceDeclContext); ok {
 			walkSymbols(c, func(name parser.INameNodeContext) error {
-				psym := NewPrototypeOrInstanceSymbol(
+				psym := symbol.NewPrototypeOrInstance(
 					name.GetText(),
 					c.ParentReference().GetText(),
 					l.source,
@@ -208,12 +210,12 @@ func walkSymbols[T antlr.ParserRuleContext](rule antlr.RuleNode, walkFn func(sym
 func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 	// Classes
 	walkSymbols(ctx, func(c *parser.ClassDefContext) error {
-		cFields := []Symbol{}
+		cFields := []symbol.Symbol{}
 		walkSymbols(c, func(v *parser.VarDeclContext) error {
 			for _, ch := range v.GetChildren() {
 				if vv, ok := ch.(*parser.VarValueDeclContext); ok {
 					cFields = append(cFields,
-						NewVariableSymbol(vv.NameNode().GetText(),
+						symbol.NewVariable(vv.NameNode().GetText(),
 							v.TypeReference().GetText(),
 							l.source,
 							"",
@@ -221,7 +223,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 					)
 				} else if vv, ok := ch.(*parser.VarArrayDeclContext); ok {
 					cFields = append(cFields,
-						NewArrayVariableSymbol(vv.NameNode().GetText(),
+						symbol.NewArrayVariable(vv.NameNode().GetText(),
 							v.TypeReference().GetText(),
 							vv.ArraySize().GetText(),
 							l.source,
@@ -233,20 +235,16 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 			return nil
 		})
 
-		csym := NewClassSymbol(c.NameNode().GetText(),
+		csym := symbol.NewClass(c.NameNode().GetText(),
 			l.source,
 			l.symbolSummaryForContext(c),
 			symbolDefinitionForRuleContext(c.NameNode()),
-			SymbolDefinition{
-				Start: DefinitionIndex{
-					Line:   c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetLine(),
-					Column: c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetColumn(),
-				},
-				End: DefinitionIndex{
-					Line:   c.GetChild(c.GetChildCount() - 1).(antlr.TerminalNode).GetSymbol().GetLine(),
-					Column: c.GetChild(c.GetChildCount() - 1).(antlr.TerminalNode).GetSymbol().GetColumn(),
-				},
-			},
+			symbol.NewDefinition(
+				c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetLine(),
+				c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetColumn(),
+				c.GetChild(c.GetChildCount()-1).(antlr.TerminalNode).GetSymbol().GetLine(),
+				c.GetChild(c.GetChildCount()-1).(antlr.TerminalNode).GetSymbol().GetColumn(),
+			),
 			cFields)
 		l.Classes[strings.ToUpper(csym.Name())] = csym
 		return nil
@@ -254,7 +252,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 
 	for _, ch := range ctx.GetChildren() {
 		if c, ok := ch.(*parser.PrototypeDefContext); ok {
-			psym := NewPrototypeOrInstanceSymbol(
+			psym := symbol.NewPrototypeOrInstance(
 				c.NameNode().GetText(),
 				c.ParentReference().GetText(),
 				l.source,
@@ -264,7 +262,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 				false)
 			l.Prototypes[strings.ToUpper(psym.Name())] = psym
 		} else if c, ok := ch.(*parser.InstanceDefContext); ok {
-			psym := NewPrototypeOrInstanceSymbol(
+			psym := symbol.NewPrototypeOrInstance(
 				c.NameNode().GetText(),
 				c.ParentReference().GetText(),
 				l.source,
@@ -277,8 +275,8 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 	}
 }
 
-func (l *DaedalusStatefulListener) findVarsConstsInStatements(root antlr.Tree) []Symbol {
-	result := []Symbol{}
+func (l *DaedalusStatefulListener) findVarsConstsInStatements(root antlr.Tree) []symbol.Symbol {
+	result := []symbol.Symbol{}
 
 	for _, s := range root.GetChildren() {
 		if varDecl, ok := s.(*parser.VarDeclContext); ok {
@@ -297,12 +295,12 @@ func (l *DaedalusStatefulListener) findVarsConstsInStatements(root antlr.Tree) [
 func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefContext) {
 	statements := ctx.StatementBlock().(*parser.StatementBlockContext)
 
-	params := []VariableSymbol{}
+	params := []symbol.Variable{}
 	locals := l.findVarsConstsInStatements(statements)
 
 	walkSymbols(ctx.ParameterList(), func(pdef *parser.ParameterDeclContext) error {
 		params = append(params,
-			NewVariableSymbol(pdef.NameNode().GetText(),
+			symbol.NewVariable(pdef.NameNode().GetText(),
 				pdef.TypeReference().GetText(),
 				l.source,
 				"",
@@ -310,7 +308,7 @@ func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefConte
 		return nil
 	})
 
-	fnc := NewFunctionSymbol(ctx.NameNode().GetText(),
+	fnc := symbol.NewFunction(ctx.NameNode().GetText(),
 		l.source,
 		l.symbolSummaryForContext(ctx.GetParent().(*parser.BlockDefContext)),
 		symbolDefinitionForRuleContext(ctx.NameNode()),

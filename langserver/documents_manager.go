@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "go.lsp.dev/protocol"
 )
 
@@ -38,6 +39,6 @@ func (d *DocumentsManager) GetCompletionSymbols(documentURI string, position *ls
 }
 
 // LookupSymbol ...
-func (d *DocumentsManager) LookupSymbol(identifier string) (Symbol, error) {
+func (d *DocumentsManager) LookupSymbol(identifier string) (symbol.Symbol, error) {
 	return nil, ErrSymbolNotFound
 }

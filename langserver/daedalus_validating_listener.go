@@ -1,8 +1,10 @@
 package langserver
 
 import (
-	"langsrv/langserver/parser"
 	"strings"
+
+	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )
@@ -59,7 +61,7 @@ func (l *DaedalusValidatingListener) EnterAnyIdentifier(ctx *parser.AnyIdentifie
 	}
 }
 
-func (l *DaedalusValidatingListener) lookupSymbol(name string, symbol SymbolType) Symbol {
+func (l *DaedalusValidatingListener) lookupSymbol(name string, symbol SymbolType) symbol.Symbol {
 	foundSymbol, _ := l.knownSymbols.LookupGlobalSymbol(name, symbol)
 	return foundSymbol
 }
@@ -74,7 +76,7 @@ func (l *DaedalusValidatingListener) EnterFuncCall(ctx *parser.FuncCallContext) 
 		return
 	}
 
-	if len(ctx.AllFuncArgExpression()) < len(sym.(FunctionSymbol).Parameters) {
+	if len(ctx.AllFuncArgExpression()) < len(sym.(symbol.Function).Parameters) {
 		l.report(ctx.GetParser(), ctx, ctx.NameNode().GetStop(), D0004NotEnoughArgumentsSpecified)
 	}
 }

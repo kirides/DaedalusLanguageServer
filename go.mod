@@ -1,4 +1,4 @@
-module langsrv
+module github.com/kirides/DaedalusLanguageServer
 
 go 1.18
 

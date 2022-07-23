@@ -1,7 +1,7 @@
 package langserver
 
 import (
-	"langsrv/langserver/parser"
+	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 )

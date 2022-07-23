@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 )
 
 type DaedalusGrammarParser interface {
@@ -106,7 +107,7 @@ const (
 )
 
 // LookupGlobalSymbol ...
-func (p *ParseResult) LookupGlobalSymbol(name string, types SymbolType) (Symbol, bool) {
+func (p *ParseResult) LookupGlobalSymbol(name string, types SymbolType) (symbol.Symbol, bool) {
 	if (types & SymbolClass) != 0 {
 		if s, ok := p.Classes[name]; ok {
 			return s, true
@@ -141,7 +142,7 @@ func (p *ParseResult) LookupGlobalSymbol(name string, types SymbolType) (Symbol,
 }
 
 // WalkGlobalSymbols ...
-func (p *ParseResult) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error {
+func (p *ParseResult) WalkGlobalSymbols(walkFn func(symbol.Symbol) error, types SymbolType) error {
 	if (types & SymbolClass) != 0 {
 		for _, s := range p.Classes {
 			if err := walkFn(s); err != nil {

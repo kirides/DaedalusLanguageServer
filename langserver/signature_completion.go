@@ -6,19 +6,21 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+	"github.com/kirides/DaedalusLanguageServer/langserver/javadoc"
 	lsp "go.lsp.dev/protocol"
 )
 
-func checkInheritance(docs *parseResultsManager, symbol Symbol, symToImplement string) bool {
-	if strings.EqualFold(symbol.Name(), symToImplement) {
+func checkInheritance(docs *parseResultsManager, sym symbol.Symbol, symToImplement string) bool {
+	if strings.EqualFold(sym.Name(), symToImplement) {
 		return true
 	}
-	sym, ok := symbol.(ProtoTypeOrInstanceSymbol)
+	inst, ok := sym.(symbol.ProtoTypeOrInstance)
 	if ok {
-		if strings.EqualFold(sym.Parent, symToImplement) {
+		if strings.EqualFold(inst.Parent, symToImplement) {
 			return true
 		}
-		sym2, ok := docs.LookupGlobalSymbol(strings.ToUpper(sym.Parent), SymbolInstance|SymbolPrototype|SymbolClass)
+		sym2, ok := docs.LookupGlobalSymbol(strings.ToUpper(inst.Parent), SymbolInstance|SymbolPrototype|SymbolClass)
 		if ok {
 			return checkInheritance(docs, sym2, symToImplement)
 		}
@@ -28,7 +30,7 @@ func checkInheritance(docs *parseResultsManager, symbol Symbol, symToImplement s
 
 func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, docu, varType string, docs *parseResultsManager, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	if strings.HasPrefix(docu, "{") { // if instance list directive
-		instances, _ := parseJavadocWithinTokens(docu, "{", "}")
+		instances, _ := javadoc.ParseWithin(docu, "{", "}")
 
 		done := map[string]struct{}{}
 		for _, in := range instances {
@@ -48,7 +50,7 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, doc
 				result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 			}
 
-			docs.WalkGlobalSymbols(func(s Symbol) error {
+			docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
 				if checkInheritance(docs, s, in) {
 					ci, err := completionItemFromSymbol(docs, s)
 					if err != nil {
@@ -61,7 +63,7 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, doc
 			}, SymbolInstance)
 		}
 	} else if strings.HasPrefix(docu, "[") { // if enum list directive
-		enums, _ := parseJavadocWithinTokens(docu, "[", "]")
+		enums, _ := javadoc.ParseWithin(docu, "[", "]")
 
 		ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType)
 		result = append(result, ci...)
@@ -95,15 +97,15 @@ func getCompletionItemsSimple(result []lsp.CompletionItem, h *LspHandler, varTyp
 		types |= SymbolInstance | SymbolClass
 	}
 
-	docs.WalkGlobalSymbols(func(s Symbol) error {
+	docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		useIt := false
 		if typer, ok := s.(interface{ GetType() string }); ok {
 			if strings.EqualFold(typer.GetType(), varType) {
 				useIt = true
 			}
-		} else if _, ok := s.(ProtoTypeOrInstanceSymbol); ok {
+		} else if _, ok := s.(symbol.ProtoTypeOrInstance); ok {
 			useIt = true
-		} else if _, ok := s.(ClassSymbol); ok {
+		} else if _, ok := s.(symbol.Class); ok {
 			useIt = true
 		}
 		if useIt {
@@ -131,7 +133,7 @@ func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varTy
 		result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 	}
 
-	docs.WalkGlobalSymbols(func(s Symbol) error {
+	docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		if checkInheritance(docs, s, varType) {
 			ci, err := completionItemFromSymbol(docs, s)
 			if err != nil {
@@ -144,12 +146,12 @@ func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varTy
 	return result, nil
 }
 
-func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol FunctionSymbol, paramIndex int, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol symbol.Function, paramIndex int, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	// Pre-allocate buffer
 	result := make([]lsp.CompletionItem, 0, 200)
 
 	varType := symbol.Parameters[paramIndex].Type
-	docu := findJavadocParam(symbol.Documentation(), symbol.Parameters[paramIndex].Name())
+	docu := javadoc.FindParam(symbol.Documentation(), symbol.Parameters[paramIndex].Name())
 
 	if strings.HasPrefix(docu, "{") || strings.HasPrefix(docu, "[") {
 		return getCompletionItemsByJavadoc(result, h, docu, varType, docs, params)
@@ -164,7 +166,7 @@ func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, symbol Fu
 }
 
 type callContext struct {
-	Function FunctionSymbol
+	Function symbol.Function
 	ParamIdx int
 }
 
@@ -205,7 +207,7 @@ func getFunctionCallContext(h *LspHandler, docUri lsp.URI, pos lsp.Position) (ca
 		return callContext{}, errors.New("no function symbol found")
 	}
 	sigCtx := methodCallLine[idxParen+1:]
-	fn := funcSymbol.(FunctionSymbol)
+	fn := funcSymbol.(symbol.Function)
 	paramIdx := uint32(strings.Count(sigCtx, ","))
 	if int(paramIdx) >= len(fn.Parameters) {
 		return callContext{}, errors.New("index bigger than number of elements")
@@ -298,7 +300,7 @@ func getLocalsAndParams(h *LspHandler, docURI lsp.URI, pos lsp.Position, varType
 	}
 
 	result := make([]lsp.CompletionItem, 0, 20)
-	di := DefinitionIndex{Line: int(pos.Line), Column: int(pos.Character)}
+	di := symbol.DefinitionIndex{Line: int(pos.Line), Column: int(pos.Character)}
 	// locally scoped variables ordered at the top
 	localSortIdx := 0
 	for _, fn := range parsedDoc.Functions {

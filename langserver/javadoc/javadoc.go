@@ -1,9 +1,11 @@
-package langserver
+package javadoc
 
 import (
 	"bufio"
 	"bytes"
 	"strings"
+
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 )
 
 var (
@@ -32,8 +34,8 @@ func formatParams(sb *strings.Builder, param, desc string) {
 	sb.WriteString("** - *")
 
 	if strings.HasPrefix(desc, "{") || strings.HasPrefix(desc, "[") {
-		insts, desc := parseJavadocWithinTokens(desc, "{", "}")
-		enums, desc := parseJavadocWithinTokens(desc, "[", "]")
+		insts, desc := ParseWithin(desc, "{", "}")
+		enums, desc := ParseWithin(desc, "[", "]")
 		appendMarkdownEscaped(sb, desc)
 		sb.WriteString("*  \n")
 
@@ -60,19 +62,20 @@ func formatParams(sb *strings.Builder, param, desc string) {
 	}
 }
 
-func cleanUpParamDesc(desc string) string {
+// RemoveTokens removes all javadoc tokens from a text and makes it plain text
+func RemoveTokens(desc string) string {
 	if strings.HasPrefix(desc, "{") || strings.HasPrefix(desc, "[") {
-		_, desc = parseJavadocWithinTokens(desc, "{", "}")
-		_, desc = parseJavadocWithinTokens(desc, "[", "]")
+		_, desc = ParseWithin(desc, "{", "}")
+		_, desc = ParseWithin(desc, "[", "]")
 	}
 	return desc
 }
 
-func parseJavadocMdEscaped(sym Symbol) javadoc {
+func parseJavadocMdEscaped(sym symbol.Symbol) javadoc {
 	r := javadoc{
 		Summary: sym.Documentation(),
 	}
-	fn, ok := sym.(FunctionSymbol)
+	fn, ok := sym.(symbol.Function)
 	if !ok {
 		return r
 	}
@@ -111,12 +114,12 @@ func parseJavadocMdEscaped(sym Symbol) javadoc {
 	return r
 }
 
-func simpleJavadocMD(sym Symbol) string {
+func MarkdownSimple(sym symbol.Symbol) string {
 	doc := parseJavadocMdEscaped(sym)
-	return javadocMD(doc)
+	return Markdown(doc)
 }
 
-func javadocMD(doc javadoc) string {
+func Markdown(doc javadoc) string {
 	sb := strings.Builder{}
 
 	sb.WriteString(doc.Summary)
@@ -147,7 +150,7 @@ func parseJavadocParam(line string) (param, desc string, ok bool) {
 	return
 }
 
-func findJavadocParam(doc, key string) string {
+func FindParam(doc, key string) string {
 	scn := bufio.NewScanner(strings.NewReader(doc))
 
 	for scn.Scan() {
@@ -184,7 +187,7 @@ func dedupI(in []string) []string {
 	return result
 }
 
-func parseJavadocWithinTokens(doc, open, close string) (instances []string, remaining string) {
+func ParseWithin(doc, open, close string) (instances []string, remaining string) {
 
 	idxOpen := strings.Index(doc, open)
 	if idxOpen == -1 {

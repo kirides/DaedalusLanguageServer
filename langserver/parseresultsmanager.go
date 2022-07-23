@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/charmap"
 )
@@ -81,12 +82,12 @@ func (m *parseResultsManager) CountSymbols() int64 {
 	return n
 }
 
-func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error, types SymbolType) error {
+func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(symbol.Symbol) error, types SymbolType) error {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()
 
 	for _, p := range m.parseResults {
-		err := p.WalkGlobalSymbols(func(s Symbol) error {
+		err := p.WalkGlobalSymbols(func(s symbol.Symbol) error {
 			return walkFn(s)
 		}, types)
 		if err != nil {
@@ -97,7 +98,7 @@ func (m *parseResultsManager) WalkGlobalSymbols(walkFn func(Symbol) error, types
 	return nil
 }
 
-func (m *parseResultsManager) LookupGlobalSymbol(name string, types SymbolType) (Symbol, bool) {
+func (m *parseResultsManager) LookupGlobalSymbol(name string, types SymbolType) (symbol.Symbol, bool) {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()
 
@@ -110,14 +111,14 @@ func (m *parseResultsManager) LookupGlobalSymbol(name string, types SymbolType) 
 	return nil, false
 }
 
-func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) ([]Symbol, error) {
-	result := make([]Symbol, 0, 200)
+func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) ([]symbol.Symbol, error) {
+	result := make([]symbol.Symbol, 0, 200)
 
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()
 
 	for _, p := range m.parseResults {
-		p.WalkGlobalSymbols(func(s Symbol) error {
+		p.WalkGlobalSymbols(func(s symbol.Symbol) error {
 			result = append(result, s)
 			return nil
 		}, types)
@@ -427,7 +428,7 @@ func (h *parseResultsManager) resolveIntConstant(c string) int {
 	if !ok {
 		return -1
 	}
-	cs, ok := found.(ConstantSymbol)
+	cs, ok := found.(symbol.Constant)
 	if !ok {
 		return -1
 	}
@@ -437,14 +438,14 @@ func (h *parseResultsManager) resolveIntConstant(c string) int {
 	return -1
 }
 
-func (h *parseResultsManager) getSymbolCode(s Symbol) string {
+func (h *parseResultsManager) getSymbolCode(s symbol.Symbol) string {
 	var codeText string
-	if cas, ok := s.(ConstantArraySymbol); ok {
+	if cas, ok := s.(symbol.ConstantArray); ok {
 		sb := strings.Builder{}
 		resolvedSize := h.resolveIntConstant(cas.ArraySizeText)
 		cas.Format(&sb, resolvedSize)
 		codeText = sb.String()
-	} else if cas, ok := s.(ArrayVariableSymbol); ok {
+	} else if cas, ok := s.(symbol.ArrayVariable); ok {
 		sb := strings.Builder{}
 		resolvedSize := h.resolveIntConstant(cas.ArraySizeText)
 		cas.Format(&sb, resolvedSize)

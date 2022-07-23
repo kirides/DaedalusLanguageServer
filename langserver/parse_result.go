@@ -2,16 +2,18 @@ package langserver
 
 import (
 	"strings"
+
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 )
 
 // ParseResult ...
 type ParseResult struct {
-	Instances       map[string]ProtoTypeOrInstanceSymbol
-	GlobalVariables map[string]Symbol
-	GlobalConstants map[string]Symbol
-	Functions       map[string]FunctionSymbol
-	Classes         map[string]ClassSymbol
-	Prototypes      map[string]ProtoTypeOrInstanceSymbol
+	Instances       map[string]symbol.ProtoTypeOrInstance
+	GlobalVariables map[string]symbol.Symbol
+	GlobalConstants map[string]symbol.Symbol
+	Functions       map[string]symbol.Function
+	Classes         map[string]symbol.Class
+	Prototypes      map[string]symbol.ProtoTypeOrInstance
 	Source          string
 	SyntaxErrors    []SyntaxError
 }
@@ -43,7 +45,7 @@ func (r *ParseResult) CountSymbols() int64 {
 	return numSymbols
 }
 
-func (parsedDoc *ParseResult) WalkScopedVariables(di DefinitionIndex, walkFn func(Symbol) bool) {
+func (parsedDoc *ParseResult) WalkScopedVariables(di symbol.DefinitionIndex, walkFn func(symbol.Symbol) bool) {
 	for _, fn := range parsedDoc.Functions {
 		if fn.BodyDefinition.InBBox(di) {
 			for _, p := range fn.Parameters {
@@ -61,10 +63,10 @@ func (parsedDoc *ParseResult) WalkScopedVariables(di DefinitionIndex, walkFn fun
 	}
 }
 
-func (parsedDoc *ParseResult) ScopedVariables(di DefinitionIndex) map[string]Symbol {
-	locals := map[string]Symbol{}
+func (parsedDoc *ParseResult) ScopedVariables(di symbol.DefinitionIndex) map[string]symbol.Symbol {
+	locals := map[string]symbol.Symbol{}
 
-	parsedDoc.WalkScopedVariables(di, func(s Symbol) bool {
+	parsedDoc.WalkScopedVariables(di, func(s symbol.Symbol) bool {
 		locals[strings.ToUpper(s.Name())] = s
 		return true
 	})

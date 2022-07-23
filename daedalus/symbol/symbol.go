@@ -1,4 +1,4 @@
-package langserver
+package symbol
 
 import (
 	"io"
@@ -11,7 +11,7 @@ type Symbol interface {
 	Name() string
 	Source() string
 	Documentation() string
-	Definition() SymbolDefinition
+	Definition() Definition
 	String() string
 }
 
@@ -19,33 +19,33 @@ type symbolBase struct {
 	NameValue           string
 	SymbolSource        string
 	SymbolDocumentation string
-	SymbolDefinition    SymbolDefinition
+	SymbolDefinition    Definition
 }
 
-var _ Symbol = (*FunctionSymbol)(nil)
-var _ Symbol = (*ArrayVariableSymbol)(nil)
-var _ Symbol = (*VariableSymbol)(nil)
-var _ Symbol = (*ConstantSymbol)(nil)
-var _ Symbol = (*FunctionSymbol)(nil)
-var _ Symbol = (*ProtoTypeOrInstanceSymbol)(nil)
-var _ Symbol = (*ClassSymbol)(nil)
-var _ Symbol = (*ConstantArraySymbol)(nil)
+var _ Symbol = (*Function)(nil)
+var _ Symbol = (*ArrayVariable)(nil)
+var _ Symbol = (*Variable)(nil)
+var _ Symbol = (*Constant)(nil)
+var _ Symbol = (*Function)(nil)
+var _ Symbol = (*ProtoTypeOrInstance)(nil)
+var _ Symbol = (*Class)(nil)
+var _ Symbol = (*ConstantArray)(nil)
 
-// FunctionSymbol ...
-type FunctionSymbol struct {
+// Function ...
+type Function struct {
 	ReturnType     string
-	Parameters     []VariableSymbol
+	Parameters     []Variable
 	LocalVariables []Symbol
 	symbolBase
-	BodyDefinition SymbolDefinition
+	BodyDefinition Definition
 }
 
 // GetType ...
-func (s FunctionSymbol) GetType() string {
+func (s Function) GetType() string {
 	return s.ReturnType
 }
 
-func newSymbolBase(name, source, doc string, def SymbolDefinition) symbolBase {
+func newSymbolBase(name, source, doc string, def Definition) symbolBase {
 	return symbolBase{
 		NameValue:           name,
 		SymbolSource:        source,
@@ -54,9 +54,9 @@ func newSymbolBase(name, source, doc string, def SymbolDefinition) symbolBase {
 	}
 }
 
-// NewFunctionSymbol ...
-func NewFunctionSymbol(name, source, doc string, def SymbolDefinition, retType string, bodyDef SymbolDefinition, params []VariableSymbol, locals []Symbol) FunctionSymbol {
-	return FunctionSymbol{
+// NewFunction ...
+func NewFunction(name, source, doc string, def Definition, retType string, bodyDef Definition, params []Variable, locals []Symbol) Function {
+	return Function{
 		symbolBase:     newSymbolBase(name, source, doc, def),
 		ReturnType:     retType,
 		BodyDefinition: bodyDef,
@@ -65,52 +65,52 @@ func NewFunctionSymbol(name, source, doc string, def SymbolDefinition, retType s
 	}
 }
 
-// NewVariableSymbol ...
-func NewVariableSymbol(name, varType, source, documentation string, definiton SymbolDefinition) VariableSymbol {
-	return VariableSymbol{
+// NewVariable ...
+func NewVariable(name, varType, source, documentation string, definiton Definition) Variable {
+	return Variable{
 		Type:       varType,
 		symbolBase: newSymbolBase(name, source, documentation, definiton),
 	}
 }
 
 // NewVariableSymbol ...
-func NewArrayVariableSymbol(name, varType, sizeText, source, documentation string, definiton SymbolDefinition) ArrayVariableSymbol {
-	return ArrayVariableSymbol{
+func NewArrayVariable(name, varType, sizeText, source, documentation string, definiton Definition) ArrayVariable {
+	return ArrayVariable{
 		Type:          varType,
 		ArraySizeText: sizeText,
 		symbolBase:    newSymbolBase(name, source, documentation, definiton),
 	}
 }
 
-// NewConstantSymbol ...
-func NewConstantSymbol(name, varType, source, documentation string, definiton SymbolDefinition, value string) ConstantSymbol {
-	return ConstantSymbol{
-		VariableSymbol: NewVariableSymbol(name, varType, source, documentation, definiton),
-		Value:          value,
+// NewConstant ...
+func NewConstant(name, varType, source, documentation string, definiton Definition, value string) Constant {
+	return Constant{
+		Variable: NewVariable(name, varType, source, documentation, definiton),
+		Value:    value,
 	}
 }
 
-// NewConstantArraySymbol ...
-func NewConstantArraySymbol(name, varType, arraySizeText, source, documentation string, definiton SymbolDefinition, value string) ConstantArraySymbol {
-	return ConstantArraySymbol{
-		VariableSymbol: NewVariableSymbol(name, varType, source, documentation, definiton),
-		Value:          value,
-		ArraySizeText:  arraySizeText,
+// NewConstantArray ...
+func NewConstantArray(name, varType, arraySizeText, source, documentation string, definiton Definition, value string) ConstantArray {
+	return ConstantArray{
+		Variable:      NewVariable(name, varType, source, documentation, definiton),
+		Value:         value,
+		ArraySizeText: arraySizeText,
 	}
 }
 
-// NewClassSymbol ...
-func NewClassSymbol(name, source, documentation string, definiton SymbolDefinition, bodyDef SymbolDefinition, fields []Symbol) ClassSymbol {
-	return ClassSymbol{
+// NewClass ...
+func NewClass(name, source, documentation string, definiton Definition, bodyDef Definition, fields []Symbol) Class {
+	return Class{
 		symbolBase:     newSymbolBase(name, source, documentation, definiton),
 		BodyDefinition: bodyDef,
 		Fields:         fields,
 	}
 }
 
-// NewPrototypeOrInstanceSymbol ...
-func NewPrototypeOrInstanceSymbol(name, parent, source, documentation string, definiton SymbolDefinition, bodyDef SymbolDefinition, isInstance bool) ProtoTypeOrInstanceSymbol {
-	return ProtoTypeOrInstanceSymbol{
+// NewPrototypeOrInstance ...
+func NewPrototypeOrInstance(name, parent, source, documentation string, definiton Definition, bodyDef Definition, isInstance bool) ProtoTypeOrInstance {
+	return ProtoTypeOrInstance{
 		Parent:         parent,
 		symbolBase:     newSymbolBase(name, source, documentation, definiton),
 		IsInstance:     isInstance,
@@ -118,7 +118,7 @@ func NewPrototypeOrInstanceSymbol(name, parent, source, documentation string, de
 	}
 }
 
-func writeParameterVariables(w io.StringWriter, symbols []VariableSymbol) {
+func writeParameterVariables(w io.StringWriter, symbols []Variable) {
 	for _, s := range symbols {
 		w.WriteString(s.String())
 	}
@@ -140,12 +140,12 @@ func (s symbolBase) Documentation() string {
 }
 
 // Definition ...
-func (s symbolBase) Definition() SymbolDefinition {
+func (s symbolBase) Definition() Definition {
 	return s.SymbolDefinition
 }
 
 // String ...
-func (s FunctionSymbol) String() string {
+func (s Function) String() string {
 	sb := strings.Builder{}
 	sb.WriteString("func ")
 	sb.WriteString(s.ReturnType)
@@ -158,35 +158,35 @@ func (s FunctionSymbol) String() string {
 	return sb.String()
 }
 
-// VariableSymbol ...
-type VariableSymbol struct {
+// Variable ...
+type Variable struct {
 	Type string
 	symbolBase
 }
 
 // String ...
-func (s VariableSymbol) String() string {
+func (s Variable) String() string {
 	return "var " + s.Type + " " + s.Name()
 }
 
 // GetType ...
-func (s VariableSymbol) GetType() string {
+func (s Variable) GetType() string {
 	return s.Type
 }
 
 // VariableSymbol ...
-type ArrayVariableSymbol struct {
+type ArrayVariable struct {
 	Type          string
 	ArraySizeText string
 	symbolBase
 }
 
 // String ...
-func (s ArrayVariableSymbol) String() string {
+func (s ArrayVariable) String() string {
 	return "var " + s.Type + " " + s.Name() + "[" + s.ArraySizeText + "]"
 }
 
-func (s ArrayVariableSymbol) Format(w io.StringWriter, resolvedSize int) {
+func (s ArrayVariable) Format(w io.StringWriter, resolvedSize int) {
 	w.WriteString("var ")
 	w.WriteString(s.Type)
 	w.WriteString(" ")
@@ -201,40 +201,40 @@ func (s ArrayVariableSymbol) Format(w io.StringWriter, resolvedSize int) {
 }
 
 // GetType ...
-func (s ArrayVariableSymbol) GetType() string {
+func (s ArrayVariable) GetType() string {
 	return s.Type
 }
 
-// ConstantSymbol ...
-type ConstantSymbol struct {
+// Constant ...
+type Constant struct {
 	Value string
-	VariableSymbol
+	Variable
 }
 
 // String ...
-func (s ConstantSymbol) String() string {
+func (s Constant) String() string {
 	return "const " + s.Type + " " + s.Name() + " = " + s.Value
 }
 
 // GetType ...
-func (s ConstantSymbol) GetType() string {
+func (s Constant) GetType() string {
 	return s.Type
 }
 
-type ConstantArraySymbol struct {
+type ConstantArray struct {
 	Value         string
 	ArraySizeText string
-	VariableSymbol
+	Variable
 }
 
 // String ...
-func (s ConstantArraySymbol) String() string {
+func (s ConstantArray) String() string {
 	sb := strings.Builder{}
 	s.Format(&sb, -1)
 	return sb.String()
 }
 
-func (s ConstantArraySymbol) Format(w io.StringWriter, resolvedSize int) {
+func (s ConstantArray) Format(w io.StringWriter, resolvedSize int) {
 	w.WriteString("const ")
 	w.WriteString(s.Type)
 	w.WriteString(" ")
@@ -250,48 +250,48 @@ func (s ConstantArraySymbol) Format(w io.StringWriter, resolvedSize int) {
 }
 
 // GetType ...
-func (s ConstantArraySymbol) GetType() string {
+func (s ConstantArray) GetType() string {
 	return s.Type
 }
 
-// ClassSymbol ...
-type ClassSymbol struct {
+// Class ...
+type Class struct {
 	Fields []Symbol
 	symbolBase
-	BodyDefinition SymbolDefinition
+	BodyDefinition Definition
 }
 
 // String ...
-func (s ClassSymbol) String() string {
+func (s Class) String() string {
 	return "class " + s.Name()
 }
 
-// ProtoTypeOrInstanceSymbol ...
-type ProtoTypeOrInstanceSymbol struct {
+// ProtoTypeOrInstance ...
+type ProtoTypeOrInstance struct {
 	Parent string
-	Fields []VariableSymbol
+	Fields []Variable
 	symbolBase
-	BodyDefinition SymbolDefinition
+	BodyDefinition Definition
 	IsInstance     bool
 }
 
 // String ...
-func (s ProtoTypeOrInstanceSymbol) String() string {
+func (s ProtoTypeOrInstance) String() string {
 	if s.IsInstance {
 		return "instance " + s.Name() + "(" + s.Parent + ")"
 	}
 	return "prototype " + s.Name() + "(" + s.Parent + ")"
 }
 
-// SymbolDefinition ...
-type SymbolDefinition struct {
+// Definition ...
+type Definition struct {
 	Start DefinitionIndex
 	End   DefinitionIndex
 }
 
-// NewSymbolDefinition ...
-func NewSymbolDefinition(startLine, startCol, endLine, endCol int) SymbolDefinition {
-	return SymbolDefinition{
+// NewDefinition ...
+func NewDefinition(startLine, startCol, endLine, endCol int) Definition {
+	return Definition{
 		Start: DefinitionIndex{
 			Line:   startLine,
 			Column: startCol,
@@ -304,7 +304,7 @@ func NewSymbolDefinition(startLine, startCol, endLine, endCol int) SymbolDefinit
 }
 
 // InBBox ...
-func (sd SymbolDefinition) InBBox(di DefinitionIndex) bool {
+func (sd Definition) InBBox(di DefinitionIndex) bool {
 	if di.Line < sd.Start.Line {
 		return false
 	}

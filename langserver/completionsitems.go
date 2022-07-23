@@ -3,10 +3,13 @@ package langserver
 import (
 	"fmt"
 
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+	"github.com/kirides/DaedalusLanguageServer/langserver/javadoc"
+
 	lsp "go.lsp.dev/protocol"
 )
 
-func completionItemFromSymbol(docs *parseResultsManager, s Symbol) (lsp.CompletionItem, error) {
+func completionItemFromSymbol(docs *parseResultsManager, s symbol.Symbol) (lsp.CompletionItem, error) {
 	kind, err := completionItemKindForSymbol(s)
 	if err != nil {
 		return lsp.CompletionItem{}, err
@@ -17,28 +20,28 @@ func completionItemFromSymbol(docs *parseResultsManager, s Symbol) (lsp.Completi
 		Detail: docs.getSymbolCode(s),
 		Documentation: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
-			Value: simpleJavadocMD(s),
+			Value: javadoc.MarkdownSimple(s),
 		},
 	}, nil
 }
 
-func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
+func completionItemKindForSymbol(s symbol.Symbol) (lsp.CompletionItemKind, error) {
 	switch s.(type) {
-	case ArrayVariableSymbol, VariableSymbol:
+	case symbol.ArrayVariable, symbol.Variable:
 		return lsp.CompletionItemKindVariable, nil
-	case ConstantSymbol, ConstantArraySymbol:
+	case symbol.Constant, symbol.ConstantArray:
 		return lsp.CompletionItemKindConstant, nil
-	case FunctionSymbol:
+	case symbol.Function:
 		return lsp.CompletionItemKindFunction, nil
-	case ClassSymbol:
+	case symbol.Class:
 		return lsp.CompletionItemKindClass, nil
-	case ProtoTypeOrInstanceSymbol:
+	case symbol.ProtoTypeOrInstance:
 		return lsp.CompletionItemKindClass, nil
 	}
-	return lsp.CompletionItemKind(-1), fmt.Errorf("Symbol not found")
+	return lsp.CompletionItemKind(-1), fmt.Errorf("symbol not found")
 }
 
-func fieldsToCompletionItems(docs *parseResultsManager, fields []Symbol) []lsp.CompletionItem {
+func fieldsToCompletionItems(docs *parseResultsManager, fields []symbol.Symbol) []lsp.CompletionItem {
 	result := make([]lsp.CompletionItem, 0, len(fields))
 	for _, v := range fields {
 		ci, err := completionItemFromSymbol(docs, v)

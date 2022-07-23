@@ -14,7 +14,7 @@ import (
 	"sync"
 	"syscall"
 
-	"langsrv/langserver"
+	"github.com/kirides/DaedalusLanguageServer/langserver"
 
 	"go.uber.org/zap"
 

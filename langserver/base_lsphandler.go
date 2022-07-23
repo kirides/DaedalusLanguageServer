@@ -30,20 +30,6 @@ func (h *baseLspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req
 	return fmt.Errorf("%w: %s", ErrUnhandled, req.Method())
 }
 
-func replyEither(ctx context.Context, rpc RpcContext, result interface{}, err error) error {
-	if err != nil {
-		return rpc.Reply(ctx, nil, err)
-	}
-	return rpc.Reply(ctx, result, nil)
-}
-
-func (h *baseLspHandler) replyEither(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request, result interface{}, err error) error {
-	if err != nil {
-		return reply(ctx, nil, err)
-	}
-	return reply(ctx, result, nil)
-}
-
 func (h *baseLspHandler) LogDebug(format string, params ...interface{}) {
 	h.logger.Debugf(format, params...)
 }

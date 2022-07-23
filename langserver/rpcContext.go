@@ -9,6 +9,7 @@ import (
 type RpcContext interface {
 	Context() context.Context
 	Reply(ctx context.Context, result interface{}, err error) error
+	ReplyEither(ctx context.Context, result interface{}, err error) error
 	Request() jsonrpc2.Request
 }
 
@@ -23,3 +24,10 @@ func (d rpcContext) Reply(ctx context.Context, result interface{}, err error) er
 	return d.reply(ctx, result, err)
 }
 func (d rpcContext) Request() jsonrpc2.Request { return d.req }
+
+func (d rpcContext) ReplyEither(ctx context.Context, result interface{}, err error) error {
+	if err != nil {
+		return d.Reply(ctx, nil, err)
+	}
+	return d.Reply(ctx, result, nil)
+}
