@@ -6,7 +6,7 @@ import (
 	lsp "go.lsp.dev/protocol"
 )
 
-func completionItemFromSymbol(s Symbol) (lsp.CompletionItem, error) {
+func completionItemFromSymbol(docs *parseResultsManager, s Symbol) (lsp.CompletionItem, error) {
 	kind, err := completionItemKindForSymbol(s)
 	if err != nil {
 		return lsp.CompletionItem{}, err
@@ -14,7 +14,7 @@ func completionItemFromSymbol(s Symbol) (lsp.CompletionItem, error) {
 	return lsp.CompletionItem{
 		Kind:   kind,
 		Label:  s.Name(),
-		Detail: s.String(),
+		Detail: docs.getSymbolCode(s),
 		Documentation: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
 			Value: simpleJavadocMD(s),
@@ -38,10 +38,10 @@ func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
 	return lsp.CompletionItemKind(-1), fmt.Errorf("Symbol not found")
 }
 
-func fieldsToCompletionItems(fields []Symbol) []lsp.CompletionItem {
+func fieldsToCompletionItems(docs *parseResultsManager, fields []Symbol) []lsp.CompletionItem {
 	result := make([]lsp.CompletionItem, 0, len(fields))
 	for _, v := range fields {
-		ci, err := completionItemFromSymbol(v)
+		ci, err := completionItemFromSymbol(docs, v)
 		if err != nil {
 			continue
 		}

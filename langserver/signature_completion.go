@@ -50,7 +50,7 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, doc
 
 			docs.WalkGlobalSymbols(func(s Symbol) error {
 				if checkInheritance(docs, s, in) {
-					ci, err := completionItemFromSymbol(s)
+					ci, err := completionItemFromSymbol(docs, s)
 					if err != nil {
 						return nil
 					}
@@ -72,7 +72,7 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, doc
 			if !ok {
 				continue
 			}
-			ci, err := completionItemFromSymbol(symb)
+			ci, err := completionItemFromSymbol(docs, symb)
 			if err != nil {
 				continue
 			}
@@ -107,7 +107,7 @@ func getCompletionItemsSimple(result []lsp.CompletionItem, h *LspHandler, varTyp
 			useIt = true
 		}
 		if useIt {
-			ci, err := completionItemFromSymbol(s)
+			ci, err := completionItemFromSymbol(docs, s)
 			if err != nil {
 				return nil
 			}
@@ -133,7 +133,7 @@ func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varTy
 
 	docs.WalkGlobalSymbols(func(s Symbol) error {
 		if checkInheritance(docs, s, varType) {
-			ci, err := completionItemFromSymbol(s)
+			ci, err := completionItemFromSymbol(docs, s)
 			if err != nil {
 				return nil
 			}
@@ -235,7 +235,7 @@ func globalSignatureCompletionItem(docs *parseResultsManager, symName string, so
 		return lsp.CompletionItem{}, false
 	}
 
-	ci, err := completionItemFromSymbol(sym)
+	ci, err := completionItemFromSymbol(docs, sym)
 	if err != nil {
 		return lsp.CompletionItem{}, false
 	}
@@ -307,7 +307,7 @@ func getLocalsAndParams(h *LspHandler, docURI lsp.URI, pos lsp.Position, varType
 				if !validType(p.Type) {
 					continue
 				}
-				ci, err := completionItemFromSymbol(p)
+				ci, err := completionItemFromSymbol(h.parsedDocuments, p)
 				if err != nil {
 					continue
 				}
@@ -325,7 +325,7 @@ func getLocalsAndParams(h *LspHandler, docURI lsp.URI, pos lsp.Position, varType
 				if !validType(typer.GetType()) {
 					continue
 				}
-				ci, err := completionItemFromSymbol(p)
+				ci, err := completionItemFromSymbol(h.parsedDocuments, p)
 				if err != nil {
 					continue
 				}

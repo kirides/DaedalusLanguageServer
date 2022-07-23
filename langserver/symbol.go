@@ -194,9 +194,8 @@ func (s ArrayVariableSymbol) Format(w io.StringWriter, resolvedSize int) {
 	w.WriteString("[")
 	w.WriteString(s.ArraySizeText)
 	if resolvedSize != -1 {
-		w.WriteString(" /* ")
+		w.WriteString(":")
 		w.WriteString(strconv.Itoa(resolvedSize))
-		w.WriteString(" */")
 	}
 	w.WriteString("]")
 }
@@ -243,9 +242,8 @@ func (s ConstantArraySymbol) Format(w io.StringWriter, resolvedSize int) {
 	w.WriteString("[")
 	w.WriteString(s.ArraySizeText)
 	if resolvedSize != -1 {
-		w.WriteString(" /* ")
+		w.WriteString(":")
 		w.WriteString(strconv.Itoa(resolvedSize))
-		w.WriteString(" */")
 	}
 	w.WriteString("] = ")
 	w.WriteString(s.Value)

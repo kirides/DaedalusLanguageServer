@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -414,4 +415,42 @@ func (m *parseResultsManager) ParseFile(dFile string) (*ParseResult, error) {
 		parsed.SyntaxErrors = append(parsed.SyntaxErrors, validations...)
 	}
 	return parsed, nil
+}
+
+func (h *parseResultsManager) resolveIntConstant(c string) int {
+	n, err := strconv.Atoi(c)
+	if err == nil {
+		return n
+	}
+	// probably symbol...?
+	found, ok := h.LookupGlobalSymbol(c, SymbolConstant)
+	if !ok {
+		return -1
+	}
+	cs, ok := found.(ConstantSymbol)
+	if !ok {
+		return -1
+	}
+	if n, err := strconv.Atoi(cs.Value); err == nil {
+		return n
+	}
+	return -1
+}
+
+func (h *parseResultsManager) getSymbolCode(s Symbol) string {
+	var codeText string
+	if cas, ok := s.(ConstantArraySymbol); ok {
+		sb := strings.Builder{}
+		resolvedSize := h.resolveIntConstant(cas.ArraySizeText)
+		cas.Format(&sb, resolvedSize)
+		codeText = sb.String()
+	} else if cas, ok := s.(ArrayVariableSymbol); ok {
+		sb := strings.Builder{}
+		resolvedSize := h.resolveIntConstant(cas.ArraySizeText)
+		cas.Format(&sb, resolvedSize)
+		codeText = sb.String()
+	} else {
+		codeText = s.String()
+	}
+	return codeText
 }
