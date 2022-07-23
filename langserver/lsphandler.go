@@ -15,12 +15,15 @@ import (
 	"go.lsp.dev/uri"
 )
 
+var defaultProjectFiles = []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"}
+
 type LspConfig struct {
-	FileEncoding     string `json:"fileEncoding"`
-	SrcFileEncoding  string `json:"srcFileEncoding"`
-	LogLevel         string `json:"loglevel"`
-	PprofAddr        string `json:"pprofAddr"`
-	NumParserThreads int    `json:"numParserThreads"`
+	FileEncoding     string   `json:"fileEncoding"`
+	SrcFileEncoding  string   `json:"srcFileEncoding"`
+	LogLevel         string   `json:"loglevel"`
+	PprofAddr        string   `json:"pprofAddr"`
+	NumParserThreads int      `json:"numParserThreads"`
+	ProjectFiles     []string `json:"projectFiles"`
 }
 
 // LspHandler ...
@@ -67,6 +70,12 @@ func NewLspHandler(conn jsonrpc2.Conn, logger Logger) *LspHandler {
 			parsedDocuments: parsedDocuments,
 		},
 		onConfigChangedHandlers: []func(config LspConfig){},
+		config: LspConfig{
+			FileEncoding:    "1252",
+			SrcFileEncoding: "1252",
+			LogLevel:        "info",
+			ProjectFiles:    defaultProjectFiles,
+		},
 	}
 }
 
@@ -565,6 +574,10 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 			v(h.config)
 		}
 
+		if len(h.config.ProjectFiles) == 0 {
+			h.config.ProjectFiles = defaultProjectFiles
+		}
+
 		return nil
 	case lsp.MethodInitialized:
 		return nil
@@ -628,21 +641,32 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				}
 			}
 
-			for _, v := range []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"} {
-				if full, err := findPathAnywhereUpToRoot(wd, v); err == nil {
-					if h.parsedKnownSrcFiles.Contains(full) {
+			for _, v := range h.config.ProjectFiles {
+				var err error
+				full := v
+				if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
+					// User defined hardcoded project file, either absolute or relative
+					if _, err := os.Stat(full); err != nil {
+						h.LogError("Error user-define project file %s: %v", full, err)
 						continue
 					}
-					h.parsedKnownSrcFiles.Store(full)
-					results, err := h.parsedDocuments.ParseSource(full)
-					if err != nil {
-						h.LogError("Error parsing %s: %v", full, err)
-						return
-					}
-					resultsX = append(resultsX, results...)
 				} else {
-					h.LogDebug("Did not parse %q: %v", v, err)
+					full, err = findPathAnywhereUpToRoot(wd, v)
 				}
+				if err != nil {
+					h.LogDebug("Did not parse %q: %v", v, err)
+					continue
+				}
+				if h.parsedKnownSrcFiles.Contains(full) {
+					continue
+				}
+				h.parsedKnownSrcFiles.Store(full)
+				results, err := h.parsedDocuments.ParseSource(full)
+				if err != nil {
+					h.LogError("Error parsing %s: %v", full, err)
+					continue
+				}
+				resultsX = append(resultsX, results...)
 			}
 
 			var diagnostics = make([]lsp.Diagnostic, 0)
