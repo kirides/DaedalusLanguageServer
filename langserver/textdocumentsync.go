@@ -39,7 +39,7 @@ func (h *textDocumentSync) updateBuffer(ctx context.Context, documentURI, conten
 		Diagnostics: diagnostics,
 	})
 
-	h.LogDebug("Updated buffer for %q with %d chars\n", documentURI, len(chars))
+	h.LogDebug("Updated buffer for %q with %d chars", documentURI, len(chars))
 }
 
 func (h *textDocumentSync) handleTextDocumentDidOpen(req RpcContext, data lsp.DidOpenTextDocumentParams) error {
