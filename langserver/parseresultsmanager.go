@@ -439,17 +439,17 @@ func resolveIntConstant(h SymbolProvider, c string) int {
 	return -1
 }
 
-func SymbolToReadableCode(h SymbolProvider, s symbol.Symbol) string {
+func SymbolToReadableCode(symbols SymbolProvider, s symbol.Symbol) string {
 	var codeText string
 	switch s := s.(type) {
 	case symbol.ConstantArray:
 		sb := strings.Builder{}
-		resolvedSize := resolveIntConstant(h, s.ArraySizeText)
+		resolvedSize := resolveIntConstant(symbols, s.ArraySizeText)
 		s.Format(&sb, resolvedSize)
 		codeText = sb.String()
 	case symbol.ArrayVariable:
 		sb := strings.Builder{}
-		resolvedSize := resolveIntConstant(h, s.ArraySizeText)
+		resolvedSize := resolveIntConstant(symbols, s.ArraySizeText)
 		s.Format(&sb, resolvedSize)
 		codeText = sb.String()
 	default:

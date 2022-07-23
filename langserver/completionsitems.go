@@ -9,7 +9,7 @@ import (
 	lsp "go.lsp.dev/protocol"
 )
 
-func completionItemFromSymbol(docs *parseResultsManager, s symbol.Symbol) (lsp.CompletionItem, error) {
+func completionItemFromSymbol(symbols SymbolProvider, s symbol.Symbol) (lsp.CompletionItem, error) {
 	kind, err := completionItemKindForSymbol(s)
 	if err != nil {
 		return lsp.CompletionItem{}, err
@@ -17,7 +17,7 @@ func completionItemFromSymbol(docs *parseResultsManager, s symbol.Symbol) (lsp.C
 	return lsp.CompletionItem{
 		Kind:   kind,
 		Label:  s.Name(),
-		Detail: SymbolToReadableCode(docs, s),
+		Detail: SymbolToReadableCode(symbols, s),
 		Documentation: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
 			Value: javadoc.MarkdownSimple(s),

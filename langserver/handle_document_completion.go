@@ -42,11 +42,11 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 		doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
 		di := symbol.DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 
-		scci, err := getSignatureCompletions(params, h)
+		scci, found, err := getSignatureCompletions(params, h)
 		if err != nil {
 			h.logger.Debugf("signature completion error %v: ", err)
 		}
-		if len(scci) > 0 {
+		if found {
 			return scci, nil
 		}
 

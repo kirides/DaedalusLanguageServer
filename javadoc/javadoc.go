@@ -33,9 +33,26 @@ func formatParams(sb *strings.Builder, param, desc string) {
 	appendMarkdownEscaped(sb, param)
 	sb.WriteString("** - *")
 
-	if strings.HasPrefix(desc, "{") || strings.HasPrefix(desc, "[") {
-		insts, desc := ParseWithin(desc, "{", "}")
-		enums, desc := ParseWithin(desc, "[", "]")
+	const (
+		PREFIX_INST = "{"
+		PREFIX_ENUM = "["
+		PREFIX_FUNC = "<"
+
+		INST_OPEN  = PREFIX_INST
+		INST_CLOSE = "}"
+
+		ENUM_OPEN  = PREFIX_ENUM
+		ENUM_CLOSE = "]"
+
+		FUNC_OPEN  = PREFIX_FUNC
+		FUNC_CLOSE = ">"
+	)
+
+	if strings.HasPrefix(desc, PREFIX_INST) || strings.HasPrefix(desc, PREFIX_ENUM) || strings.HasPrefix(desc, PREFIX_FUNC) {
+		insts, desc := ParseWithin(desc, INST_OPEN, INST_CLOSE)
+		enums, desc := ParseWithin(desc, ENUM_OPEN, ENUM_CLOSE)
+		fnSigdata, desc := ParseWithin(desc, FUNC_OPEN, FUNC_CLOSE)
+
 		appendMarkdownEscaped(sb, desc)
 		sb.WriteString("*  \n")
 
@@ -55,7 +72,17 @@ func formatParams(sb *strings.Builder, param, desc string) {
 			sb.WriteString(strings.Join(enums, ", "))
 			sb.WriteString("\n")
 		}
-
+		if len(fnSigdata) != 0 {
+			sb.WriteString("Required function signature: ")
+			sig, err := getFuncSignatureString(fnSigdata)
+			if err == nil {
+				// I wanted daedalus syntax highlightin here, but it does not work for me
+				sb.WriteString("```daedalus\n" + sig + "\n```")
+			} else {
+				sb.WriteString("<invalid signature>")
+			}
+			sb.WriteString("\n")
+		}
 	} else {
 		appendMarkdownEscaped(sb, desc)
 		sb.WriteString("*\n")
@@ -64,9 +91,10 @@ func formatParams(sb *strings.Builder, param, desc string) {
 
 // RemoveTokens removes all javadoc tokens from a text and makes it plain text
 func RemoveTokens(desc string) string {
-	if strings.HasPrefix(desc, "{") || strings.HasPrefix(desc, "[") {
+	if strings.HasPrefix(desc, "{") || strings.HasPrefix(desc, "[") || strings.HasPrefix(desc, "<") {
 		_, desc = ParseWithin(desc, "{", "}")
 		_, desc = ParseWithin(desc, "[", "]")
+		_, desc = ParseWithin(desc, "<", ">")
 	}
 	return desc
 }

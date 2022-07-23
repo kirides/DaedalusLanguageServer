@@ -26,24 +26,9 @@ var _ Symbol = (*Function)(nil)
 var _ Symbol = (*ArrayVariable)(nil)
 var _ Symbol = (*Variable)(nil)
 var _ Symbol = (*Constant)(nil)
-var _ Symbol = (*Function)(nil)
 var _ Symbol = (*ProtoTypeOrInstance)(nil)
 var _ Symbol = (*Class)(nil)
 var _ Symbol = (*ConstantArray)(nil)
-
-// Function ...
-type Function struct {
-	ReturnType     string
-	Parameters     []Variable
-	LocalVariables []Symbol
-	symbolBase
-	BodyDefinition Definition
-}
-
-// GetType ...
-func (s Function) GetType() string {
-	return s.ReturnType
-}
 
 func newSymbolBase(name, source, doc string, def Definition) symbolBase {
 	return symbolBase{
@@ -119,7 +104,10 @@ func NewPrototypeOrInstance(name, parent, source, documentation string, definito
 }
 
 func writeParameterVariables(w io.StringWriter, symbols []Variable) {
-	for _, s := range symbols {
+	for i, s := range symbols {
+		if i > 0 {
+			w.WriteString(", ")
+		}
 		w.WriteString(s.String())
 	}
 }
@@ -142,6 +130,20 @@ func (s symbolBase) Documentation() string {
 // Definition ...
 func (s symbolBase) Definition() Definition {
 	return s.SymbolDefinition
+}
+
+// Function ...
+type Function struct {
+	ReturnType     string
+	Parameters     []Variable
+	LocalVariables []Symbol
+	symbolBase
+	BodyDefinition Definition
+}
+
+// GetType ...
+func (s Function) GetType() string {
+	return s.ReturnType
 }
 
 // String ...
