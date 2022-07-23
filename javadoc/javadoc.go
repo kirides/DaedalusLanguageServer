@@ -51,7 +51,7 @@ func formatParams(sb *strings.Builder, param, desc string) {
 	if strings.HasPrefix(desc, PREFIX_INST) || strings.HasPrefix(desc, PREFIX_ENUM) || strings.HasPrefix(desc, PREFIX_FUNC) {
 		insts, desc := ParseWithinDedup(desc, INST_OPEN, INST_CLOSE)
 		enums, desc := ParseWithinDedup(desc, ENUM_OPEN, ENUM_CLOSE)
-		fnSigdata, desc := ParseWithinDedup(desc, FUNC_OPEN, FUNC_CLOSE)
+		fnSigdata, desc := ParseWithin(desc, FUNC_OPEN, FUNC_CLOSE)
 
 		appendMarkdownEscaped(sb, desc)
 		sb.WriteString("*  \n")
@@ -92,9 +92,9 @@ func formatParams(sb *strings.Builder, param, desc string) {
 // RemoveTokens removes all javadoc tokens from a text and makes it plain text
 func RemoveTokens(desc string) string {
 	if strings.HasPrefix(desc, "{") || strings.HasPrefix(desc, "[") || strings.HasPrefix(desc, "<") {
-		_, desc = ParseWithinDedup(desc, "{", "}")
-		_, desc = ParseWithinDedup(desc, "[", "]")
-		_, desc = ParseWithinDedup(desc, "<", ">")
+		_, desc = ParseWithin(desc, "{", "}")
+		_, desc = ParseWithin(desc, "[", "]")
+		_, desc = ParseWithin(desc, "<", ">")
 	}
 	return desc
 }
