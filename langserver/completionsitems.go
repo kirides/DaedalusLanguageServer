@@ -24,11 +24,9 @@ func completionItemFromSymbol(s Symbol) (lsp.CompletionItem, error) {
 
 func completionItemKindForSymbol(s Symbol) (lsp.CompletionItemKind, error) {
 	switch s.(type) {
-	case VariableSymbol:
+	case ArrayVariableSymbol, VariableSymbol:
 		return lsp.CompletionItemKindVariable, nil
-	case ArrayVariableSymbol:
-		return lsp.CompletionItemKindVariable, nil
-	case ConstantSymbol:
+	case ConstantSymbol, ConstantArraySymbol:
 		return lsp.CompletionItemKindConstant, nil
 	case FunctionSymbol:
 		return lsp.CompletionItemKindFunction, nil

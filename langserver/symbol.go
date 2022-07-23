@@ -1,6 +1,10 @@
 package langserver
 
-import "strings"
+import (
+	"io"
+	"strconv"
+	"strings"
+)
 
 // Symbol ...
 type Symbol interface {
@@ -19,9 +23,13 @@ type symbolBase struct {
 }
 
 var _ Symbol = (*FunctionSymbol)(nil)
+var _ Symbol = (*ArrayVariableSymbol)(nil)
 var _ Symbol = (*VariableSymbol)(nil)
 var _ Symbol = (*ConstantSymbol)(nil)
-var _ Symbol = (*ConstantSymbol)(nil)
+var _ Symbol = (*FunctionSymbol)(nil)
+var _ Symbol = (*ProtoTypeOrInstanceSymbol)(nil)
+var _ Symbol = (*ClassSymbol)(nil)
+var _ Symbol = (*ConstantArraySymbol)(nil)
 
 // FunctionSymbol ...
 type FunctionSymbol struct {
@@ -82,6 +90,15 @@ func NewConstantSymbol(name, varType, source, documentation string, definiton Sy
 	}
 }
 
+// NewConstantArraySymbol ...
+func NewConstantArraySymbol(name, varType, arraySizeText, source, documentation string, definiton SymbolDefinition, value string) ConstantArraySymbol {
+	return ConstantArraySymbol{
+		VariableSymbol: NewVariableSymbol(name, varType, source, documentation, definiton),
+		Value:          value,
+		ArraySizeText:  arraySizeText,
+	}
+}
+
 // NewClassSymbol ...
 func NewClassSymbol(name, source, documentation string, definiton SymbolDefinition, bodyDef SymbolDefinition, fields []Symbol) ClassSymbol {
 	return ClassSymbol{
@@ -101,13 +118,10 @@ func NewPrototypeOrInstanceSymbol(name, parent, source, documentation string, de
 	}
 }
 
-// TODO: Refactor for generics, `[]T where T: Stringer`
-func joinVars(symbols []VariableSymbol) string {
-	syms := make([]string, 0, len(symbols))
+func writeParameterVariables(w io.StringWriter, symbols []VariableSymbol) {
 	for _, s := range symbols {
-		syms = append(syms, s.String())
+		w.WriteString(s.String())
 	}
-	return strings.Join(syms, ", ")
 }
 
 // Name ...
@@ -132,7 +146,16 @@ func (s symbolBase) Definition() SymbolDefinition {
 
 // String ...
 func (s FunctionSymbol) String() string {
-	return "func " + s.ReturnType + " " + s.Name() + "(" + joinVars(s.Parameters) + ")"
+	sb := strings.Builder{}
+	sb.WriteString("func ")
+	sb.WriteString(s.ReturnType)
+	sb.WriteString(" ")
+	sb.WriteString(s.Name())
+	sb.WriteString("(")
+	writeParameterVariables(&sb, s.Parameters)
+	sb.WriteString(")")
+
+	return sb.String()
 }
 
 // VariableSymbol ...
@@ -160,7 +183,22 @@ type ArrayVariableSymbol struct {
 
 // String ...
 func (s ArrayVariableSymbol) String() string {
-	return "var " + s.Type + "[" + s.ArraySizeText + "]" + " " + s.Name()
+	return "var " + s.Type + " " + s.Name() + "[" + s.ArraySizeText + "]"
+}
+
+func (s ArrayVariableSymbol) Format(w io.StringWriter, resolvedSize int) {
+	w.WriteString("var ")
+	w.WriteString(s.Type)
+	w.WriteString(" ")
+	w.WriteString(s.Name())
+	w.WriteString("[")
+	w.WriteString(s.ArraySizeText)
+	if resolvedSize != -1 {
+		w.WriteString(" /* ")
+		w.WriteString(strconv.Itoa(resolvedSize))
+		w.WriteString(" */")
+	}
+	w.WriteString("]")
 }
 
 // GetType ...
@@ -181,6 +219,40 @@ func (s ConstantSymbol) String() string {
 
 // GetType ...
 func (s ConstantSymbol) GetType() string {
+	return s.Type
+}
+
+type ConstantArraySymbol struct {
+	Value         string
+	ArraySizeText string
+	VariableSymbol
+}
+
+// String ...
+func (s ConstantArraySymbol) String() string {
+	sb := strings.Builder{}
+	s.Format(&sb, -1)
+	return sb.String()
+}
+
+func (s ConstantArraySymbol) Format(w io.StringWriter, resolvedSize int) {
+	w.WriteString("const ")
+	w.WriteString(s.Type)
+	w.WriteString(" ")
+	w.WriteString(s.Name())
+	w.WriteString("[")
+	w.WriteString(s.ArraySizeText)
+	if resolvedSize != -1 {
+		w.WriteString(" /* ")
+		w.WriteString(strconv.Itoa(resolvedSize))
+		w.WriteString(" */")
+	}
+	w.WriteString("] = ")
+	w.WriteString(s.Value)
+}
+
+// GetType ...
+func (s ConstantArraySymbol) GetType() string {
 	return s.Type
 }
 

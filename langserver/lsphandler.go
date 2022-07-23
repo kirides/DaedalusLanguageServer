@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"unicode"
@@ -100,6 +101,9 @@ func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string
 		return getTypeFieldsAsCompletionItems(docs, protoSym.Parent, locals)
 	}
 	if varSym, ok := sym.(VariableSymbol); ok {
+		return getTypeFieldsAsCompletionItems(docs, varSym.Type, locals)
+	}
+	if varSym, ok := sym.(ArrayVariableSymbol); ok {
 		return getTypeFieldsAsCompletionItems(docs, varSym.Type, locals)
 	}
 	return []lsp.CompletionItem{}, nil
@@ -295,12 +299,51 @@ func (h *LspHandler) handleTextDocumentDefinition(req RpcContext, data lsp.TextD
 	return req.Reply(req.Context(), found, nil)
 }
 
+func (h *LspHandler) resolveIntConstant(c string) int {
+	n, err := strconv.Atoi(c)
+	if err == nil {
+		return n
+	}
+	// probably symbol...?
+	found, ok := h.parsedDocuments.LookupGlobalSymbol(c, SymbolConstant)
+	if !ok {
+		return -1
+	}
+	cs, ok := found.(ConstantSymbol)
+	if !ok {
+		return -1
+	}
+	if n, err := strconv.Atoi(cs.Value); err == nil {
+		return n
+	}
+	return -1
+}
+
+func (h *LspHandler) getSymbolCode(s Symbol) string {
+	var codeText string
+	if cas, ok := s.(ConstantArraySymbol); ok {
+		sb := strings.Builder{}
+		resolvedSize := h.resolveIntConstant(cas.ArraySizeText)
+		cas.Format(&sb, resolvedSize)
+		codeText = sb.String()
+	} else if cas, ok := s.(ArrayVariableSymbol); ok {
+		sb := strings.Builder{}
+		resolvedSize := h.resolveIntConstant(cas.ArraySizeText)
+		cas.Format(&sb, resolvedSize)
+		codeText = sb.String()
+	} else {
+		codeText = s.String()
+	}
+	return codeText
+}
+
 func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocumentPositionParams) error {
 	found, err := h.lookUpSymbol(h.uriToFilename(data.TextDocument.URI), data.Position)
 	if err != nil {
 		return req.Reply(req.Context(), nil, nil)
 	}
-	h.LogDebug("Found Symbol for Hover: %s\n", found.String())
+	h.LogDebug("Found Symbol for Hover: %s", found.String())
+
 	return req.Reply(req.Context(), lsp.Hover{
 		Range: &lsp.Range{
 			Start: data.Position,
@@ -308,7 +351,7 @@ func (h *LspHandler) handleTextDocumentHover(req RpcContext, data lsp.TextDocume
 		},
 		Contents: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
-			Value: strings.TrimSpace(simpleJavadocMD(found) + "\n\n```daedalus\n" + found.String() + "\n```"),
+			Value: strings.TrimSpace(simpleJavadocMD(found) + "\n\n```daedalus\n" + h.getSymbolCode(found) + "\n```"),
 		},
 	}, nil)
 }
@@ -322,11 +365,9 @@ func (h *LspHandler) handleTextDocumentSignatureHelp(req RpcContext, data lsp.Te
 
 func getSymbolKind(s Symbol) lsp.SymbolKind {
 	switch s.(type) {
-	case ArrayVariableSymbol:
+	case ArrayVariableSymbol, ConstantArraySymbol:
 		return lsp.SymbolKindArray
-	case ClassSymbol:
-		return lsp.SymbolKindClass
-	case ProtoTypeOrInstanceSymbol:
+	case ClassSymbol, ProtoTypeOrInstanceSymbol:
 		return lsp.SymbolKindClass
 	case FunctionSymbol:
 		return lsp.SymbolKindFunction

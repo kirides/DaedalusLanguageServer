@@ -7,8 +7,8 @@ import (
 // ParseResult ...
 type ParseResult struct {
 	Instances       map[string]ProtoTypeOrInstanceSymbol
-	GlobalVariables map[string]VariableSymbol
-	GlobalConstants map[string]ConstantSymbol
+	GlobalVariables map[string]Symbol
+	GlobalConstants map[string]Symbol
 	Functions       map[string]FunctionSymbol
 	Classes         map[string]ClassSymbol
 	Prototypes      map[string]ProtoTypeOrInstanceSymbol
