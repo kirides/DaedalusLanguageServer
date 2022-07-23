@@ -33,7 +33,7 @@ func noFilter(symbol.Symbol) bool { return true }
 func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, parentDocu, paramDocu, varType string, docs SymbolProvider, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
 	found := true
 	if strings.HasPrefix(paramDocu, "{") { // if instance list directive
-		instances, _ := javadoc.ParseWithin(paramDocu, "{", "}")
+		instances, _ := javadoc.ParseWithinDedup(paramDocu, "{", "}")
 
 		done := map[string]struct{}{}
 		for _, in := range instances {
@@ -66,7 +66,7 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, par
 			}, SymbolInstance)
 		}
 	} else if strings.HasPrefix(paramDocu, "[") { // if enum list directive
-		enums, _ := javadoc.ParseWithin(paramDocu, "[", "]")
+		enums, _ := javadoc.ParseWithinDedup(paramDocu, "[", "]")
 
 		ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType, noFilter)
 		result = append(result, ci...)
