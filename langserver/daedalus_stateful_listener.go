@@ -70,21 +70,9 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 	if p, ok := v.GetParent().(parser.IInlineDefContext); ok {
 		summary = l.symbolSummaryForContext(p)
 	}
-	for _, ival := range v.AllVarValueDecl() {
-		val := ival.(*parser.VarValueDeclContext)
-		result = append(result,
-			NewVariableSymbol(val.NameNode().GetText(),
-				v.TypeReference().GetText(),
-				l.source,
-				summary, // documentation
-				symbolDefinitionForRuleContext(val.NameNode()),
-			))
-	}
 
-	for _, iInnerVar := range v.AllVarDecl() {
-		innerVal := iInnerVar.(*parser.VarDeclContext)
-		for _, ival := range innerVal.AllVarValueDecl() {
-			val := ival.(*parser.VarValueDeclContext)
+	for _, ch := range v.GetChildren() {
+		if val, ok := ch.(*parser.VarValueDeclContext); ok {
 			result = append(result,
 				NewVariableSymbol(val.NameNode().GetText(),
 					v.TypeReference().GetText(),
@@ -92,18 +80,27 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 					summary, // documentation
 					symbolDefinitionForRuleContext(val.NameNode()),
 				))
+		} else if innerVal, ok := ch.(*parser.VarDeclContext); ok {
+			for _, ival := range innerVal.AllVarValueDecl() {
+				val := ival.(*parser.VarValueDeclContext)
+				result = append(result,
+					NewVariableSymbol(val.NameNode().GetText(),
+						v.TypeReference().GetText(),
+						l.source,
+						summary, // documentation
+						symbolDefinitionForRuleContext(val.NameNode()),
+					))
+			}
+		} else if innerVal, ok := ch.(*parser.VarArrayDeclContext); ok {
+			result = append(result,
+				NewArrayVariableSymbol(innerVal.NameNode().GetText(),
+					v.TypeReference().GetText(),
+					innerVal.ArraySize().GetText(),
+					l.source,
+					summary, // documentation
+					symbolDefinitionForRuleContext(innerVal.NameNode()),
+				))
 		}
-	}
-	for _, iInnerVar := range v.AllVarArrayDecl() {
-		innerVal := iInnerVar.(*parser.VarArrayDeclContext)
-		result = append(result,
-			NewArrayVariableSymbol(innerVal.NameNode().GetText(),
-				v.TypeReference().GetText(),
-				innerVal.ArraySize().GetText(),
-				l.source,
-				summary, // documentation
-				symbolDefinitionForRuleContext(innerVal.NameNode()),
-			))
 	}
 
 	return result
@@ -171,36 +168,30 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 
 // EnterInlineDef ...
 func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) {
-
-	walkSymbols(ctx, func(c *parser.ConstDefContext) error {
-		for _, s := range l.constsFromContext(c) {
-			l.GlobalConstants[strings.ToUpper(s.Name())] = s
+	for _, ch := range ctx.GetChildren() {
+		if c, ok := ch.(*parser.ConstDefContext); ok {
+			for _, s := range l.constsFromContext(c) {
+				l.GlobalConstants[strings.ToUpper(s.Name())] = s
+			}
+		} else if v, ok := ch.(*parser.VarDeclContext); ok {
+			for _, s := range l.variablesFromContext(v) {
+				l.GlobalVariables[strings.ToUpper(s.Name())] = s
+			}
+		} else if c, ok := ch.(*parser.InstanceDeclContext); ok {
+			walkSymbols(c, func(name parser.INameNodeContext) error {
+				psym := NewPrototypeOrInstanceSymbol(
+					name.GetText(),
+					c.ParentReference().GetText(),
+					l.source,
+					"",
+					symbolDefinitionForRuleContext(name),
+					symbolDefinitionForRuleContext(c.ParentReference()),
+					true)
+				l.Instances[strings.ToUpper(psym.Name())] = psym
+				return nil
+			})
 		}
-		return nil
-	})
-
-	walkSymbols(ctx, func(v *parser.VarDeclContext) error {
-		for _, s := range l.variablesFromContext(v) {
-			l.GlobalVariables[strings.ToUpper(s.Name())] = s
-		}
-		return nil
-	})
-
-	walkSymbols(ctx, func(c *parser.InstanceDeclContext) error {
-		walkSymbols(c, func(name parser.INameNodeContext) error {
-			psym := NewPrototypeOrInstanceSymbol(
-				name.GetText(),
-				c.ParentReference().GetText(),
-				l.source,
-				"",
-				symbolDefinitionForRuleContext(name),
-				symbolDefinitionForRuleContext(c.ParentReference()),
-				true)
-			l.Instances[strings.ToUpper(psym.Name())] = psym
-			return nil
-		})
-		return nil
-	})
+	}
 }
 
 func walkSymbols[T antlr.ParserRuleContext](rule antlr.RuleNode, walkFn func(symbol T) error) {
@@ -219,28 +210,26 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 	walkSymbols(ctx, func(c *parser.ClassDefContext) error {
 		cFields := []Symbol{}
 		walkSymbols(c, func(v *parser.VarDeclContext) error {
-			walkSymbols(v, func(vv *parser.VarValueDeclContext) error {
-				cFields = append(cFields,
-					NewVariableSymbol(vv.NameNode().GetText(),
-						v.TypeReference().GetText(),
-						l.source,
-						"",
-						symbolDefinitionForRuleContext(vv.NameNode())),
-				)
-				return nil
-			})
-
-			walkSymbols(v, func(vv *parser.VarArrayDeclContext) error {
-				cFields = append(cFields,
-					NewArrayVariableSymbol(vv.NameNode().GetText(),
-						v.TypeReference().GetText(),
-						vv.ArraySize().GetText(),
-						l.source,
-						"",
-						symbolDefinitionForRuleContext(vv.NameNode())),
-				)
-				return nil
-			})
+			for _, ch := range v.GetChildren() {
+				if vv, ok := ch.(*parser.VarValueDeclContext); ok {
+					cFields = append(cFields,
+						NewVariableSymbol(vv.NameNode().GetText(),
+							v.TypeReference().GetText(),
+							l.source,
+							"",
+							symbolDefinitionForRuleContext(vv.NameNode())),
+					)
+				} else if vv, ok := ch.(*parser.VarArrayDeclContext); ok {
+					cFields = append(cFields,
+						NewArrayVariableSymbol(vv.NameNode().GetText(),
+							v.TypeReference().GetText(),
+							vv.ArraySize().GetText(),
+							l.source,
+							"",
+							symbolDefinitionForRuleContext(vv.NameNode())),
+					)
+				}
+			}
 			return nil
 		})
 
@@ -263,31 +252,29 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 		return nil
 	})
 
-	walkSymbols(ctx, func(c *parser.PrototypeDefContext) error {
-		psym := NewPrototypeOrInstanceSymbol(
-			c.NameNode().GetText(),
-			c.ParentReference().GetText(),
-			l.source,
-			"",
-			symbolDefinitionForRuleContext(c.NameNode()),
-			symbolDefinitionForRuleContext(c.StatementBlock()),
-			false)
-		l.Prototypes[strings.ToUpper(psym.Name())] = psym
-		return nil
-	})
-
-	walkSymbols(ctx, func(c *parser.InstanceDefContext) error {
-		psym := NewPrototypeOrInstanceSymbol(
-			c.NameNode().GetText(),
-			c.ParentReference().GetText(),
-			l.source,
-			"",
-			symbolDefinitionForRuleContext(c.NameNode()),
-			symbolDefinitionForRuleContext(c.StatementBlock()),
-			true)
-		l.Instances[strings.ToUpper(psym.Name())] = psym
-		return nil
-	})
+	for _, ch := range ctx.GetChildren() {
+		if c, ok := ch.(*parser.PrototypeDefContext); ok {
+			psym := NewPrototypeOrInstanceSymbol(
+				c.NameNode().GetText(),
+				c.ParentReference().GetText(),
+				l.source,
+				"",
+				symbolDefinitionForRuleContext(c.NameNode()),
+				symbolDefinitionForRuleContext(c.StatementBlock()),
+				false)
+			l.Prototypes[strings.ToUpper(psym.Name())] = psym
+		} else if c, ok := ch.(*parser.InstanceDefContext); ok {
+			psym := NewPrototypeOrInstanceSymbol(
+				c.NameNode().GetText(),
+				c.ParentReference().GetText(),
+				l.source,
+				"",
+				symbolDefinitionForRuleContext(c.NameNode()),
+				symbolDefinitionForRuleContext(c.StatementBlock()),
+				true)
+			l.Instances[strings.ToUpper(psym.Name())] = psym
+		}
+	}
 }
 
 func (l *DaedalusStatefulListener) findVarsConstsInStatements(root antlr.Tree) []Symbol {
