@@ -253,14 +253,17 @@ func getFunctionCallContext(doc BufferedDocument, symbols SymbolProvider, pos ls
 	}
 	sigCtx := methodCallLine[idxParen+1:]
 	fn := funcSymbol.(symbol.Function)
-	paramIdx := uint32(strings.Count(sigCtx, ","))
-	if int(paramIdx) >= len(fn.Parameters) {
+	paramIdx := strings.Count(sigCtx, ",")
+
+	if paramIdx == 0 && len(fn.Parameters) == 0 {
+		paramIdx = -1
+	} else if paramIdx >= len(fn.Parameters) {
 		return callContext{}, errors.New("index bigger than number of elements")
 	}
 
 	return callContext{
 		Function: fn,
-		ParamIdx: int(paramIdx),
+		ParamIdx: paramIdx,
 	}, nil
 }
 
@@ -270,6 +273,10 @@ func getSignatureCompletions(params *lsp.CompletionParams, h *LspHandler) ([]lsp
 	ctx, err := getFunctionCallContext(doc, h.parsedDocuments, params.Position)
 	if err != nil {
 		return []lsp.CompletionItem{}, false, err
+	}
+	// Function without any arguments. Don't show anything.
+	if len(ctx.Function.Parameters) == 0 && ctx.ParamIdx == -1 {
+		return []lsp.CompletionItem{}, true, nil
 	}
 	return getTypedCompletionItems(h, h.parsedDocuments, ctx.Function, ctx.ParamIdx, params)
 }
