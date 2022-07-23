@@ -9,7 +9,7 @@ import (
 )
 
 func (h *LspHandler) handleTextDocumentHover(req dls.RpcContext, data lsp.TextDocumentPositionParams) error {
-	found, err := h.lookUpSymbol(h.uriToFilename(data.TextDocument.URI), data.Position)
+	found, err := h.lookUpSymbol(uriToFilename(data.TextDocument.URI), data.Position)
 	if err != nil {
 		return req.Reply(req.Context(), nil, nil)
 	}

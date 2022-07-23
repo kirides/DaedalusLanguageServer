@@ -44,14 +44,14 @@ func (h *textDocumentSync) updateBuffer(ctx context.Context, documentURI, conten
 }
 
 func (h *textDocumentSync) handleTextDocumentDidOpen(req dls.RpcContext, data lsp.DidOpenTextDocumentParams) error {
-	documentUri := h.uriToFilename(data.TextDocument.URI)
+	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" {
 		h.updateBuffer(req.Context(), documentUri, data.TextDocument.Text)
 	}
 	return nil
 }
 func (h *textDocumentSync) handleTextDocumentDidChange(req dls.RpcContext, data lsp.DidChangeTextDocumentParams) error {
-	documentUri := h.uriToFilename(data.TextDocument.URI)
+	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" && len(data.ContentChanges) > 0 {
 		h.updateBuffer(req.Context(), documentUri, data.ContentChanges[0].Text)
 	}
@@ -59,7 +59,7 @@ func (h *textDocumentSync) handleTextDocumentDidChange(req dls.RpcContext, data 
 }
 
 func (h *textDocumentSync) handleTextDocumentDidSave(req dls.RpcContext, data lsp.DidSaveTextDocumentParams) error {
-	documentUri := h.uriToFilename(data.TextDocument.URI)
+	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" {
 		h.updateBuffer(req.Context(), documentUri, data.Text)
 	}

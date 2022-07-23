@@ -273,7 +273,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		var openParams lsp.DidOpenTextDocumentParams
 		json.Unmarshal(r.Params(), &openParams)
 		go func() {
-			wd := h.uriToFilename(openParams.TextDocument.URI)
+			wd := uriToFilename(openParams.TextDocument.URI)
 			if wd == "" {
 				h.LogError("Error locating current file")
 				return

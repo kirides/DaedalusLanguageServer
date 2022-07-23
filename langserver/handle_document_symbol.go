@@ -6,7 +6,9 @@ import (
 	lsp "go.lsp.dev/protocol"
 )
 
-func getDocumentSymbol(s symbol.Symbol) lsp.DocumentSymbol {
+type textDocumentDocumentSymbol struct{}
+
+func (ds textDocumentDocumentSymbol) getDocumentSymbol(s symbol.Symbol) lsp.DocumentSymbol {
 	rn := getSymbolLocation(s).Range
 	return lsp.DocumentSymbol{
 		Name:           s.Name(),
@@ -16,12 +18,12 @@ func getDocumentSymbol(s symbol.Symbol) lsp.DocumentSymbol {
 	}
 }
 
-func collectDocumentSymbols(result []lsp.DocumentSymbol, s symbol.Symbol) []lsp.DocumentSymbol {
-	mainSymb := getDocumentSymbol(s)
+func (ds textDocumentDocumentSymbol) collectDocumentSymbols(result []lsp.DocumentSymbol, s symbol.Symbol) []lsp.DocumentSymbol {
+	mainSymb := ds.getDocumentSymbol(s)
 
 	if cls, ok := s.(symbol.Class); ok {
 		for _, v := range cls.Fields {
-			si := getDocumentSymbol(v)
+			si := ds.getDocumentSymbol(v)
 			mainSymb.Children = append(mainSymb.Children, si)
 		}
 		mainSymb.Range = lsp.Range{
@@ -33,7 +35,7 @@ func collectDocumentSymbols(result []lsp.DocumentSymbol, s symbol.Symbol) []lsp.
 		}
 	} else if cls, ok := s.(symbol.ProtoTypeOrInstance); ok {
 		for _, v := range cls.Fields {
-			si := getDocumentSymbol(v)
+			si := ds.getDocumentSymbol(v)
 			mainSymb.Children = append(mainSymb.Children, si)
 		}
 		mainSymb.Range = lsp.Range{
@@ -58,7 +60,9 @@ func collectDocumentSymbols(result []lsp.DocumentSymbol, s symbol.Symbol) []lsp.
 }
 
 func (h *LspHandler) handleDocumentSymbol(req dls.RpcContext, params lsp.DocumentSymbolParams) error {
-	r, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
+	ds := textDocumentDocumentSymbol{}
+
+	r, err := h.parsedDocuments.Get(uriToFilename(params.TextDocument.URI))
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
 		return err
@@ -71,7 +75,7 @@ func (h *LspHandler) handleDocumentSymbol(req dls.RpcContext, params lsp.Documen
 			h.logger.Debugf("request cancelled", "method", req.Request().Method())
 			return req.Context().Err()
 		}
-		result = collectDocumentSymbols(result, s)
+		result = ds.collectDocumentSymbols(result, s)
 		return nil
 	}, SymbolAll)
 	if err != nil {

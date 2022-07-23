@@ -217,9 +217,7 @@ type callContext struct {
 	ParamIdx int
 }
 
-func getFunctionCallContext(h *LspHandler, docUri lsp.URI, pos lsp.Position) (callContext, error) {
-	doc := h.bufferManager.GetBuffer(h.uriToFilename(docUri))
-
+func getFunctionCallContext(doc BufferedDocument, symbols SymbolProvider, pos lsp.Position) (callContext, error) {
 	methodCallLine := doc.GetMethodCall(pos)
 	// The expected method call turned out to be a `func void something( ... )` -> a function definition
 	if rxFunctionDef.MatchString(methodCallLine) {
@@ -249,7 +247,7 @@ func getFunctionCallContext(h *LspHandler, docUri lsp.URI, pos lsp.Position) (ca
 	}
 
 	fnName = strings.ToUpper(strings.TrimSpace(fnName))
-	funcSymbol, found := h.parsedDocuments.LookupGlobalSymbol(fnName, SymbolFunction)
+	funcSymbol, found := symbols.LookupGlobalSymbol(fnName, SymbolFunction)
 	if !found {
 		return callContext{}, errors.New("no function symbol found")
 	}
@@ -268,7 +266,8 @@ func getFunctionCallContext(h *LspHandler, docUri lsp.URI, pos lsp.Position) (ca
 
 // TODO: refactor this - duplicate code
 func getSignatureCompletions(params *lsp.CompletionParams, h *LspHandler) ([]lsp.CompletionItem, bool, error) {
-	ctx, err := getFunctionCallContext(h, params.TextDocument.URI, params.Position)
+	doc := h.bufferManager.GetBuffer(uriToFilename(params.TextDocument.URI))
+	ctx, err := getFunctionCallContext(doc, h.parsedDocuments, params.Position)
 	if err != nil {
 		return []lsp.CompletionItem{}, false, err
 	}
@@ -334,7 +333,7 @@ func getHighestSortIndex(items []lsp.CompletionItem) int {
 }
 
 func getLocalsAndParams(h *LspHandler, docURI lsp.URI, pos lsp.Position, varType string, filter func(symbol.Symbol) bool) []lsp.CompletionItem {
-	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(docURI))
+	parsedDoc, err := h.parsedDocuments.Get(uriToFilename(docURI))
 	if err != nil {
 		return []lsp.CompletionItem{}
 	}

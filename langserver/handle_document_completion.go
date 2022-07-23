@@ -9,7 +9,23 @@ import (
 	lsp "go.lsp.dev/protocol"
 )
 
-func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string, locals map[string]symbol.Symbol) ([]lsp.CompletionItem, error) {
+type textDocumentCompletion struct {
+	symbols SymbolProvider
+}
+
+func (tdc textDocumentCompletion) fieldsToCompletionItems(fields []symbol.Symbol) []lsp.CompletionItem {
+	result := make([]lsp.CompletionItem, 0, len(fields))
+	for _, v := range fields {
+		ci, err := completionItemFromSymbol(tdc.symbols, v)
+		if err != nil {
+			continue
+		}
+		result = append(result, ci)
+	}
+	return result
+}
+
+func (tdc textDocumentCompletion) getTypeFieldsAsCompletionItems(docs SymbolProvider, symbolName string, locals map[string]symbol.Symbol) ([]lsp.CompletionItem, error) {
 	symName := strings.ToUpper(symbolName)
 	sym, ok := locals[symName]
 	if !ok {
@@ -20,13 +36,13 @@ func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string
 		return []lsp.CompletionItem{}, nil
 	}
 	if clsSym, ok := sym.(symbol.Class); ok {
-		return fieldsToCompletionItems(docs, clsSym.Fields), nil
+		return tdc.fieldsToCompletionItems(clsSym.Fields), nil
 	}
 	if protoSym, ok := sym.(symbol.ProtoTypeOrInstance); ok {
-		return getTypeFieldsAsCompletionItems(docs, protoSym.Parent, locals)
+		return tdc.getTypeFieldsAsCompletionItems(docs, protoSym.Parent, locals)
 	}
 	if varSym, ok := sym.(symbol.Variable); ok {
-		return getTypeFieldsAsCompletionItems(docs, varSym.Type, locals)
+		return tdc.getTypeFieldsAsCompletionItems(docs, varSym.Type, locals)
 	}
 	// no way for e.g. C_NPC arrays
 	// if varSym, ok := sym.(ArrayVariableSymbol); ok {
@@ -36,13 +52,16 @@ func getTypeFieldsAsCompletionItems(docs *parseResultsManager, symbolName string
 }
 
 func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+	// TODO: split up further
+	tdc := textDocumentCompletion{symbols: h.parsedDocuments}
+
 	result := make([]lsp.CompletionItem, 0, 200)
-	parsedDoc, err := h.parsedDocuments.Get(h.uriToFilename(params.TextDocument.URI))
+	parsedDoc, err := h.parsedDocuments.Get(uriToFilename(params.TextDocument.URI))
 
 	partialIdentifier := ""
 
 	if err == nil {
-		doc := h.bufferManager.GetBuffer(h.uriToFilename(params.TextDocument.URI))
+		doc := h.bufferManager.GetBuffer(uriToFilename(params.TextDocument.URI))
 		di := symbol.DefinitionIndex{Line: int(params.Position.Line), Column: int(params.Position.Character)}
 
 		scci, found, err := getSignatureCompletions(params, h)
@@ -57,7 +76,7 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 		proto, _, err := doc.GetParentSymbolReference(params.Position)
 		if err == nil && proto != "" {
 			locals := parsedDoc.ScopedVariables(di)
-			return getTypeFieldsAsCompletionItems(h.parsedDocuments, proto, locals)
+			return tdc.getTypeFieldsAsCompletionItems(h.parsedDocuments, proto, locals)
 		}
 		partialIdentifier, _ = doc.GetIdentifier(params.Position)
 
@@ -96,12 +115,12 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 		}
 		for _, fn := range parsedDoc.Instances {
 			if fn.BodyDefinition.InBBox(di) {
-				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]symbol.Symbol{})
+				return tdc.getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]symbol.Symbol{})
 			}
 		}
 		for _, fn := range parsedDoc.Prototypes {
 			if fn.BodyDefinition.InBBox(di) {
-				return getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]symbol.Symbol{})
+				return tdc.getTypeFieldsAsCompletionItems(h.parsedDocuments, fn.Parent, map[string]symbol.Symbol{})
 			}
 		}
 	}

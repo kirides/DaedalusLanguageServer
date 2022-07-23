@@ -10,7 +10,8 @@ import (
 )
 
 func (h *LspHandler) getSignatureInfo(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.SignatureHelp, error) {
-	fnCtx, err := getFunctionCallContext(h, params.TextDocument.URI, params.Position)
+	doc := h.bufferManager.GetBuffer(uriToFilename(params.TextDocument.URI))
+	fnCtx, err := getFunctionCallContext(doc, h.parsedDocuments, params.Position)
 	if err != nil {
 		return lsp.SignatureHelp{}, err
 	}

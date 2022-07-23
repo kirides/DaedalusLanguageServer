@@ -20,6 +20,9 @@ type BufferedDocument string
 
 // GetWordRangeAtPosition ...
 func (m BufferedDocument) GetWordRangeAtPosition(position lsp.Position) string {
+	if m == "" {
+		return ""
+	}
 	if position.Character < 2 && position.Line < 1 {
 		return ""
 	}

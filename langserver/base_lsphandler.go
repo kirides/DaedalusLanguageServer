@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
@@ -56,7 +55,7 @@ func fixURI(s string) (string, bool) {
 	return s, true
 }
 
-func (h *baseLspHandler) uriToFilename(v uri.URI) string {
+func uriToFilename(v uri.URI) string {
 	s := string(v)
 	if strings.HasPrefix(s, "git:/") {
 		return ""
@@ -64,13 +63,6 @@ func (h *baseLspHandler) uriToFilename(v uri.URI) string {
 	fixed, ok := fixURI(s)
 
 	if !ok {
-		unescaped, err := url.PathUnescape(s)
-		if err != nil {
-			h.LogWarn("Unsupported URI (not a filepath): %q\n", s)
-
-		} else {
-			h.LogWarn("Unsupported URI (not a filepath): %q\n", unescaped)
-		}
 		return ""
 	}
 	v = uri.URI(fixed)

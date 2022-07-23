@@ -8,7 +8,9 @@ import (
 	lsp "go.lsp.dev/protocol"
 )
 
-func getSymbolInformation(s symbol.Symbol) lsp.SymbolInformation {
+type workspaceSymbol struct{}
+
+func (w workspaceSymbol) getSymbolInformation(s symbol.Symbol) lsp.SymbolInformation {
 	return lsp.SymbolInformation{
 		Name:     s.Name(),
 		Kind:     getSymbolKind(s),
@@ -16,19 +18,19 @@ func getSymbolInformation(s symbol.Symbol) lsp.SymbolInformation {
 	}
 }
 
-func collectWorkspaceSymbols(result []lsp.SymbolInformation, s symbol.Symbol) []lsp.SymbolInformation {
-	mainSymb := getSymbolInformation(s)
+func (w workspaceSymbol) collectWorkspaceSymbols(result []lsp.SymbolInformation, s symbol.Symbol) []lsp.SymbolInformation {
+	mainSymb := w.getSymbolInformation(s)
 	result = append(result, mainSymb)
 
 	if cls, ok := s.(symbol.Class); ok {
 		for _, v := range cls.Fields {
-			si := getSymbolInformation(v)
+			si := w.getSymbolInformation(v)
 			si.ContainerName = s.Name()
 			result = append(result, si)
 		}
 	} else if cls, ok := s.(symbol.ProtoTypeOrInstance); ok {
 		for _, v := range cls.Fields {
-			si := getSymbolInformation(v)
+			si := w.getSymbolInformation(v)
 			si.ContainerName = s.Name()
 			result = append(result, si)
 		}
@@ -37,6 +39,8 @@ func collectWorkspaceSymbols(result []lsp.SymbolInformation, s symbol.Symbol) []
 }
 
 func (h *LspHandler) handleWorkspaceSymbol(req dls.RpcContext, params lsp.WorkspaceSymbolParams) error {
+	w := workspaceSymbol{}
+
 	numSymbols := h.parsedDocuments.CountSymbols()
 	result := make([]lsp.SymbolInformation, 0, numSymbols)
 	buffer := make([]lsp.SymbolInformation, 0, 50)
@@ -49,13 +53,13 @@ func (h *LspHandler) handleWorkspaceSymbol(req dls.RpcContext, params lsp.Worksp
 			return req.Context().Err()
 		}
 		if qlower == "" {
-			result = collectWorkspaceSymbols(result, s)
+			result = w.collectWorkspaceSymbols(result, s)
 			return nil
 		}
 
 		// pre filtering
 		buffer = buffer[:0]
-		buffer = collectWorkspaceSymbols(buffer, s)
+		buffer = w.collectWorkspaceSymbols(buffer, s)
 		for _, v := range buffer {
 			if stringContainsAllAnywhere(v.Name, params.Query) {
 				result = append(result, v)
