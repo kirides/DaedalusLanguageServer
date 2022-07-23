@@ -419,7 +419,7 @@ func (m *parseResultsManager) ParseFile(dFile string) (*ParseResult, error) {
 	return parsed, nil
 }
 
-func (h *parseResultsManager) resolveIntConstant(c string) int {
+func resolveIntConstant(h SymbolProvider, c string) int {
 	n, err := strconv.Atoi(c)
 	if err == nil {
 		return n
@@ -439,20 +439,22 @@ func (h *parseResultsManager) resolveIntConstant(c string) int {
 	return -1
 }
 
-func (h *parseResultsManager) getSymbolCode(s symbol.Symbol) string {
+func SymbolToReadableCode(h SymbolProvider, s symbol.Symbol) string {
 	var codeText string
-	if cas, ok := s.(symbol.ConstantArray); ok {
+	switch s := s.(type) {
+	case symbol.ConstantArray:
 		sb := strings.Builder{}
-		resolvedSize := h.resolveIntConstant(cas.ArraySizeText)
-		cas.Format(&sb, resolvedSize)
+		resolvedSize := resolveIntConstant(h, s.ArraySizeText)
+		s.Format(&sb, resolvedSize)
 		codeText = sb.String()
-	} else if cas, ok := s.(symbol.ArrayVariable); ok {
+	case symbol.ArrayVariable:
 		sb := strings.Builder{}
-		resolvedSize := h.resolveIntConstant(cas.ArraySizeText)
-		cas.Format(&sb, resolvedSize)
+		resolvedSize := resolveIntConstant(h, s.ArraySizeText)
+		s.Format(&sb, resolvedSize)
 		codeText = sb.String()
-	} else {
+	default:
 		codeText = s.String()
 	}
+
 	return codeText
 }

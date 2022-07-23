@@ -17,7 +17,7 @@ func completionItemFromSymbol(docs *parseResultsManager, s symbol.Symbol) (lsp.C
 	return lsp.CompletionItem{
 		Kind:   kind,
 		Label:  s.Name(),
-		Detail: docs.getSymbolCode(s),
+		Detail: SymbolToReadableCode(docs, s),
 		Documentation: lsp.MarkupContent{
 			Kind:  lsp.Markdown,
 			Value: javadoc.MarkdownSimple(s),

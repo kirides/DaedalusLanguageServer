@@ -9,9 +9,11 @@ import (
 	lsp "go.lsp.dev/protocol"
 )
 
-var rxFunctionDef = regexp.MustCompile(`^\s*func\s+`)
-var rxStringValues = regexp.MustCompile(`(".*? "|'.*?')`)
-var rxFuncCall = regexp.MustCompile(`\([\w@^_,:\/"'=\s\[\]]*\)`)
+var (
+	rxFunctionDef  = regexp.MustCompile(`^\s*func\s+`)
+	rxStringValues = regexp.MustCompile(`(".*? "|'.*?')`)
+	rxFuncCall     = regexp.MustCompile(`\([\w@^_,:\/"'=\s\[\]]*\)`)
+)
 
 // BufferedDocument ...
 type BufferedDocument string

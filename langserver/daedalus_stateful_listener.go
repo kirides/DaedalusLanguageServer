@@ -14,7 +14,7 @@ import (
 // DaedalusStatefulListener ...
 type DaedalusStatefulListener struct {
 	parser.BaseDaedalusListener
-	knownSymbols    symbolWalker
+	knownSymbols    SymbolProvider
 	Instances       map[string]symbol.ProtoTypeOrInstance
 	GlobalVariables map[string]symbol.Symbol
 	GlobalConstants map[string]symbol.Symbol
@@ -25,13 +25,13 @@ type DaedalusStatefulListener struct {
 	source          string
 }
 
-type symbolWalker interface {
+type SymbolProvider interface {
 	WalkGlobalSymbols(walkFn func(symbol.Symbol) error, types SymbolType) error
 	LookupGlobalSymbol(name string, types SymbolType) (symbol.Symbol, bool)
 }
 
 // NewDaedalusStatefulListener ...
-func NewDaedalusStatefulListener(source string, knownSymbols symbolWalker) *DaedalusStatefulListener {
+func NewDaedalusStatefulListener(source string, knownSymbols SymbolProvider) *DaedalusStatefulListener {
 	return &DaedalusStatefulListener{
 		source:          source,
 		GlobalVariables: map[string]symbol.Symbol{},

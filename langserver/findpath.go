@@ -72,7 +72,7 @@ func findPathAnywhereUpToRoot(dir, segment string) (string, error) {
 	return findPathAnywhereUpToRoot(nextDir, segment)
 }
 
-func InsensitiveRxPattern(path string) string {
+func insensitiveRxPattern(path string) string {
 	p := strings.Builder{}
 	for _, r := range path {
 		if unicode.IsLetter(r) {
@@ -97,7 +97,7 @@ func ResolvePathsCaseInsensitive(directory, fileName string) (files []string, er
 	if err != nil {
 		return nil, err
 	}
-	pattern := InsensitiveRxPattern(fileName)
+	pattern := insensitiveRxPattern(fileName)
 	rxName, err := regexp.Compile(pattern)
 	if err != nil {
 		return nil, err

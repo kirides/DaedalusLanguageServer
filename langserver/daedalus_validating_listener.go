@@ -12,12 +12,12 @@ import (
 // DaedalusValidatingListener ...
 type DaedalusValidatingListener struct {
 	parser.BaseDaedalusListener
-	knownSymbols symbolWalker
+	knownSymbols SymbolProvider
 	source       string
 }
 
 // NewDaedalusValidatingListener ...
-func NewDaedalusValidatingListener(source string, knownSymbols symbolWalker) *DaedalusValidatingListener {
+func NewDaedalusValidatingListener(source string, knownSymbols SymbolProvider) *DaedalusValidatingListener {
 	return &DaedalusValidatingListener{
 		source:       source,
 		knownSymbols: knownSymbols,
