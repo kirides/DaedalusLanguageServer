@@ -1,6 +1,6 @@
 module github.com/kirides/DaedalusLanguageServer
 
-go 1.18
+go 1.19
 
 require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20220911224424-aa1f1f12a846
