@@ -11,7 +11,7 @@ package langserver
 import (
 	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
 func combineListeners(listeners ...parser.DaedalusListener) parser.DaedalusListener {

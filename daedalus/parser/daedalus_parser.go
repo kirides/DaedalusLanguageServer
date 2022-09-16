@@ -1,4 +1,4 @@
-// Code generated from Daedalus.g4 by ANTLR 4.10.1. DO NOT EDIT.
+// Code generated from java-escape by ANTLR 4.11.1. DO NOT EDIT.
 
 package parser // Daedalus
 
@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
 // Suppress unused import errors
@@ -302,7 +302,7 @@ func NewDaedalusParser(input antlr.TokenStream) *DaedalusParser {
 	this.RuleNames = staticData.ruleNames
 	this.LiteralNames = staticData.literalNames
 	this.SymbolicNames = staticData.symbolicNames
-	this.GrammarFileName = "Daedalus.g4"
+	this.GrammarFileName = "java-escape"
 
 	return this
 }
@@ -4544,7 +4544,7 @@ func (p *DaedalusParser) FuncCall() (localctx IFuncCallContext) {
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<DaedalusParserT__4)|(1<<DaedalusParserT__14)|(1<<DaedalusParserT__15)|(1<<DaedalusParserT__24)|(1<<DaedalusParserT__25))) != 0) || (((_la-35)&-(0x1f+1)) == 0 && ((1<<uint((_la-35)))&((1<<(DaedalusParserVar-35))|(1<<(DaedalusParserInt-35))|(1<<(DaedalusParserFunc-35))|(1<<(DaedalusParserStringKeyword-35))|(1<<(DaedalusParserClass-35))|(1<<(DaedalusParserVoid-35))|(1<<(DaedalusParserFloat-35))|(1<<(DaedalusParserPrototype-35))|(1<<(DaedalusParserInstance-35))|(1<<(DaedalusParserNull-35))|(1<<(DaedalusParserNoFunc-35))|(1<<(DaedalusParserIdentifier-35))|(1<<(DaedalusParserIntegerLiteral-35))|(1<<(DaedalusParserFloatLiteral-35))|(1<<(DaedalusParserStringLiteral-35)))) != 0) {
+	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&8998025305358368) != 0 {
 		{
 			p.SetState(317)
 			p.FuncArgExpression()
@@ -5525,7 +5525,7 @@ func (p *DaedalusParser) ReturnStatement() (localctx IReturnStatementContext) {
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	if (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<DaedalusParserT__4)|(1<<DaedalusParserT__14)|(1<<DaedalusParserT__15)|(1<<DaedalusParserT__24)|(1<<DaedalusParserT__25))) != 0) || (((_la-35)&-(0x1f+1)) == 0 && ((1<<uint((_la-35)))&((1<<(DaedalusParserVar-35))|(1<<(DaedalusParserInt-35))|(1<<(DaedalusParserFunc-35))|(1<<(DaedalusParserStringKeyword-35))|(1<<(DaedalusParserClass-35))|(1<<(DaedalusParserVoid-35))|(1<<(DaedalusParserFloat-35))|(1<<(DaedalusParserPrototype-35))|(1<<(DaedalusParserInstance-35))|(1<<(DaedalusParserNull-35))|(1<<(DaedalusParserNoFunc-35))|(1<<(DaedalusParserIdentifier-35))|(1<<(DaedalusParserIntegerLiteral-35))|(1<<(DaedalusParserFloatLiteral-35))|(1<<(DaedalusParserStringLiteral-35)))) != 0) {
+	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&8998025305358368) != 0 {
 		{
 			p.SetState(358)
 			p.ExpressionBlock()
@@ -8100,7 +8100,7 @@ func (p *DaedalusParser) TypeReference() (localctx ITypeReferenceContext) {
 		p.SetState(447)
 		_la = p.GetTokenStream().LA(1)
 
-		if !(((_la-37)&-(0x1f+1)) == 0 && ((1<<uint((_la-37)))&((1<<(DaedalusParserInt-37))|(1<<(DaedalusParserFunc-37))|(1<<(DaedalusParserStringKeyword-37))|(1<<(DaedalusParserVoid-37))|(1<<(DaedalusParserFloat-37))|(1<<(DaedalusParserInstance-37))|(1<<(DaedalusParserIdentifier-37)))) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&657095636549632) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
@@ -8242,7 +8242,7 @@ func (p *DaedalusParser) AnyIdentifier() (localctx IAnyIdentifierContext) {
 		p.SetState(449)
 		_la = p.GetTokenStream().LA(1)
 
-		if !(((_la-35)&-(0x1f+1)) == 0 && ((1<<uint((_la-35)))&((1<<(DaedalusParserVar-35))|(1<<(DaedalusParserInt-35))|(1<<(DaedalusParserFunc-35))|(1<<(DaedalusParserStringKeyword-35))|(1<<(DaedalusParserClass-35))|(1<<(DaedalusParserVoid-35))|(1<<(DaedalusParserFloat-35))|(1<<(DaedalusParserPrototype-35))|(1<<(DaedalusParserInstance-35))|(1<<(DaedalusParserNull-35))|(1<<(DaedalusParserIdentifier-35)))) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&835250879987712) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
@@ -8539,7 +8539,7 @@ func (p *DaedalusParser) AssignmentOperator() (localctx IAssignmentOperatorConte
 		p.SetState(455)
 		_la = p.GetTokenStream().LA(1)
 
-		if !(((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<DaedalusParserT__8)|(1<<DaedalusParserT__10)|(1<<DaedalusParserT__11)|(1<<DaedalusParserT__12)|(1<<DaedalusParserT__13))) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&31232) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
@@ -8830,7 +8830,7 @@ func (p *DaedalusParser) CompOperator() (localctx ICompOperatorContext) {
 		p.SetState(461)
 		_la = p.GetTokenStream().LA(1)
 
-		if !(((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<DaedalusParserT__18)|(1<<DaedalusParserT__19)|(1<<DaedalusParserT__20)|(1<<DaedalusParserT__21))) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7864320) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
@@ -9024,7 +9024,7 @@ func (p *DaedalusParser) OneArgOperator() (localctx IOneArgOperatorContext) {
 		p.SetState(465)
 		_la = p.GetTokenStream().LA(1)
 
-		if !(((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<DaedalusParserT__14)|(1<<DaedalusParserT__15)|(1<<DaedalusParserT__24)|(1<<DaedalusParserT__25))) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&100761600) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
@@ -9121,7 +9121,7 @@ func (p *DaedalusParser) MultOperator() (localctx IMultOperatorContext) {
 		p.SetState(467)
 		_la = p.GetTokenStream().LA(1)
 
-		if !(((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<DaedalusParserT__26)|(1<<DaedalusParserT__27)|(1<<DaedalusParserT__28))) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&939524096) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)

@@ -8,7 +8,7 @@ import (
 	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
 // DaedalusStatefulListener ...
