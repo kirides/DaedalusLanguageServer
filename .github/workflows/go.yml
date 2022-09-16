@@ -47,14 +47,14 @@ jobs:
       run: |
         export RELEASE_FILE=DaedalusLanguageServer.$GOARCH.exe
         echo "RELEASE_FILE=$RELEASE_FILE" >> $GITHUB_ENV
-        go build -v -o $RELEASE_FILE -ldflags "-s -w"
+        go build -v -o $RELEASE_FILE -ldflags "-s -w" ./cmd/DaedalusLanguageServer/
 
     - name: Build linux
       if: matrix.os != 'windows'
       run: |
         export RELEASE_FILE=DaedalusLanguageServer.$GOOS.$GOARCH
         echo "RELEASE_FILE=$RELEASE_FILE" >> $GITHUB_ENV
-        go build -v -o $RELEASE_FILE -ldflags '-extldflags "-static" -s -w'
+        go build -v -o $RELEASE_FILE -ldflags '-extldflags "-static" -s -w' ./cmd/DaedalusLanguageServer/
 
     - name: Calculate distribution hash
       working-directory: ${{env.GITHUB_WORKSPACE}}
