@@ -3,6 +3,7 @@ package langserver
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
@@ -135,6 +137,25 @@ func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
 		return r, nil
 	}
 	return nil, fmt.Errorf("document %q not found", documentURI)
+}
+
+func (m *parseResultsManager) GetCtx(ctx context.Context, documentURI string) (*ParseResult, error) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	for {
+		doc, err := m.Get(documentURI)
+		if err == nil {
+			return doc, err
+		} else {
+			select {
+			case <-ticker.C:
+				return nil, fmt.Errorf("timeout: document %q not found", documentURI)
+			case <-time.After(100 * time.Millisecond):
+			case <-ctx.Done():
+				return nil, fmt.Errorf("document %q not found", documentURI)
+			}
+		}
+	}
 }
 
 func (m *parseResultsManager) Update(documentURI, content string) (*ParseResult, error) {

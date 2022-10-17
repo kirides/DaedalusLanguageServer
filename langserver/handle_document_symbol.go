@@ -62,7 +62,7 @@ func (ds textDocumentDocumentSymbol) collectDocumentSymbols(result []lsp.Documen
 func (h *LspHandler) handleDocumentSymbol(req dls.RpcContext, params lsp.DocumentSymbolParams) error {
 	ds := textDocumentDocumentSymbol{}
 
-	r, err := h.parsedDocuments.Get(uriToFilename(params.TextDocument.URI))
+	r, err := h.parsedDocuments.GetCtx(req.Context(), uriToFilename(params.TextDocument.URI))
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
 		return err
