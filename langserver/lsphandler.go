@@ -157,6 +157,7 @@ func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentDefinition, dls.MakeHandler(h.handleTextDocumentDefinition))
 	h.handlers.Register(lsp.MethodTextDocumentHover, dls.MakeHandler(h.handleTextDocumentHover))
 	h.handlers.Register(lsp.MethodTextDocumentSignatureHelp, dls.MakeHandler(h.handleTextDocumentSignatureHelp))
+	h.handlers.Register(lsp.MethodTextDocumentImplementation, dls.MakeHandler(h.handleTextDocumentImplementation))
 
 	// textDocument/didOpen/didSave/didChange
 	h.handlers.Register(lsp.MethodTextDocumentDidOpen, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidOpen))
@@ -205,6 +206,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				},
 				WorkspaceSymbolProvider: true,
 				DocumentSymbolProvider:  true,
+				ImplementationProvider:  true,
 			},
 		}, nil); err != nil {
 			return fmt.Errorf("not initialized")
