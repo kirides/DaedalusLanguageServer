@@ -40,7 +40,8 @@ type LspHandler struct {
 	onConfigChangedHandlers []func(config LspConfig)
 	parsedKnownSrcFiles     concurrentSet[string]
 	baseLspHandler
-	initialized bool
+	initialized     context.Context
+	markInitialized func()
 }
 
 var (
@@ -52,13 +53,15 @@ var (
 func NewLspHandler(conn jsonrpc2.Conn, logger dls.Logger) *LspHandler {
 	bufferManager := NewBufferManager()
 	parsedDocuments := newParseResultsManager(logger)
+	initialized, markInitialized := context.WithCancel(context.Background())
 	return &LspHandler{
 		baseLspHandler: baseLspHandler{
 			logger: logger,
 			conn:   conn,
 		},
 		handlers:        dls.NewMux(),
-		initialized:     false,
+		initialized:     initialized,
+		markInitialized: markInitialized,
 		bufferManager:   bufferManager,
 		parsedDocuments: parsedDocuments,
 		TextDocumentSync: &textDocumentSync{
@@ -187,7 +190,13 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 	// }
 	switch r.Method() {
 	case lsp.MethodInitialize:
+		h.onInitialized()
+
 		if err := reply(ctx, lsp.InitializeResult{
+			ServerInfo: &lsp.ServerInfo{
+				Name:    "Daedalus Language Server",
+				Version: "dev",
+			},
 			Capabilities: lsp.ServerCapabilities{
 				CompletionProvider: &lsp.CompletionOptions{
 					TriggerCharacters: []string{"."},
@@ -211,8 +220,6 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		}, nil); err != nil {
 			return fmt.Errorf("not initialized")
 		}
-		h.initialized = true
-		h.onInitialized()
 		return nil
 	case lsp.MethodWorkspaceDidChangeConfiguration:
 		var params struct {
@@ -241,16 +248,13 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 			h.config.ProjectFiles = defaultProjectFiles
 		}
 
+		reply(ctx, nil, nil)
 		return nil
 	case lsp.MethodInitialized:
+		reply(ctx, nil, nil)
+		h.LogInfo("DLS initialized")
+		h.markInitialized()
 		return nil
-	}
-
-	// DEFAULT / OTHERWISE
-
-	if !h.initialized {
-		reply(ctx, nil, jsonrpc2.Errorf(jsonrpc2.ServerNotInitialized, "Not initialized yet"))
-		return fmt.Errorf("not initialized yet")
 	}
 
 	// Recover if something bad happens in the handlers...
@@ -260,6 +264,13 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 			h.LogWarn("Recovered from panic at %s: %v\n", r.Method, err)
 		}
 	}()
+
+	// Init should be done, just to be safe, wait for it to finish
+	select {
+	case <-h.initialized.Done():
+	case <-ctx.Done():
+		return nil
+	}
 
 	if r.Method() == lsp.MethodTextDocumentDidOpen {
 		h.onceParseAll.Do(func() {
@@ -274,11 +285,10 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		})
 		var openParams lsp.DidOpenTextDocumentParams
 		json.Unmarshal(r.Params(), &openParams)
-		go func() {
 			wd := uriToFilename(openParams.TextDocument.URI)
 			if wd == "" {
 				h.LogError("Error locating current file")
-				return
+			return nil
 			}
 
 			var resultsX []*ParseResult
@@ -360,7 +370,8 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					})
 				}
 			}
-		}()
+
+		h.LogInfo("Initial diagnostics completed")
 	}
 
 	handled, err := h.handlers.Handle(ctx, reply, r)

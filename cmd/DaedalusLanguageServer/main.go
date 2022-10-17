@@ -124,40 +124,43 @@ func main() {
 	}
 
 	conn.Go(ctx, func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
-		if req.Method() == "$/cancelRequest" {
-			var idPayload struct {
-				Request struct {
-					ID string `json:"id"`
-				} `json:"request"`
+		go func() {
+			if req.Method() == "$/cancelRequest" {
+				var idPayload struct {
+					Request struct {
+						ID string `json:"id"`
+					} `json:"request"`
+				}
+				if err := json.Unmarshal(req.Params(), &idPayload); err != nil {
+					log.Warnf("invalid request, missing \"id\"")
+					return
+				}
+				log.Debugf("cancelling request %s", idPayload.Request.ID)
+				cancelRequest(idPayload.Request.ID)
+				return
 			}
-			if err := json.Unmarshal(req.Params(), &idPayload); err != nil {
-				log.Warnf("invalid request, missing \"id\"")
-				return nil
-			}
-			log.Debugf("cancelling request %s", idPayload.Request.ID)
-			cancelRequest(idPayload.Request.ID)
-			return nil
-		}
-		if r, ok := req.(*jsonrpc2.Call); ok {
-			id := r.ID()
-			idVal, err := (&id).MarshalJSON()
-			if err != nil {
-				log.Warnf("invalid call, missing \"id\". err %v", err)
-				return nil
-			}
-			idStr := strings.Trim(string(idVal), "\"")
+			if r, ok := req.(*jsonrpc2.Call); ok {
+				id := r.ID()
+				idVal, err := (&id).MarshalJSON()
+				if err != nil {
+					log.Warnf("invalid call, missing \"id\". err %v", err)
+					return
+				}
+				idStr := strings.Trim(string(idVal), "\"")
 
-			ctx = addRequest(ctx, idStr)
-			defer cancelRequest(idStr)
-		}
-		err := lspHandler.Handle(ctx, reply, req)
-		if err != nil {
-			if errors.Is(err, langserver.ErrUnhandled) {
-				log.Debugw(err.Error(), "method", req.Method(), "request", string(req.Params()))
-			} else {
-				log.Errorf("%s: %v", req.Method(), err)
+				ctx = addRequest(ctx, idStr)
+				defer cancelRequest(idStr)
 			}
-		}
+			err := lspHandler.Handle(ctx, reply, req)
+			if err != nil {
+				if errors.Is(err, langserver.ErrUnhandled) {
+					log.Debugw(err.Error(), "method", req.Method(), "request", string(req.Params()))
+				} else {
+					log.Errorf("%s: %v", req.Method(), err)
+				}
+			}
+		}()
+
 		return nil // unhandled
 	})
 	<-conn.Done()
