@@ -1,5 +1,17 @@
 grammar Daedalus;
+
+@lexer::members {
+    const (
+        // Channel that contains comments
+        COMMENTS int = 2;
+    )
+}
+
 // lexer
+IntegerLiteral: Digit+;
+FloatLiteral: PointFloat | ExponentFloat;
+StringLiteral: '"' (~["\r\n])* '"';
+
 Const: [Cc][Oo][Nn][Ss][Tt];
 Var: [Vv][Aa][Rr];
 If: [Ii][Ff];
@@ -14,24 +26,50 @@ Float: [Ff][Ll][Oo][Aa][Tt];
 Prototype: [Pp][Rr][Oo][Tt][Oo][Tt][Yy][Pp][Ee];
 Instance: [Ii][Nn][Ss][Tt][Aa][Nn][Cc][Ee];
 Null: [Nn][Uu][Ll][Ll];
-NoFunc: [Nn][Oo][Ff][Uu][Nn][Cc];
 
-Identifier: (IdStart | IdStartNumeric) IdContinue*;
-IntegerLiteral: Digit+;
-FloatLiteral: PointFloat | ExponentFloat;
-StringLiteral: '"' (~["\\\r\n] | '\\' (. | EOF))* '"';
+LeftParen: '(';
+RightParen: ')';
+
+LeftBracket: '[';
+RightBracket: ']';
+
+LeftBrace: '{';
+RightBrace: '}';
+
+BitAnd: '&';
+And: '&&';
+BitOr: '|';
+Or: '||';
+Plus: '+';
+Minus: '-';
+Div: '/';
+Star: '*';
+Tilde: '~';
+Not: '!';
+Assign: '=';
+Less: '<';
+Greater: '>';
+
+PlusAssign: '+=';
+MinusAssign: '-=';
+StarAssign: '*=';
+DivAssign: '/=';
+AndAssign: '&=';
+OrAssign: '|=';
+
+Dot: '.';
+Semi: ';';
+
+Identifier: (NonDigit | Digit) IdContinue*;
 
 Whitespace: [ \t]+ -> skip;
-TooManyCommentlines: '////' ~[\r\n]* -> skip;
-SummaryComment: DocCommentStart ~[\r\n]+;
-Newline: [\r\n] -> skip;
+Newline: ('\r' '\n'? | '\n') -> skip;
 BlockComment: '/*' .*? '*/' -> skip;
-LineComment: '//' ~[\r\n]* -> skip;
+LineComment: '//' ~[\r\n]* -> channel(2);
 
 // fragments
-fragment IdStart: GermanCharacter | [a-zA-Z_];
-fragment IdStartNumeric: Digit+ IdStart;
-fragment IdContinue: IdStart | IdSpecial | Digit;
+fragment NonDigit: GermanCharacter | [a-zA-Z_];
+fragment IdContinue: NonDigit | IdSpecial | Digit;
 fragment IdSpecial: [@^];
 //                             ß     Ä     ä     Ö     ö     Ü     ü
 fragment GermanCharacter:
@@ -40,21 +78,12 @@ fragment Digit: [0-9];
 fragment PointFloat: Digit* '.' Digit+ | Digit+ '.';
 fragment ExponentFloat: (Digit+ | PointFloat) Exponent;
 fragment Exponent: [eE] [+-]? Digit+;
-fragment DocCommentStart: '///';
 
 //parser
-symbolSummary: SummaryComment+;
-
-daedalusFile: (blockDef | inlineDef | symbolSummary)*? EOF;
+daedalusFile: (blockDef | inlineDef)*? EOF;
 blockDef:
-	symbolSummary* (
-		functionDef
-		| classDef
-		| prototypeDef
-		| instanceDef
-	) ';'?;
-inlineDef:
-	symbolSummary* (constDef | varDecl | instanceDecl) ';';
+	(functionDef | classDef | prototypeDef | instanceDef) Semi?;
+inlineDef: (constDef | varDecl | instanceDecl) Semi;
 
 functionDef:
 	Func typeReference nameNode parameterList statementBlock;
@@ -62,37 +91,37 @@ constDef:
 	Const typeReference (constValueDef | constArrayDef) (
 		',' (constValueDef | constArrayDef)
 	)*;
-classDef:
-	Class nameNode '{' (varDecl ';' | symbolSummary)*? '}';
+classDef: Class nameNode LeftBrace (varDecl Semi)*? RightBrace;
 prototypeDef:
-	Prototype nameNode '(' parentReference ')' statementBlock;
+	Prototype nameNode LeftParen parentReference RightParen statementBlock;
 instanceDef:
-	Instance nameNode '(' parentReference ')' statementBlock;
+	Instance nameNode LeftParen parentReference RightParen statementBlock;
 instanceDecl:
-	Instance nameNode (',' nameNode)*? '(' parentReference ')';
+	Instance nameNode (',' nameNode)*? LeftParen parentReference RightParen;
 varDecl:
 	Var typeReference (varValueDecl | varArrayDecl) (
 		',' (varDecl | varValueDecl | varArrayDecl)
 	)*;
 
-constArrayDef: nameNode '[' arraySize ']' constArrayAssignment;
+constArrayDef:
+	nameNode LeftBracket arraySize RightBracket constArrayAssignment;
 constArrayAssignment:
-	'=' '{' (expressionBlock (',' expressionBlock)*?) '}';
+	Assign LeftBrace (expressionBlock (',' expressionBlock)*?) RightBrace;
 
 constValueDef: nameNode constValueAssignment;
-constValueAssignment: '=' expressionBlock;
+constValueAssignment: Assign expressionBlock;
 
-varArrayDecl: nameNode '[' arraySize ']';
+varArrayDecl: nameNode LeftBracket arraySize RightBracket;
 varValueDecl: nameNode;
 
-parameterList: '(' (parameterDecl (',' parameterDecl)*?)? ')';
-parameterDecl: Var typeReference nameNode ('[' arraySize ']')?;
+parameterList:
+	LeftParen (parameterDecl (',' parameterDecl)*?)? RightParen;
+parameterDecl:
+	Var typeReference nameNode (
+		LeftBracket arraySize RightBracket
+	)?;
 statementBlock:
-	symbolSummary* '{' (
-		(statement ';')
-		| ( ifBlockStatement ( ';')?)
-		| symbolSummary
-	)*? '}' symbolSummary*;
+	LeftBrace ((statement Semi) | ( ifBlockStatement Semi?))*? RightBrace;
 statement:
 	assignment
 	| returnStatement
@@ -101,7 +130,9 @@ statement:
 	| funcCall
 	| expression;
 funcCall:
-	nameNode '(' (funcArgExpression ( ',' funcArgExpression)*?)? ')';
+	nameNode LeftParen (
+		funcArgExpression (',' funcArgExpression)*?
+	)? RightParen;
 assignment: reference assignmentOperator expressionBlock;
 ifCondition: expressionBlock;
 elseBlock: Else statementBlock;
@@ -116,8 +147,8 @@ expressionBlock:
 	expression; // we use that expression to force parser threat expression as a block
 
 expression:
-	'(' expression ')'						# bracketExpression
-	| oneArgOperator expression				# oneArgExpression
+	LeftParen expression RightParen			# bracketExpression
+	| unaryOperator expression				# unaryOperation
 	| expression multOperator expression	# multExpression
 	| expression addOperator expression		# addExpression
 	| expression bitMoveOperator expression	# bitMoveExpression
@@ -137,13 +168,12 @@ value:
 	| FloatLiteral	# floatLiteralValue
 	| StringLiteral	# stringLiteralValue
 	| Null			# nullLiteralValue
-	| NoFunc		# noFuncLiteralValue
 	| funcCall		# funcCallValue
 	| reference		# referenceValue
 	| nameNode		# anyIdentifierValue;
 
-referenceAtom: nameNode ( '[' arrayIndex ']')?;
-reference: referenceAtom ( '.' referenceAtom)?;
+referenceAtom: nameNode ( LeftBracket arrayIndex RightBracket)?;
+reference: referenceAtom ( Dot referenceAtom)?;
 
 typeReference: (
 		Identifier
@@ -172,12 +202,21 @@ nameNode: anyIdentifier;
 
 parentReference: Identifier;
 
-assignmentOperator: '=' | '+=' | '-=' | '*=' | '/=';
+assignmentOperator:
+	Assign
+	| StarAssign
+	| DivAssign
+	| PlusAssign
+	| MinusAssign
+	| AndAssign
+	| OrAssign;
+
+unaryOperator: Plus | Tilde | Minus | Not;
+
 addOperator: '+' | '-';
 bitMoveOperator: '<<' | '>>';
 compOperator: '<' | '>' | '<=' | '>=';
 eqOperator: '==' | '!=';
-oneArgOperator: '-' | '!' | '~' | '+';
 multOperator: '*' | '/' | '%';
 binAndOperator: '&';
 binOrOperator: '|';

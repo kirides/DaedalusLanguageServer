@@ -21,12 +21,6 @@ func (s *BaseDaedalusListener) EnterEveryRule(ctx antlr.ParserRuleContext) {}
 // ExitEveryRule is called when any rule is exited.
 func (s *BaseDaedalusListener) ExitEveryRule(ctx antlr.ParserRuleContext) {}
 
-// EnterSymbolSummary is called when production symbolSummary is entered.
-func (s *BaseDaedalusListener) EnterSymbolSummary(ctx *SymbolSummaryContext) {}
-
-// ExitSymbolSummary is called when production symbolSummary is exited.
-func (s *BaseDaedalusListener) ExitSymbolSummary(ctx *SymbolSummaryContext) {}
-
 // EnterDaedalusFile is called when production daedalusFile is entered.
 func (s *BaseDaedalusListener) EnterDaedalusFile(ctx *DaedalusFileContext) {}
 
@@ -213,12 +207,6 @@ func (s *BaseDaedalusListener) EnterBitMoveExpression(ctx *BitMoveExpressionCont
 // ExitBitMoveExpression is called when production bitMoveExpression is exited.
 func (s *BaseDaedalusListener) ExitBitMoveExpression(ctx *BitMoveExpressionContext) {}
 
-// EnterOneArgExpression is called when production oneArgExpression is entered.
-func (s *BaseDaedalusListener) EnterOneArgExpression(ctx *OneArgExpressionContext) {}
-
-// ExitOneArgExpression is called when production oneArgExpression is exited.
-func (s *BaseDaedalusListener) ExitOneArgExpression(ctx *OneArgExpressionContext) {}
-
 // EnterEqExpression is called when production eqExpression is entered.
 func (s *BaseDaedalusListener) EnterEqExpression(ctx *EqExpressionContext) {}
 
@@ -273,6 +261,12 @@ func (s *BaseDaedalusListener) EnterBracketExpression(ctx *BracketExpressionCont
 // ExitBracketExpression is called when production bracketExpression is exited.
 func (s *BaseDaedalusListener) ExitBracketExpression(ctx *BracketExpressionContext) {}
 
+// EnterUnaryOperation is called when production unaryOperation is entered.
+func (s *BaseDaedalusListener) EnterUnaryOperation(ctx *UnaryOperationContext) {}
+
+// ExitUnaryOperation is called when production unaryOperation is exited.
+func (s *BaseDaedalusListener) ExitUnaryOperation(ctx *UnaryOperationContext) {}
+
 // EnterLogAndExpression is called when production logAndExpression is entered.
 func (s *BaseDaedalusListener) EnterLogAndExpression(ctx *LogAndExpressionContext) {}
 
@@ -314,12 +308,6 @@ func (s *BaseDaedalusListener) EnterNullLiteralValue(ctx *NullLiteralValueContex
 
 // ExitNullLiteralValue is called when production nullLiteralValue is exited.
 func (s *BaseDaedalusListener) ExitNullLiteralValue(ctx *NullLiteralValueContext) {}
-
-// EnterNoFuncLiteralValue is called when production noFuncLiteralValue is entered.
-func (s *BaseDaedalusListener) EnterNoFuncLiteralValue(ctx *NoFuncLiteralValueContext) {}
-
-// ExitNoFuncLiteralValue is called when production noFuncLiteralValue is exited.
-func (s *BaseDaedalusListener) ExitNoFuncLiteralValue(ctx *NoFuncLiteralValueContext) {}
 
 // EnterFuncCallValue is called when production funcCallValue is entered.
 func (s *BaseDaedalusListener) EnterFuncCallValue(ctx *FuncCallValueContext) {}
@@ -381,6 +369,12 @@ func (s *BaseDaedalusListener) EnterAssignmentOperator(ctx *AssignmentOperatorCo
 // ExitAssignmentOperator is called when production assignmentOperator is exited.
 func (s *BaseDaedalusListener) ExitAssignmentOperator(ctx *AssignmentOperatorContext) {}
 
+// EnterUnaryOperator is called when production unaryOperator is entered.
+func (s *BaseDaedalusListener) EnterUnaryOperator(ctx *UnaryOperatorContext) {}
+
+// ExitUnaryOperator is called when production unaryOperator is exited.
+func (s *BaseDaedalusListener) ExitUnaryOperator(ctx *UnaryOperatorContext) {}
+
 // EnterAddOperator is called when production addOperator is entered.
 func (s *BaseDaedalusListener) EnterAddOperator(ctx *AddOperatorContext) {}
 
@@ -404,12 +398,6 @@ func (s *BaseDaedalusListener) EnterEqOperator(ctx *EqOperatorContext) {}
 
 // ExitEqOperator is called when production eqOperator is exited.
 func (s *BaseDaedalusListener) ExitEqOperator(ctx *EqOperatorContext) {}
-
-// EnterOneArgOperator is called when production oneArgOperator is entered.
-func (s *BaseDaedalusListener) EnterOneArgOperator(ctx *OneArgOperatorContext) {}
-
-// ExitOneArgOperator is called when production oneArgOperator is exited.
-func (s *BaseDaedalusListener) ExitOneArgOperator(ctx *OneArgOperatorContext) {}
 
 // EnterMultOperator is called when production multOperator is entered.
 func (s *BaseDaedalusListener) EnterMultOperator(ctx *MultOperatorContext) {}

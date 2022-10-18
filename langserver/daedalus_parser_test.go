@@ -37,7 +37,7 @@ func TestParseSingleScript(t *testing.T) {
 }
 
 func TestParseSingleScriptFromFile(t *testing.T) {
-	fileBody, _ := os.ReadFile(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\LeGo\Int64.d`)
+	fileBody, _ := os.ReadFile(`testdata/demo.d`)
 	script, _ := charmap.Windows1252.NewDecoder().Bytes(fileBody)
 
 	m := newParseResultsManager(nopLogger{})
@@ -48,9 +48,22 @@ func TestParseSingleScriptFromFile(t *testing.T) {
 
 func TestGothicSrc(t *testing.T) {
 	m := newParseResultsManager(nopLogger{})
-	paths, _ := m.resolveSrcPaths(`E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content\Gothic.src`, `E:\Dev\Gothic II_Mods\_work\Data\Scripts\Content`)
+	m.NumParserThreads = 8
+	result, err := m.ParseSource(`testdata/Gothic.src`)
+	if err != nil {
+		t.Error(err)
+	}
+	_ = result
+}
 
-	// result := ParseScript("C:\\temp", string(script))
-	b, _ := json.MarshalIndent(paths, "", "  ")
-	t.Logf("%s\n", b)
+func BenchmarkGothicSrc(b *testing.B) {
+	b.Logf("Running %d iterations", b.N)
+	for i := 0; i < b.N; i++ {
+		m := newParseResultsManager(nopLogger{})
+		m.NumParserThreads = 1
+		_, err := m.ParseSource(`testdata/Gothic.src`)
+		if err != nil {
+			b.Error(err)
+		}
+	}
 }

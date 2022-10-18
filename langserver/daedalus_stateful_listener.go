@@ -49,19 +49,40 @@ func symbolDefinitionForRuleContext(ctx antlr.ParserRuleContext) symbol.Definiti
 	return symbol.NewDefinition(ctx.GetStart().GetLine(), ctx.GetStart().GetColumn(), ctx.GetStop().GetLine(), ctx.GetStop().GetColumn())
 }
 
-func (l *DaedalusStatefulListener) symbolSummaryForContext(ctx antlr.ParserRuleContext) string {
-	l.summaryBuilder.Reset()
+type hiddenTokens interface {
+	GetHiddenTokensToLeft(tokenIndex int, channel int) []antlr.Token
+}
 
-	walkSymbols(ctx, func(sum *parser.SymbolSummaryContext) error {
+func (l *DaedalusStatefulListener) getHiddenTokens(ctx antlr.ParserRuleContext) (hiddenTokens, bool) {
+	parserGetter, ok := ctx.(interface{ GetParser() antlr.Parser })
+	if !ok {
+		return nil, false
+	}
+	tokenStream := parserGetter.GetParser().GetTokenStream()
+	hidden, ok := tokenStream.(hiddenTokens)
+	return hidden, ok
+}
+
+func (l *DaedalusStatefulListener) symbolSummaryForContext(ctx antlr.ParserRuleContext) string {
+	tokens, ok := l.getHiddenTokens(ctx)
+	if !ok {
+		return ""
+	}
+	hidden := tokens.GetHiddenTokensToLeft(ctx.GetStart().GetTokenIndex(), parser.COMMENTS)
+
+	l.summaryBuilder.Reset()
+	for _, h := range hidden {
+		txt := h.GetText()
+		if !strings.HasPrefix(txt, "///") {
+			continue
+		}
 		if l.summaryBuilder.Len() > 0 {
 			l.summaryBuilder.WriteRune('\n')
 		}
-		sumReplaced := strings.TrimLeft(sum.GetText(), "/ \t")
+		sumReplaced := strings.TrimLeft(txt, "/ \t")
 		sumReplaced = strings.ReplaceAll(sumReplaced, "/// ", "  \n")
 		l.summaryBuilder.WriteString(sumReplaced)
-
-		return nil
-	})
+	}
 
 	return l.summaryBuilder.String()
 }

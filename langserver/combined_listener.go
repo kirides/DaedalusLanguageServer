@@ -37,6 +37,30 @@ type CombinedDaedalusListener struct {
 	left, right parser.DaedalusListener
 }
 
+// EnterUnaryOperation implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) EnterUnaryOperation(c *parser.UnaryOperationContext) {
+	l.left.EnterUnaryOperation(c)
+	l.right.EnterUnaryOperation(c)
+}
+
+// EnterUnaryOperator implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) EnterUnaryOperator(c *parser.UnaryOperatorContext) {
+	l.left.EnterUnaryOperator(c)
+	l.right.EnterUnaryOperator(c)
+}
+
+// ExitUnaryOperation implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) ExitUnaryOperation(c *parser.UnaryOperationContext) {
+	l.left.ExitUnaryOperation(c)
+	l.right.ExitUnaryOperation(c)
+}
+
+// ExitUnaryOperator implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) ExitUnaryOperator(c *parser.UnaryOperatorContext) {
+	l.left.ExitUnaryOperator(c)
+	l.right.ExitUnaryOperator(c)
+}
+
 // EnterEveryRule implements parser.DaedalusListener
 func (l *CombinedDaedalusListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
 	l.left.EnterEveryRule(ctx)
@@ -355,28 +379,10 @@ func (l *CombinedDaedalusListener) EnterNameNode(c *parser.NameNodeContext) {
 	l.right.EnterNameNode(c)
 }
 
-// EnterNoFuncLiteralValue implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) EnterNoFuncLiteralValue(c *parser.NoFuncLiteralValueContext) {
-	l.left.EnterNoFuncLiteralValue(c)
-	l.right.EnterNoFuncLiteralValue(c)
-}
-
 // EnterNullLiteralValue implements parser.DaedalusListener
 func (l *CombinedDaedalusListener) EnterNullLiteralValue(c *parser.NullLiteralValueContext) {
 	l.left.EnterNullLiteralValue(c)
 	l.right.EnterNullLiteralValue(c)
-}
-
-// EnterOneArgExpression implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) EnterOneArgExpression(c *parser.OneArgExpressionContext) {
-	l.left.EnterOneArgExpression(c)
-	l.right.EnterOneArgExpression(c)
-}
-
-// EnterOneArgOperator implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) EnterOneArgOperator(c *parser.OneArgOperatorContext) {
-	l.left.EnterOneArgOperator(c)
-	l.right.EnterOneArgOperator(c)
 }
 
 // EnterParameterDecl implements parser.DaedalusListener
@@ -443,12 +449,6 @@ func (l *CombinedDaedalusListener) EnterStatementBlock(c *parser.StatementBlockC
 func (l *CombinedDaedalusListener) EnterStringLiteralValue(c *parser.StringLiteralValueContext) {
 	l.left.EnterStringLiteralValue(c)
 	l.right.EnterStringLiteralValue(c)
-}
-
-// EnterSymbolSummary implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) EnterSymbolSummary(c *parser.SymbolSummaryContext) {
-	l.left.EnterSymbolSummary(c)
-	l.right.EnterSymbolSummary(c)
 }
 
 // EnterTypeReference implements parser.DaedalusListener
@@ -775,28 +775,10 @@ func (l *CombinedDaedalusListener) ExitNameNode(c *parser.NameNodeContext) {
 	l.right.ExitNameNode(c)
 }
 
-// ExitNoFuncLiteralValue implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) ExitNoFuncLiteralValue(c *parser.NoFuncLiteralValueContext) {
-	l.left.ExitNoFuncLiteralValue(c)
-	l.right.ExitNoFuncLiteralValue(c)
-}
-
 // ExitNullLiteralValue implements parser.DaedalusListener
 func (l *CombinedDaedalusListener) ExitNullLiteralValue(c *parser.NullLiteralValueContext) {
 	l.left.ExitNullLiteralValue(c)
 	l.right.ExitNullLiteralValue(c)
-}
-
-// ExitOneArgExpression implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) ExitOneArgExpression(c *parser.OneArgExpressionContext) {
-	l.left.ExitOneArgExpression(c)
-	l.right.ExitOneArgExpression(c)
-}
-
-// ExitOneArgOperator implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) ExitOneArgOperator(c *parser.OneArgOperatorContext) {
-	l.left.ExitOneArgOperator(c)
-	l.right.ExitOneArgOperator(c)
 }
 
 // ExitParameterDecl implements parser.DaedalusListener
@@ -863,12 +845,6 @@ func (l *CombinedDaedalusListener) ExitStatementBlock(c *parser.StatementBlockCo
 func (l *CombinedDaedalusListener) ExitStringLiteralValue(c *parser.StringLiteralValueContext) {
 	l.left.ExitStringLiteralValue(c)
 	l.right.ExitStringLiteralValue(c)
-}
-
-// ExitSymbolSummary implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) ExitSymbolSummary(c *parser.SymbolSummaryContext) {
-	l.left.ExitSymbolSummary(c)
-	l.right.ExitSymbolSummary(c)
 }
 
 // ExitTypeReference implements parser.DaedalusListener

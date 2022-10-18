@@ -8,9 +8,6 @@ import "github.com/antlr/antlr4/runtime/Go/antlr/v4"
 type DaedalusListener interface {
 	antlr.ParseTreeListener
 
-	// EnterSymbolSummary is called when entering the symbolSummary production.
-	EnterSymbolSummary(c *SymbolSummaryContext)
-
 	// EnterDaedalusFile is called when entering the daedalusFile production.
 	EnterDaedalusFile(c *DaedalusFileContext)
 
@@ -104,9 +101,6 @@ type DaedalusListener interface {
 	// EnterBitMoveExpression is called when entering the bitMoveExpression production.
 	EnterBitMoveExpression(c *BitMoveExpressionContext)
 
-	// EnterOneArgExpression is called when entering the oneArgExpression production.
-	EnterOneArgExpression(c *OneArgExpressionContext)
-
 	// EnterEqExpression is called when entering the eqExpression production.
 	EnterEqExpression(c *EqExpressionContext)
 
@@ -134,6 +128,9 @@ type DaedalusListener interface {
 	// EnterBracketExpression is called when entering the bracketExpression production.
 	EnterBracketExpression(c *BracketExpressionContext)
 
+	// EnterUnaryOperation is called when entering the unaryOperation production.
+	EnterUnaryOperation(c *UnaryOperationContext)
+
 	// EnterLogAndExpression is called when entering the logAndExpression production.
 	EnterLogAndExpression(c *LogAndExpressionContext)
 
@@ -154,9 +151,6 @@ type DaedalusListener interface {
 
 	// EnterNullLiteralValue is called when entering the nullLiteralValue production.
 	EnterNullLiteralValue(c *NullLiteralValueContext)
-
-	// EnterNoFuncLiteralValue is called when entering the noFuncLiteralValue production.
-	EnterNoFuncLiteralValue(c *NoFuncLiteralValueContext)
 
 	// EnterFuncCallValue is called when entering the funcCallValue production.
 	EnterFuncCallValue(c *FuncCallValueContext)
@@ -188,6 +182,9 @@ type DaedalusListener interface {
 	// EnterAssignmentOperator is called when entering the assignmentOperator production.
 	EnterAssignmentOperator(c *AssignmentOperatorContext)
 
+	// EnterUnaryOperator is called when entering the unaryOperator production.
+	EnterUnaryOperator(c *UnaryOperatorContext)
+
 	// EnterAddOperator is called when entering the addOperator production.
 	EnterAddOperator(c *AddOperatorContext)
 
@@ -199,9 +196,6 @@ type DaedalusListener interface {
 
 	// EnterEqOperator is called when entering the eqOperator production.
 	EnterEqOperator(c *EqOperatorContext)
-
-	// EnterOneArgOperator is called when entering the oneArgOperator production.
-	EnterOneArgOperator(c *OneArgOperatorContext)
 
 	// EnterMultOperator is called when entering the multOperator production.
 	EnterMultOperator(c *MultOperatorContext)
@@ -217,9 +211,6 @@ type DaedalusListener interface {
 
 	// EnterLogOrOperator is called when entering the logOrOperator production.
 	EnterLogOrOperator(c *LogOrOperatorContext)
-
-	// ExitSymbolSummary is called when exiting the symbolSummary production.
-	ExitSymbolSummary(c *SymbolSummaryContext)
 
 	// ExitDaedalusFile is called when exiting the daedalusFile production.
 	ExitDaedalusFile(c *DaedalusFileContext)
@@ -314,9 +305,6 @@ type DaedalusListener interface {
 	// ExitBitMoveExpression is called when exiting the bitMoveExpression production.
 	ExitBitMoveExpression(c *BitMoveExpressionContext)
 
-	// ExitOneArgExpression is called when exiting the oneArgExpression production.
-	ExitOneArgExpression(c *OneArgExpressionContext)
-
 	// ExitEqExpression is called when exiting the eqExpression production.
 	ExitEqExpression(c *EqExpressionContext)
 
@@ -344,6 +332,9 @@ type DaedalusListener interface {
 	// ExitBracketExpression is called when exiting the bracketExpression production.
 	ExitBracketExpression(c *BracketExpressionContext)
 
+	// ExitUnaryOperation is called when exiting the unaryOperation production.
+	ExitUnaryOperation(c *UnaryOperationContext)
+
 	// ExitLogAndExpression is called when exiting the logAndExpression production.
 	ExitLogAndExpression(c *LogAndExpressionContext)
 
@@ -364,9 +355,6 @@ type DaedalusListener interface {
 
 	// ExitNullLiteralValue is called when exiting the nullLiteralValue production.
 	ExitNullLiteralValue(c *NullLiteralValueContext)
-
-	// ExitNoFuncLiteralValue is called when exiting the noFuncLiteralValue production.
-	ExitNoFuncLiteralValue(c *NoFuncLiteralValueContext)
 
 	// ExitFuncCallValue is called when exiting the funcCallValue production.
 	ExitFuncCallValue(c *FuncCallValueContext)
@@ -398,6 +386,9 @@ type DaedalusListener interface {
 	// ExitAssignmentOperator is called when exiting the assignmentOperator production.
 	ExitAssignmentOperator(c *AssignmentOperatorContext)
 
+	// ExitUnaryOperator is called when exiting the unaryOperator production.
+	ExitUnaryOperator(c *UnaryOperatorContext)
+
 	// ExitAddOperator is called when exiting the addOperator production.
 	ExitAddOperator(c *AddOperatorContext)
 
@@ -409,9 +400,6 @@ type DaedalusListener interface {
 
 	// ExitEqOperator is called when exiting the eqOperator production.
 	ExitEqOperator(c *EqOperatorContext)
-
-	// ExitOneArgOperator is called when exiting the oneArgOperator production.
-	ExitOneArgOperator(c *OneArgOperatorContext)
 
 	// ExitMultOperator is called when exiting the multOperator production.
 	ExitMultOperator(c *MultOperatorContext)

@@ -207,9 +207,6 @@ func (l *DaedalusIdentifierListener) EnterReferenceAtom(ctx *parser.ReferenceAto
 func (l *DaedalusIdentifierListener) EnterNullLiteralValue(ctx *parser.NullLiteralValueContext) {
 	l.onIdentifier(ctx)
 }
-func (l *DaedalusIdentifierListener) EnterNoFuncLiteralValue(ctx *parser.NoFuncLiteralValueContext) {
-	l.onIdentifier(ctx)
-}
 
 func (l *DaedalusIdentifierListener) copyIdentifiers(o []Identifier) []Identifier {
 	if len(l.currentIdentifiers) > 0 {
