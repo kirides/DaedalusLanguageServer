@@ -5,3 +5,4 @@
 *.tokens
 *.interp
 /antlr_parser/*.jar
+antlr_parser/.antlr
