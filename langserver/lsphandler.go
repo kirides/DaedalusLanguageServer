@@ -188,6 +188,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 	// 	json.Unmarshal(*r.Params, &paramsMap)
 	// 	fmt.Fprintf(os.Stderr, "Params: %+v\n", paramsMap)
 	// }
+
 	switch r.Method() {
 	case lsp.MethodInitialize:
 		h.onInitialized()
@@ -282,13 +283,12 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					return
 				}
 			}
-		})
 		var openParams lsp.DidOpenTextDocumentParams
 		json.Unmarshal(r.Params(), &openParams)
 			wd := uriToFilename(openParams.TextDocument.URI)
 			if wd == "" {
 				h.LogError("Error locating current file")
-			return nil
+				return
 			}
 
 			var resultsX []*ParseResult
@@ -370,8 +370,8 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					})
 				}
 			}
-
 		h.LogInfo("Initial diagnostics completed")
+		})
 	}
 
 	handled, err := h.handlers.Handle(ctx, reply, r)
