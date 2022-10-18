@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 )
 
@@ -41,7 +42,7 @@ func (m *parseResultsManager) ParseAndValidateScript(source, content string) *Pa
 	stateful := NewDaedalusStatefulListener(source, m)
 	validating := NewDaedalusValidatingListener(source, m)
 	errListener := &SyntaxErrorListener{}
-	m.parser.Parse(source, content, combineListeners(stateful, validating), errListener)
+	m.ParseScriptListener(source, content, combineListeners(stateful, validating), errListener)
 
 	result := &ParseResult{
 		SyntaxErrors:    errListener.SyntaxErrors,
@@ -56,11 +57,17 @@ func (m *parseResultsManager) ParseAndValidateScript(source, content string) *Pa
 	return result
 }
 
+// ParseScriptListener ...
+func (m *parseResultsManager) ParseScriptListener(source, content string, listener parser.DaedalusListener, errListener antlr.ErrorListener) {
+	m.parser.Parse(source, content, listener, errListener)
+}
+
 // ParseScript ...
 func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 	listener := NewDaedalusStatefulListener(source, m)
 	errListener := &SyntaxErrorListener{}
-	m.parser.Parse(source, content, listener, errListener)
+
+	m.ParseScriptListener(source, content, listener, errListener)
 
 	result := &ParseResult{
 		SyntaxErrors:    errListener.SyntaxErrors,
@@ -79,7 +86,7 @@ func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 func (m *parseResultsManager) ValidateScript(source, content string) []SyntaxError {
 	listener := NewDaedalusValidatingListener(source, m)
 	errListener := &SyntaxErrorListener{}
-	m.parser.Parse(source, content, listener, errListener)
+	m.ParseScriptListener(source, content, listener, errListener)
 
 	return errListener.SyntaxErrors
 }

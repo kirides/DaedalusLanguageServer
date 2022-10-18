@@ -139,6 +139,7 @@ func main() {
 				cancelRequest(idPayload.Request.ID)
 				return
 			}
+			cancelId := ""
 			if r, ok := req.(*jsonrpc2.Call); ok {
 				id := r.ID()
 				idVal, err := (&id).MarshalJSON()
@@ -146,10 +147,10 @@ func main() {
 					log.Warnf("invalid call, missing \"id\". err %v", err)
 					return
 				}
-				idStr := strings.Trim(string(idVal), "\"")
+				cancelId = strings.Trim(string(idVal), "\"")
 
-				ctx = addRequest(ctx, idStr)
-				defer cancelRequest(idStr)
+				ctx = addRequest(ctx, cancelId)
+				defer cancelRequest(cancelId)
 			}
 			err := lspHandler.Handle(ctx, reply, req)
 			if err != nil {
@@ -158,6 +159,8 @@ func main() {
 				} else {
 					log.Errorf("%s: %v", req.Method(), err)
 				}
+			} else {
+				runningRequests.Delete(cancelId)
 			}
 		}()
 

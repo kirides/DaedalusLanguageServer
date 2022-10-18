@@ -16,3 +16,12 @@ func (l *SyntaxErrorListener) SyntaxError(recognizer antlr.Recognizer, offending
 		l.SyntaxErrors = append(l.SyntaxErrors, NewSyntaxError(line, column, NewSyntaxErrorCode("D0000", msg, SeverityWarning)))
 	}
 }
+
+// NoOpErrorListener ...
+type NoOpErrorListener struct {
+	antlr.DefaultErrorListener
+}
+
+// SyntaxError ...
+func (l *NoOpErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol interface{}, line, column int, msg string, e antlr.RecognitionException) {
+}

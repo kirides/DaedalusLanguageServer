@@ -1,7 +1,10 @@
 package langserver
 
 import (
+	"context"
+	"fmt"
 	"sync"
+	"time"
 )
 
 // BufferManager ...
@@ -33,4 +36,25 @@ func (m *BufferManager) GetBuffer(documentURI string) BufferedDocument {
 		return doc
 	}
 	return ""
+}
+
+// GetBuffer ...
+func (m *BufferManager) GetBufferCtx(ctx context.Context, documentURI string) (BufferedDocument, error) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	for {
+		m.mtx.RLock()
+		doc, ok := m.documents[documentURI]
+		m.mtx.RUnlock()
+		if ok {
+			return doc, nil
+		}
+		select {
+		case <-ticker.C:
+			return "", fmt.Errorf("timeout: document %q not found", documentURI)
+		case <-time.After(100 * time.Millisecond):
+		case <-ctx.Done():
+			return "", fmt.Errorf("document %q not found", documentURI)
+		}
+	}
 }
