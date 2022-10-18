@@ -161,6 +161,7 @@ func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentHover, dls.MakeHandler(h.handleTextDocumentHover))
 	h.handlers.Register(lsp.MethodTextDocumentSignatureHelp, dls.MakeHandler(h.handleTextDocumentSignatureHelp))
 	h.handlers.Register(lsp.MethodTextDocumentImplementation, dls.MakeHandler(h.handleTextDocumentImplementation))
+	h.handlers.Register(lsp.MethodSemanticTokensFull, dls.MakeHandler(h.handleSemanticTokensFull))
 
 	// textDocument/didOpen/didSave/didChange
 	h.handlers.Register(lsp.MethodTextDocumentDidOpen, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidOpen))
@@ -217,6 +218,14 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				WorkspaceSymbolProvider: true,
 				DocumentSymbolProvider:  true,
 				ImplementationProvider:  true,
+				SemanticTokensProvider: &SemanticTokensOptions{
+					Range: false,
+					Full:  true,
+					Legend: SemanticTokensLegend{
+						TokenTypes:     SemanticTypes(),
+						TokenModifiers: SemanticModifiers(),
+					},
+				},
 			},
 		}, nil); err != nil {
 			return fmt.Errorf("not initialized")
@@ -283,8 +292,8 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					return
 				}
 			}
-		var openParams lsp.DidOpenTextDocumentParams
-		json.Unmarshal(r.Params(), &openParams)
+			var openParams lsp.DidOpenTextDocumentParams
+			json.Unmarshal(r.Params(), &openParams)
 			wd := uriToFilename(openParams.TextDocument.URI)
 			if wd == "" {
 				h.LogError("Error locating current file")
@@ -370,7 +379,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					})
 				}
 			}
-		h.LogInfo("Initial diagnostics completed")
+			h.LogInfo("Initial diagnostics completed")
 		})
 	}
 
