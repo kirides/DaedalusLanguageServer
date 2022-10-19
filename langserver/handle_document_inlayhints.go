@@ -11,6 +11,12 @@ import (
 func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintParams) error {
 	var hints []lsp.InlayHint
 
+	if !h.config.InlayHints.Constants {
+		// the only setting currently
+		req.Reply(req.Context(), nil, nil)
+		return nil
+	}
+
 	source := uriToFilename(params.TextDocument.URI)
 	if source == "" {
 		req.Reply(req.Context(), nil, nil)

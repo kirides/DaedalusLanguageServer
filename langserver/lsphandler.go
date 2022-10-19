@@ -19,13 +19,17 @@ import (
 
 var defaultProjectFiles = []string{"Gothic.src", "Camera.src", "Menu.src", "Music.src", "ParticleFX.src", "SFX.src", "VisualFX.src"}
 
+type InlayHintConfig struct {
+	Constants bool `json:"constants"`
+}
 type LspConfig struct {
-	FileEncoding     string   `json:"fileEncoding"`
-	SrcFileEncoding  string   `json:"srcFileEncoding"`
-	LogLevel         string   `json:"loglevel"`
-	PprofAddr        string   `json:"pprofAddr"`
-	NumParserThreads int      `json:"numParserThreads"`
-	ProjectFiles     []string `json:"projectFiles"`
+	FileEncoding     string          `json:"fileEncoding"`
+	SrcFileEncoding  string          `json:"srcFileEncoding"`
+	LogLevel         string          `json:"loglevel"`
+	PprofAddr        string          `json:"pprofAddr"`
+	NumParserThreads int             `json:"numParserThreads"`
+	ProjectFiles     []string        `json:"projectFiles"`
+	InlayHints       InlayHintConfig `json:"inlayHints"`
 }
 
 // LspHandler ...
@@ -78,6 +82,9 @@ func NewLspHandler(conn jsonrpc2.Conn, logger dls.Logger) *LspHandler {
 			SrcFileEncoding: "1252",
 			LogLevel:        "info",
 			ProjectFiles:    defaultProjectFiles,
+			InlayHints: InlayHintConfig{
+				Constants: true,
+			},
 		},
 	}
 }
@@ -364,13 +371,19 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				DaedalusLanguageServer LspConfig `json:"daedalusLanguageServer"`
 			} `json:"settings"`
 		}
+		var paramsToMerge struct {
+			Settings struct {
+				DaedalusLanguageServer json.RawMessage `json:"daedalusLanguageServer"`
+			} `json:"settings"`
+		}
 
 		var configRaw map[string]interface{}
 		_ = json.Unmarshal(r.Params(), &configRaw)
+		_ = json.Unmarshal(r.Params(), &paramsToMerge)
 		h.LogDebug("%s (debug): %v", r.Method(), prettyJSON(configRaw))
 
 		_ = json.Unmarshal(r.Params(), &params)
-		h.config = params.Settings.DaedalusLanguageServer
+		json.Unmarshal(paramsToMerge.Settings.DaedalusLanguageServer, &h.config)
 		h.LogInfo("%s: %v", r.Method(), prettyJSON(configRaw))
 
 		h.parsedDocuments.SetFileEncoding(h.config.FileEncoding)
