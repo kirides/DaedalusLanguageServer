@@ -19,14 +19,16 @@ func combineListeners(listeners ...parser.DaedalusListener) parser.DaedalusListe
 		return listeners[0]
 	}
 
-	current := &CombinedDaedalusListener{left: listeners[0]}
-	for i := 1; i < len(listeners); i++ {
-		current.right = listeners[i]
-		current = &CombinedDaedalusListener{left: current}
-	}
-
-	if current.right == nil {
-		return current.left
+	var current parser.DaedalusListener
+	for i := 0; i < len(listeners); i++ {
+		if listeners[i] == nil {
+			continue
+		}
+		if current == nil {
+			current = listeners[i]
+		} else {
+			current = &CombinedDaedalusListener{left: current, right: listeners[i]}
+		}
 	}
 	return current
 }
