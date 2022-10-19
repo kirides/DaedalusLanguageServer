@@ -1,6 +1,7 @@
 package langserver
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -53,7 +54,7 @@ func TestParseSingleScriptFromFile(t *testing.T) {
 func TestGothicSrc(t *testing.T) {
 	m := newParseResultsManager(nopLogger{})
 	m.NumParserThreads = 8
-	result, err := m.ParseSource(filepath.Join("testdata", "Gothic.src"))
+	result, err := m.ParseSource(context.TODO(), filepath.Join("testdata", "Gothic.src"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -65,7 +66,7 @@ func BenchmarkGothicSrc(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		m := newParseResultsManager(nopLogger{})
 		m.NumParserThreads = 1
-		_, err := m.ParseSource(filepath.Join("testdata", "Gothic.src"))
+		_, err := m.ParseSource(context.TODO(), filepath.Join("testdata", "Gothic.src"))
 		if err != nil {
 			b.Error(err)
 		}

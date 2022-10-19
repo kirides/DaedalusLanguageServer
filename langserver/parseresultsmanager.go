@@ -14,6 +14,7 @@ import (
 	"time"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
+	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 	"golang.org/x/text/encoding"
@@ -134,8 +135,14 @@ func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) ([]symbol.Symbo
 func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()
+
 	if r, ok := m.parseResults[documentURI]; ok {
 		return r, nil
+	}
+	for k, v := range m.parseResults {
+		if strings.EqualFold(k, documentURI) {
+			return v, nil
+		}
 	}
 	return nil, fmt.Errorf("document %q not found", documentURI)
 }
@@ -144,7 +151,7 @@ func (m *parseResultsManager) ParseSemantics(ctx context.Context, documentURI st
 	return m.ParseSemanticsRange(ctx, documentURI, lsp.Range{})
 }
 
-func (m *parseResultsManager) ParseSemanticsRange(ctx context.Context, documentURI string, rang lsp.Range) (*SemanticParseResult, error) {
+func (m *parseResultsManager) LoadFile(ctx context.Context, documentURI string) (string, error) {
 	source := documentURI
 
 	buf := bufferPool.Get().(*bytes.Buffer)
@@ -155,7 +162,7 @@ func (m *parseResultsManager) ParseSemanticsRange(ctx context.Context, documentU
 
 	f, err := os.Open(source)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer f.Close()
 	decoder.Reset()
@@ -163,10 +170,18 @@ func (m *parseResultsManager) ParseSemanticsRange(ctx context.Context, documentU
 	buf.Reset()
 	_, err = buf.ReadFrom(translated)
 	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func (m *parseResultsManager) ParseSemanticsRange(ctx context.Context, documentURI string, rang lsp.Range) (*SemanticParseResult, error) {
+	content, err := m.LoadFile(ctx, documentURI)
+	if err != nil {
 		return nil, err
 	}
 
-	return m.ParseSemanticsContentRange(ctx, documentURI, buf.String(), rang)
+	return m.ParseSemanticsContentRange(ctx, documentURI, content, rang)
 }
 
 func (m *parseResultsManager) ParseSemanticsContentRange(ctx context.Context, source, content string, rang lsp.Range) (*SemanticParseResult, error) {
@@ -181,8 +196,68 @@ func (m *parseResultsManager) ParseSemanticsContentRange(ctx context.Context, so
 	listener2 := NewDaedalusStatefulListener(source, m)
 	m.ParseScriptListener(source, content, combineListeners(listener, listener2), &NoOpErrorListener{})
 
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
 	result := &SemanticParseResult{
 		ParseResult: ParseResult{
+			Source:          source,
+			Instances:       listener2.Instances,
+			GlobalVariables: listener2.GlobalVariables,
+			GlobalConstants: listener2.GlobalConstants,
+			Functions:       listener2.Functions,
+			Classes:         listener2.Classes,
+			Prototypes:      listener2.Prototypes,
+		},
+		GlobalIdentifiers: listener.GlobalIdentifiers,
+	}
+	return result, nil
+}
+
+type DataType int
+
+const (
+	DataIdentifiers DataType = 1 << iota
+	DataInstance
+	DataGlobalVariables
+	DataGlobalConstants
+	DataFunctions
+	DataClasses
+	DataPrototypes
+
+	DataAll DataType = 0xFFFFFFFF
+)
+
+func (m *parseResultsManager) ParseSemanticsContentDataTypesRange(ctx context.Context, source, content string, rang lsp.Range, dataTypes DataType) (*SemanticParseResult, error) {
+
+	listener := NewDaedalusIdentifierListener(source)
+	if rang != (lsp.Range{}) {
+		listener.Bbox = symbol.NewDefinition(
+			int(rang.Start.Line+1), int(rang.Start.Character),
+			int(rang.End.Line+1), int(rang.End.Character),
+		)
+	}
+	listener2 := NewDaedalusStatefulListener(source, m)
+	var combined parser.DaedalusListener
+	if dataTypes&DataIdentifiers != 0 {
+		combined = combineListeners(combined, listener)
+	}
+	if dataTypes > 1 {
+		combined = combineListeners(combined, listener2)
+	}
+	if combined == nil {
+		return nil, fmt.Errorf("datatypes invalid")
+	}
+	m.ParseScriptListener(source, content, combined, &NoOpErrorListener{})
+
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
+	result := &SemanticParseResult{
+		ParseResult: ParseResult{
+			Source:          source,
 			Instances:       listener2.Instances,
 			GlobalVariables: listener2.GlobalVariables,
 			GlobalConstants: listener2.GlobalConstants,
@@ -220,6 +295,12 @@ func (m *parseResultsManager) Update(documentURI, content string) (*ParseResult,
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
+	for k := range m.parseResults {
+		if strings.EqualFold(k, documentURI) {
+			delete(m.parseResults, k)
+			break
+		}
+	}
 	m.parseResults[documentURI] = r
 	return r, nil
 }
@@ -321,7 +402,7 @@ func (m *parseResultsManager) getConcurrency() int {
 	return numWorkers
 }
 
-func (m *parseResultsManager) validateFiles(resolvedPaths []string) map[string][]SyntaxError {
+func (m *parseResultsManager) validateFiles(ctx context.Context, resolvedPaths []string) map[string][]SyntaxError {
 	results := make(map[string][]SyntaxError)
 
 	chanPaths := make(chan string, len(resolvedPaths))
@@ -346,6 +427,9 @@ func (m *parseResultsManager) validateFiles(resolvedPaths []string) map[string][
 			defer m.decoderPool.Put(decoder)
 
 			for r := range chanPaths {
+				if ctx.Err() != nil {
+					return
+				}
 				f, err := os.Open(r)
 				if err != nil {
 					continue
@@ -396,7 +480,7 @@ func (m *parseResultsManager) validateFile(dPath string) ([]SyntaxError, error) 
 	return m.ValidateScript(dPath, buf.String()), nil
 }
 
-func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error) {
+func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) ([]*ParseResult, error) {
 	resolvedPaths, err := m.resolveSrcPaths(srcFile, filepath.Dir(srcFile))
 	if err != nil {
 		return nil, err
@@ -425,6 +509,9 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 			defer m.decoderPool.Put(decoder)
 
 			for r := range chanPaths {
+				if ctx.Err() != nil {
+					return
+				}
 				f, err := os.Open(r)
 				if err != nil {
 					continue
@@ -450,7 +537,7 @@ func (m *parseResultsManager) ParseSource(srcFile string) ([]*ParseResult, error
 
 	wg.Wait()
 
-	validations := m.validateFiles(resolvedPaths)
+	validations := m.validateFiles(ctx, resolvedPaths)
 
 	for _, v := range results {
 		if e, ok := validations[v.Source]; ok {

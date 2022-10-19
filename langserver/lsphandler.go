@@ -426,7 +426,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		h.onceParseAll.Do(func() {
 			exe, _ := os.Executable()
 			if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
-				_, err = h.parsedDocuments.ParseSource(f)
+				_, err = h.parsedDocuments.ParseSource(context.TODO(), f)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", f, err)
 					return
@@ -444,7 +444,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 			if externalsSrc, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.src")); err == nil {
 				if !h.parsedKnownSrcFiles.Contains(externalsSrc) {
 					h.parsedKnownSrcFiles.Store(externalsSrc)
-					customBuiltins, err := h.parsedDocuments.ParseSource(externalsSrc)
+					customBuiltins, err := h.parsedDocuments.ParseSource(context.TODO(), externalsSrc)
 					if err != nil {
 						h.LogError("Error parsing %q: %v", externalsSrc, err)
 					} else {
@@ -483,7 +483,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					continue
 				}
 				h.parsedKnownSrcFiles.Store(full)
-				results, err := h.parsedDocuments.ParseSource(full)
+				results, err := h.parsedDocuments.ParseSource(context.TODO(), full)
 				if err != nil {
 					h.LogError("Error parsing %s: %v", full, err)
 					continue
