@@ -3,7 +3,7 @@ set "GOARCH=386"
 set "UPX_PARAMS=-9 --lzma --strip-relocs=0"
 
 echo Building executable for %GOARCH%
-go build -o DaedalusLanguageServer.exe -ldflags "-s -w"
+go build -o DaedalusLanguageServer.exe -ldflags "-s -w" ./cmd/DaedalusLanguageServer/
 
 EXIT /B
 
