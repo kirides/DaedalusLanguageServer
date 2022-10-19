@@ -103,12 +103,6 @@ func (l *CombinedDaedalusListener) EnterAnyIdentifier(c *parser.AnyIdentifierCon
 	l.right.EnterAnyIdentifier(c)
 }
 
-// EnterAnyIdentifierValue implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) EnterAnyIdentifierValue(c *parser.AnyIdentifierValueContext) {
-	l.left.EnterAnyIdentifierValue(c)
-	l.right.EnterAnyIdentifierValue(c)
-}
-
 // EnterArrayIndex implements parser.DaedalusListener
 func (l *CombinedDaedalusListener) EnterArrayIndex(c *parser.ArrayIndexContext) {
 	l.left.EnterArrayIndex(c)
@@ -497,12 +491,6 @@ func (l *CombinedDaedalusListener) ExitAddOperator(c *parser.AddOperatorContext)
 func (l *CombinedDaedalusListener) ExitAnyIdentifier(c *parser.AnyIdentifierContext) {
 	l.left.ExitAnyIdentifier(c)
 	l.right.ExitAnyIdentifier(c)
-}
-
-// ExitAnyIdentifierValue implements parser.DaedalusListener
-func (l *CombinedDaedalusListener) ExitAnyIdentifierValue(c *parser.AnyIdentifierValueContext) {
-	l.left.ExitAnyIdentifierValue(c)
-	l.right.ExitAnyIdentifierValue(c)
 }
 
 // ExitArrayIndex implements parser.DaedalusListener

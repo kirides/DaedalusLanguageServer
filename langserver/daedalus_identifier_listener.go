@@ -196,10 +196,6 @@ func (l *DaedalusIdentifierListener) EnterReferenceValue(ctx *parser.ReferenceVa
 	l.onIdentifier(ctx)
 }
 
-func (l *DaedalusIdentifierListener) EnterAnyIdentifierValue(ctx *parser.AnyIdentifierValueContext) {
-	l.onIdentifier(ctx)
-}
-
 func (l *DaedalusIdentifierListener) EnterReferenceAtom(ctx *parser.ReferenceAtomContext) {
 	l.onIdentifier(ctx)
 }

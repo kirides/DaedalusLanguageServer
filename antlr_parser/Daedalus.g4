@@ -127,7 +127,6 @@ statement:
 	| returnStatement
 	| constDef
 	| varDecl
-	| funcCall
 	| expression;
 funcCall:
 	nameNode LeftParen (
@@ -169,8 +168,7 @@ value:
 	| StringLiteral	# stringLiteralValue
 	| Null			# nullLiteralValue
 	| funcCall		# funcCallValue
-	| reference		# referenceValue
-	| nameNode		# anyIdentifierValue;
+	| reference		# referenceValue;
 
 referenceAtom: nameNode ( LeftBracket arrayIndex RightBracket)?;
 reference: referenceAtom ( Dot referenceAtom)?;

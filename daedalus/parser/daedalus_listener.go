@@ -158,9 +158,6 @@ type DaedalusListener interface {
 	// EnterReferenceValue is called when entering the referenceValue production.
 	EnterReferenceValue(c *ReferenceValueContext)
 
-	// EnterAnyIdentifierValue is called when entering the anyIdentifierValue production.
-	EnterAnyIdentifierValue(c *AnyIdentifierValueContext)
-
 	// EnterReferenceAtom is called when entering the referenceAtom production.
 	EnterReferenceAtom(c *ReferenceAtomContext)
 
@@ -361,9 +358,6 @@ type DaedalusListener interface {
 
 	// ExitReferenceValue is called when exiting the referenceValue production.
 	ExitReferenceValue(c *ReferenceValueContext)
-
-	// ExitAnyIdentifierValue is called when exiting the anyIdentifierValue production.
-	ExitAnyIdentifierValue(c *AnyIdentifierValueContext)
 
 	// ExitReferenceAtom is called when exiting the referenceAtom production.
 	ExitReferenceAtom(c *ReferenceAtomContext)

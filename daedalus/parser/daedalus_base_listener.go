@@ -321,12 +321,6 @@ func (s *BaseDaedalusListener) EnterReferenceValue(ctx *ReferenceValueContext) {
 // ExitReferenceValue is called when production referenceValue is exited.
 func (s *BaseDaedalusListener) ExitReferenceValue(ctx *ReferenceValueContext) {}
 
-// EnterAnyIdentifierValue is called when production anyIdentifierValue is entered.
-func (s *BaseDaedalusListener) EnterAnyIdentifierValue(ctx *AnyIdentifierValueContext) {}
-
-// ExitAnyIdentifierValue is called when production anyIdentifierValue is exited.
-func (s *BaseDaedalusListener) ExitAnyIdentifierValue(ctx *AnyIdentifierValueContext) {}
-
 // EnterReferenceAtom is called when production referenceAtom is entered.
 func (s *BaseDaedalusListener) EnterReferenceAtom(ctx *ReferenceAtomContext) {}
 
