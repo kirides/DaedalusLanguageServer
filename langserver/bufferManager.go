@@ -40,7 +40,7 @@ func (m *BufferManager) GetBuffer(documentURI string) BufferedDocument {
 
 // GetBuffer ...
 func (m *BufferManager) GetBufferCtx(ctx context.Context, documentURI string) (BufferedDocument, error) {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(60 * time.Second) // 60s delay until request is aborted
 	defer ticker.Stop()
 	for {
 		m.mtx.RLock()

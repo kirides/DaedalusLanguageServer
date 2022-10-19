@@ -140,7 +140,7 @@ func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
 }
 
 func (m *parseResultsManager) GetCtx(ctx context.Context, documentURI string) (*ParseResult, error) {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(60 * time.Second) // 60s delay until request is aborted
 	defer ticker.Stop()
 	for {
 		doc, err := m.Get(documentURI)
