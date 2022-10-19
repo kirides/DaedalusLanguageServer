@@ -185,34 +185,7 @@ func (m *parseResultsManager) ParseSemanticsRange(ctx context.Context, documentU
 }
 
 func (m *parseResultsManager) ParseSemanticsContentRange(ctx context.Context, source, content string, rang lsp.Range) (*SemanticParseResult, error) {
-
-	listener := NewDaedalusIdentifierListener(source)
-	if rang != (lsp.Range{}) {
-		listener.Bbox = symbol.NewDefinition(
-			int(rang.Start.Line+1), int(rang.Start.Character),
-			int(rang.End.Line+1), int(rang.End.Character),
-		)
-	}
-	listener2 := NewDaedalusStatefulListener(source, m)
-	m.ParseScriptListener(source, content, combineListeners(listener, listener2), &NoOpErrorListener{})
-
-	if ctx.Err() != nil {
-		return nil, ctx.Err()
-	}
-
-	result := &SemanticParseResult{
-		ParseResult: ParseResult{
-			Source:          source,
-			Instances:       listener2.Instances,
-			GlobalVariables: listener2.GlobalVariables,
-			GlobalConstants: listener2.GlobalConstants,
-			Functions:       listener2.Functions,
-			Classes:         listener2.Classes,
-			Prototypes:      listener2.Prototypes,
-		},
-		GlobalIdentifiers: listener.GlobalIdentifiers,
-	}
-	return result, nil
+	return m.ParseSemanticsContentDataTypesRange(ctx, source, content, rang, DataAll)
 }
 
 type DataType int
