@@ -2772,7 +2772,7 @@ type InlayHintParams struct {
 /**
 	 * The visible document range for which inlay hints should be computed.
 	 */
-	ViewPort Range`json:"viewPort"`
+	Range Range `json:"range"`
 }
 /**
  * Inlay hint options used during static or dynamic registration.

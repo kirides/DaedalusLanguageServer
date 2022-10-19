@@ -273,6 +273,7 @@ func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentSignatureHelp, dls.MakeHandler(h.handleTextDocumentSignatureHelp))
 	h.handlers.Register(lsp.MethodTextDocumentImplementation, dls.MakeHandler(h.handleTextDocumentImplementation))
 	h.handlers.Register(lsp.MethodSemanticTokensFull, dls.MakeHandler(h.handleSemanticTokensFull))
+	h.handlers.Register(lsp.MethodTextDocumentInlayHint, dls.MakeHandler(h.handleInlayHints))
 
 	// textDocument/didOpen/didSave/didChange
 	h.handlers.Register(lsp.MethodTextDocumentDidOpen, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidOpen))
@@ -340,6 +341,9 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				WorkspaceSymbolProvider: true,
 				DocumentSymbolProvider:  true,
 				ImplementationProvider:  true,
+				InlayHintProvider: lsp.InlayHintOptions{
+					ResolveProvider: false,
+				},
 				SemanticTokensProvider: &lsp.SemanticTokensOptions{
 					Range: false,
 					Full:  true,

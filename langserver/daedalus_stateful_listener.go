@@ -45,7 +45,7 @@ func NewDaedalusStatefulListener(source string, knownSymbols SymbolProvider) *Da
 	}
 }
 
-func symbolDefinitionForRuleContext(ctx antlr.ParserRuleContext) symbol.Definition {
+func (l *DaedalusStatefulListener) symbolDefinitionForRuleContext(ctx antlr.ParserRuleContext) symbol.Definition {
 	return symbol.NewDefinition(ctx.GetStart().GetLine(), ctx.GetStart().GetColumn(), ctx.GetStop().GetLine(), ctx.GetStop().GetColumn())
 }
 
@@ -101,7 +101,7 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 					v.TypeReference().GetText(),
 					l.source,
 					summary, // documentation
-					symbolDefinitionForRuleContext(val.NameNode()),
+					l.symbolDefinitionForRuleContext(val.NameNode()),
 				))
 		} else if innerVal, ok := ch.(*parser.VarDeclContext); ok {
 			for _, ival := range innerVal.AllVarValueDecl() {
@@ -111,7 +111,7 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 						v.TypeReference().GetText(),
 						l.source,
 						summary, // documentation
-						symbolDefinitionForRuleContext(val.NameNode()),
+						l.symbolDefinitionForRuleContext(val.NameNode()),
 					))
 			}
 		} else if innerVal, ok := ch.(*parser.VarArrayDeclContext); ok {
@@ -121,7 +121,7 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 					innerVal.ArraySize().GetText(),
 					l.source,
 					summary, // documentation
-					symbolDefinitionForRuleContext(innerVal.NameNode()),
+					l.symbolDefinitionForRuleContext(innerVal.NameNode()),
 				))
 		}
 	}
@@ -167,7 +167,7 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 				c.TypeReference().GetText(),
 				l.source,
 				summary, // documentation
-				symbolDefinitionForRuleContext(cv.NameNode()),
+				l.symbolDefinitionForRuleContext(cv.NameNode()),
 				cv.ConstValueAssignment().(*parser.ConstValueAssignmentContext).ExpressionBlock().GetText(),
 			))
 		return nil
@@ -180,7 +180,7 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 				innerVal.ArraySize().GetText(),
 				l.source,
 				summary, // documentation
-				symbolDefinitionForRuleContext(innerVal.NameNode()),
+				l.symbolDefinitionForRuleContext(innerVal.NameNode()),
 				l.maxNOfConstValues(3, innerVal.ConstArrayAssignment().(*parser.ConstArrayAssignmentContext)),
 			))
 		return nil
@@ -207,8 +207,8 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 					c.ParentReference().GetText(),
 					l.source,
 					"",
-					symbolDefinitionForRuleContext(name),
-					symbolDefinitionForRuleContext(c.ParentReference()),
+					l.symbolDefinitionForRuleContext(name),
+					l.symbolDefinitionForRuleContext(c.ParentReference()),
 					true)
 				l.Instances[strings.ToUpper(psym.Name())] = psym
 				return nil
@@ -246,7 +246,7 @@ func (l *DaedalusStatefulListener) getAssignedFields(ctx parser.IStatementBlockC
 					"_",
 					l.source,
 					"",
-					symbolDefinitionForRuleContext(ref),
+					l.symbolDefinitionForRuleContext(ref),
 					expr),
 			)
 		}
@@ -268,7 +268,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 							v.TypeReference().GetText(),
 							l.source,
 							"",
-							symbolDefinitionForRuleContext(vv.NameNode())),
+							l.symbolDefinitionForRuleContext(vv.NameNode())),
 					)
 				} else if vv, ok := ch.(*parser.VarArrayDeclContext); ok {
 					cFields = append(cFields,
@@ -277,7 +277,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 							vv.ArraySize().GetText(),
 							l.source,
 							"",
-							symbolDefinitionForRuleContext(vv.NameNode())),
+							l.symbolDefinitionForRuleContext(vv.NameNode())),
 					)
 				}
 			}
@@ -287,7 +287,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 		csym := symbol.NewClass(c.NameNode().GetText(),
 			l.source,
 			l.symbolSummaryForContext(c),
-			symbolDefinitionForRuleContext(c.NameNode()),
+			l.symbolDefinitionForRuleContext(c.NameNode()),
 			symbol.NewDefinition(
 				c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetLine(),
 				c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetColumn(),
@@ -306,8 +306,8 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 				c.ParentReference().GetText(),
 				l.source,
 				"",
-				symbolDefinitionForRuleContext(c.NameNode()),
-				symbolDefinitionForRuleContext(c.StatementBlock()),
+				l.symbolDefinitionForRuleContext(c.NameNode()),
+				l.symbolDefinitionForRuleContext(c.StatementBlock()),
 				false)
 			psym.Fields = l.getAssignedFields(c.StatementBlock())
 			l.Prototypes[strings.ToUpper(psym.Name())] = psym
@@ -317,8 +317,8 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 				c.ParentReference().GetText(),
 				l.source,
 				"",
-				symbolDefinitionForRuleContext(c.NameNode()),
-				symbolDefinitionForRuleContext(c.StatementBlock()),
+				l.symbolDefinitionForRuleContext(c.NameNode()),
+				l.symbolDefinitionForRuleContext(c.StatementBlock()),
 				true)
 			psym.Fields = l.getAssignedFields(c.StatementBlock())
 			l.Instances[strings.ToUpper(psym.Name())] = psym
@@ -355,16 +355,16 @@ func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefConte
 				pdef.TypeReference().GetText(),
 				l.source,
 				"",
-				symbolDefinitionForRuleContext(pdef.NameNode())))
+				l.symbolDefinitionForRuleContext(pdef.NameNode())))
 		return nil
 	})
 
 	fnc := symbol.NewFunction(ctx.NameNode().GetText(),
 		l.source,
 		l.symbolSummaryForContext(ctx.GetParent().(*parser.BlockDefContext)),
-		symbolDefinitionForRuleContext(ctx.NameNode()),
+		l.symbolDefinitionForRuleContext(ctx.NameNode()),
 		ctx.TypeReference().GetText(),
-		symbolDefinitionForRuleContext(ctx.StatementBlock()),
+		l.symbolDefinitionForRuleContext(ctx.StatementBlock()),
 		params,
 		locals)
 

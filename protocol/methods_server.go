@@ -181,4 +181,10 @@ const (
 
 	// MethodMoniker method name of "textDocument/moniker".
 	MethodMoniker = "textDocument/moniker"
+
+	// MethodTextDocumentInlayHint method name of "textDocument/inlayHint".
+	MethodTextDocumentInlayHint = "textDocument/inlayHint"
+
+	// MethodTextDocumentInlineValue method name of "textDocument/inlineValue".
+	MethodTextDocumentInlineValue = "textDocument/inlineValue"
 )

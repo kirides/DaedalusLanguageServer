@@ -1,42 +1,18 @@
 package langserver
 
-import "github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+import (
+	"strings"
 
-type semanticParseResult struct {
-	Instances         map[string]symbol.ProtoTypeOrInstance
-	GlobalVariables   map[string]symbol.Symbol
-	GlobalConstants   map[string]symbol.Symbol
-	Functions         map[string]FunctionWithIdentifiers
-	Classes           map[string]symbol.Class
-	Prototypes        map[string]symbol.ProtoTypeOrInstance
+	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+)
+
+type SemanticParseResult struct {
+	ParseResult
 	GlobalIdentifiers []Identifier
 }
 
-func (r *semanticParseResult) CountSymbols() int64 {
-	numSymbols := int64(len(r.Classes)) +
-		int64(len(r.Functions)) +
-		int64(len(r.GlobalConstants)) +
-		int64(len(r.GlobalVariables)) +
-		int64(len(r.Instances)) +
-		int64(len(r.Prototypes)) +
-		int64(len(r.GlobalIdentifiers))
-
-	for _, v := range r.Classes {
-		numSymbols += int64(len(v.Fields))
-	}
-
-	for _, v := range r.Instances {
-		numSymbols += int64(len(v.Fields))
-	}
-	for _, v := range r.Prototypes {
-		numSymbols += int64(len(v.Fields))
-	}
-
-	for _, v := range r.Functions {
-		numSymbols += int64(len(v.Parameters))
-		numSymbols += int64(len(v.LocalVariables))
-		numSymbols += int64(len(v.Identifiers))
-	}
+func (r *SemanticParseResult) CountSymbols() int64 {
+	numSymbols := r.ParseResult.CountSymbols() + int64(len(r.GlobalIdentifiers))
 
 	return numSymbols
 }
@@ -66,7 +42,7 @@ func walkSymbolsSliceHelper[V token](items []V, walkFn func(token) error, previo
 	}
 	return nil
 }
-func (p *semanticParseResult) WalkSymbols(walkFn func(token) error) error {
+func (p *SemanticParseResult) WalkSymbols(walkFn func(token) error) error {
 	var err error
 	err = walkSymbolsMapHelper(p.Classes, walkFn, err)
 	err = walkSymbolsMapHelper(p.GlobalConstants, walkFn, err)
@@ -78,7 +54,79 @@ func (p *semanticParseResult) WalkSymbols(walkFn func(token) error) error {
 	return err
 }
 
-func (parsedDoc *semanticParseResult) WalkScopedVariables(di symbol.DefinitionIndex, walkFn func(sym symbol.Symbol, isParam bool) bool) {
+// WalkScoped walks all higher-class symbols that are contained in `di`
+func (p *SemanticParseResult) WalkScoped(bbox symbol.Definition, walkFn func(sym token) error) error {
+	var err error
+	scopedWalk := func(t token) error {
+		if bbox.InBBox(t.Definition().Start) || bbox.InBBox(t.Definition().End) {
+			return walkFn(t)
+		}
+		return nil
+	}
+	err = walkSymbolsMapHelper(p.Classes, scopedWalk, err)
+	err = walkSymbolsMapHelper(p.GlobalConstants, scopedWalk, err)
+	err = walkSymbolsMapHelper(p.Functions, scopedWalk, err)
+	err = walkSymbolsMapHelper(p.Instances, scopedWalk, err)
+	err = walkSymbolsMapHelper(p.Prototypes, scopedWalk, err)
+	err = walkSymbolsMapHelper(p.GlobalVariables, scopedWalk, err)
+	err = walkSymbolsSliceHelper(p.GlobalIdentifiers, scopedWalk, err)
+	return err
+}
+
+type ScopedVariable struct {
+	Location FoundLocation
+}
+
+func (parsedDoc *SemanticParseResult) FindScopedVariableDeclaration(di symbol.DefinitionIndex, name string) (FoundSymbol, bool) {
+	for _, fn := range parsedDoc.Functions {
+		if fn.BodyDefinition.InBBox(di) {
+			for _, p := range fn.Parameters {
+				if strings.EqualFold(p.Name(), name) {
+					return FoundSymbol{p, FoundParameter}, true
+				}
+			}
+			for _, p := range fn.LocalVariables {
+				if strings.EqualFold(p.Name(), name) {
+					return FoundSymbol{p, FoundLocal}, true
+				}
+			}
+			break
+		}
+	}
+	for _, fn := range parsedDoc.Classes {
+		if fn.BodyDefinition.InBBox(di) {
+			for _, p := range fn.Fields {
+				if strings.EqualFold(p.Name(), name) {
+					return FoundSymbol{p, FoundField}, true
+				}
+			}
+			break
+		}
+	}
+	for _, fn := range parsedDoc.Prototypes {
+		if fn.BodyDefinition.InBBox(di) {
+			for _, p := range fn.Fields {
+				if strings.EqualFold(p.Name(), name) {
+					return FoundSymbol{p, FoundField}, true
+				}
+			}
+			break
+		}
+	}
+	for _, fn := range parsedDoc.Instances {
+		if fn.BodyDefinition.InBBox(di) {
+			for _, p := range fn.Fields {
+				if strings.EqualFold(p.Name(), name) {
+					return FoundSymbol{p, FoundField}, true
+				}
+			}
+			break
+		}
+	}
+	return FoundSymbol{}, false
+}
+
+func (parsedDoc *SemanticParseResult) WalkScopedVariables(di symbol.DefinitionIndex, walkFn func(sym symbol.Symbol, isParam bool) bool) {
 	for _, fn := range parsedDoc.Functions {
 		if fn.BodyDefinition.InBBox(di) {
 			for _, p := range fn.Parameters {

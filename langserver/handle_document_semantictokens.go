@@ -89,7 +89,7 @@ func (s semanticTokensHandler) semanticsForToken(t token) (int, uint32) {
 	return -1, 0
 }
 
-func (h *semanticTokensHandler) getSemanticTokens(r *semanticParseResult, area *lsp.Range) []uint32 {
+func (h *semanticTokensHandler) getSemanticTokens(r *SemanticParseResult, area *lsp.Range) []uint32 {
 	type item struct {
 		token token
 		t     uint32
@@ -277,8 +277,6 @@ func (h *LspHandler) handleSemanticTokensFull(req dls.RpcContext, params lsp.Sem
 		req.Reply(req.Context(), nil, nil)
 		return nil
 	}
-	listener := NewDaedalusIdentifierListener(source)
-	listener2 := NewDaedalusStatefulListener(source, &ParseResult{})
 
 	buf, err := h.bufferManager.GetBufferCtx(req.Context(), source)
 	if err != nil {
@@ -286,18 +284,14 @@ func (h *LspHandler) handleSemanticTokensFull(req dls.RpcContext, params lsp.Sem
 		return err
 	}
 
-	handler.parsedDocuments.ParseScriptListener(source, string(buf), combineListeners(listener, listener2), &NoOpErrorListener{})
+	parsed, err := handler.parsedDocuments.ParseSemanticsContentRange(req.Context(), source, string(buf), lsp.Range{})
+	if err != nil {
+		req.Reply(req.Context(), nil, err)
+		return err
+	}
 
 	result := &lsp.SemanticTokens{
-		Data: handler.getSemanticTokens(&semanticParseResult{
-			Instances:         listener2.Instances,
-			GlobalVariables:   listener2.GlobalVariables,
-			GlobalConstants:   listener2.GlobalConstants,
-			Functions:         listener.Functions,
-			Classes:           listener2.Classes,
-			Prototypes:        listener2.Prototypes,
-			GlobalIdentifiers: listener.GlobalIdentifiers,
-		}, nil),
+		Data: handler.getSemanticTokens(parsed, nil),
 	}
 
 	// h.LogInfo("MethodSemanticTokensFull:\n%v", result)

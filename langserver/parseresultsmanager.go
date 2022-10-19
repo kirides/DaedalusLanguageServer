@@ -15,6 +15,7 @@ import (
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/charmap"
 )
@@ -137,6 +138,61 @@ func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
 		return r, nil
 	}
 	return nil, fmt.Errorf("document %q not found", documentURI)
+}
+
+func (m *parseResultsManager) ParseSemantics(ctx context.Context, documentURI string) (*SemanticParseResult, error) {
+	return m.ParseSemanticsRange(ctx, documentURI, lsp.Range{})
+}
+
+func (m *parseResultsManager) ParseSemanticsRange(ctx context.Context, documentURI string, rang lsp.Range) (*SemanticParseResult, error) {
+	source := documentURI
+
+	buf := bufferPool.Get().(*bytes.Buffer)
+	defer bufferPool.Put(buf)
+
+	decoder := m.decoderPool.Get().(*encoding.Decoder)
+	defer m.decoderPool.Put(decoder)
+
+	f, err := os.Open(source)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	decoder.Reset()
+	translated := decoder.Reader(f)
+	buf.Reset()
+	_, err = buf.ReadFrom(translated)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.ParseSemanticsContentRange(ctx, documentURI, buf.String(), rang)
+}
+
+func (m *parseResultsManager) ParseSemanticsContentRange(ctx context.Context, source, content string, rang lsp.Range) (*SemanticParseResult, error) {
+
+	listener := NewDaedalusIdentifierListener(source)
+	if rang != (lsp.Range{}) {
+		listener.Bbox = symbol.NewDefinition(
+			int(rang.Start.Line+1), int(rang.Start.Character),
+			int(rang.End.Line+1), int(rang.End.Character),
+		)
+	}
+	listener2 := NewDaedalusStatefulListener(source, m)
+	m.ParseScriptListener(source, content, combineListeners(listener, listener2), &NoOpErrorListener{})
+
+	result := &SemanticParseResult{
+		ParseResult: ParseResult{
+			Instances:       listener2.Instances,
+			GlobalVariables: listener2.GlobalVariables,
+			GlobalConstants: listener2.GlobalConstants,
+			Functions:       listener2.Functions,
+			Classes:         listener2.Classes,
+			Prototypes:      listener2.Prototypes,
+		},
+		GlobalIdentifiers: listener.GlobalIdentifiers,
+	}
+	return result, nil
 }
 
 func (m *parseResultsManager) GetCtx(ctx context.Context, documentURI string) (*ParseResult, error) {
