@@ -9,15 +9,15 @@ import (
 )
 
 func (h *LspHandler) handleTextDocumentImplementation(req dls.RpcContext, params lsp.ImplementationParams) error {
-	sym, err := h.lookUpSymbol(uriToFilename(params.TextDocument.URI), params.Position)
+	found, err := h.lookUpSymbol(uriToFilename(params.TextDocument.URI), params.Position)
 	if err != nil {
 		req.Reply(req.Context(), nil, nil)
 		h.LogDebug("Failed to lookup symbol. %v", err)
 		return nil
 	}
 
-	if _, ok := sym.(symbol.Class); !ok {
-		protoOrSymbol, ok := sym.(symbol.ProtoTypeOrInstance)
+	if _, ok := found.Symbol.(symbol.Class); !ok {
+		protoOrSymbol, ok := found.Symbol.(symbol.ProtoTypeOrInstance)
 		if !ok || protoOrSymbol.IsInstance {
 			req.Reply(req.Context(), nil, nil)
 			return nil
@@ -28,7 +28,7 @@ func (h *LspHandler) handleTextDocumentImplementation(req dls.RpcContext, params
 	h.parsedDocuments.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		switch v := s.(type) {
 		case symbol.ProtoTypeOrInstance:
-			if strings.EqualFold(sym.Name(), v.Parent) {
+			if strings.EqualFold(found.Symbol.Name(), v.Parent) {
 				result = append(result, getSymbolLocation(v))
 			}
 		}

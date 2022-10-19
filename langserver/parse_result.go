@@ -61,6 +61,40 @@ func (parsedDoc *ParseResult) WalkScopedVariables(di symbol.DefinitionIndex, wal
 			break
 		}
 	}
+	for _, fn := range parsedDoc.Classes {
+		if fn.BodyDefinition.InBBox(di) {
+			for _, p := range fn.Fields {
+				if !walkFn(p) {
+					return
+				}
+			}
+			break
+		}
+	}
+}
+
+func (parsedDoc *ParseResult) FindContainingScope(di symbol.DefinitionIndex) (symbol.Symbol, bool) {
+	for _, fn := range parsedDoc.Functions {
+		if fn.BodyDefinition.InBBox(di) {
+			return fn, true
+		}
+	}
+	for _, fn := range parsedDoc.Classes {
+		if fn.BodyDefinition.InBBox(di) {
+			return fn, true
+		}
+	}
+	for _, fn := range parsedDoc.Prototypes {
+		if fn.BodyDefinition.InBBox(di) {
+			return fn, true
+		}
+	}
+	for _, fn := range parsedDoc.Instances {
+		if fn.BodyDefinition.InBBox(di) {
+			return fn, true
+		}
+	}
+	return nil, false
 }
 
 func (parsedDoc *ParseResult) ScopedVariables(di symbol.DefinitionIndex) map[string]symbol.Symbol {
