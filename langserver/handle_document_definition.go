@@ -25,8 +25,9 @@ func getSymbolLocation(symbol symbol.Symbol) lsp.Location {
 func (h *LspHandler) handleTextDocumentDefinition(req dls.RpcContext, data lsp.TextDocumentPositionParams) error {
 	symbol, err := h.lookUpSymbol(uriToFilename(data.TextDocument.URI), data.Position)
 	if err != nil {
+		req.Reply(req.Context(), nil, nil)
 		return err
 	}
 
-	return req.Reply(req.Context(), getSymbolLocation(symbol), nil)
+	return req.Reply(req.Context(), getSymbolLocation(symbol.Symbol), nil)
 }
