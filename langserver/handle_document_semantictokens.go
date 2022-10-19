@@ -298,3 +298,33 @@ func (h *LspHandler) handleSemanticTokensFull(req dls.RpcContext, params lsp.Sem
 	req.Reply(req.Context(), result, nil)
 	return nil
 }
+
+func (h *LspHandler) handleSemanticTokensRange(req dls.RpcContext, params lsp.SemanticTokensRangeParams) error {
+	handler := &semanticTokensHandler{parsedDocuments: h.parsedDocuments}
+
+	source := uriToFilename(params.TextDocument.URI)
+	if source == "" {
+		req.Reply(req.Context(), nil, nil)
+		return nil
+	}
+
+	buf, err := h.bufferManager.GetBufferCtx(req.Context(), source)
+	if err != nil {
+		req.Reply(req.Context(), nil, err)
+		return err
+	}
+
+	parsed, err := handler.parsedDocuments.ParseSemanticsContentRange(req.Context(), source, string(buf), params.Range)
+	if err != nil {
+		req.Reply(req.Context(), nil, err)
+		return err
+	}
+
+	result := &lsp.SemanticTokens{
+		Data: handler.getSemanticTokens(parsed, nil),
+	}
+
+	// h.LogInfo("MethodSemanticTokensFull:\n%v", result)
+	req.Reply(req.Context(), result, nil)
+	return nil
+}
