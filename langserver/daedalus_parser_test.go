@@ -1,8 +1,9 @@
 package langserver
 
 import (
-	"encoding/json"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"golang.org/x/text/encoding/charmap"
@@ -32,24 +33,27 @@ func TestParseSingleScript(t *testing.T) {
 
 	m := newParseResultsManager(nopLogger{})
 	result := m.ParseScript("C:\\temp", script)
-	b, _ := json.MarshalIndent(result, "", "  ")
-	t.Logf("%s\n", b)
+	if _, ok := result.Functions[strings.ToUpper("InitDamage")]; !ok {
+		t.Fail()
+	}
 }
 
 func TestParseSingleScriptFromFile(t *testing.T) {
-	fileBody, _ := os.ReadFile(`testdata/demo.d`)
+	src := filepath.Join("testdata", "demo.d")
+	fileBody, _ := os.ReadFile(src)
 	script, _ := charmap.Windows1252.NewDecoder().Bytes(fileBody)
 
 	m := newParseResultsManager(nopLogger{})
-	result := m.ParseScript("C:\\temp", string(script))
-	b, _ := json.MarshalIndent(result, "", "  ")
-	t.Logf("%s\n", b)
+	result := m.ParseScript(src, string(script))
+	if _, ok := result.Functions[strings.ToUpper("Do")]; !ok {
+		t.Fail()
+	}
 }
 
 func TestGothicSrc(t *testing.T) {
 	m := newParseResultsManager(nopLogger{})
 	m.NumParserThreads = 8
-	result, err := m.ParseSource(`testdata/Gothic.src`)
+	result, err := m.ParseSource(filepath.Join("testdata", "Gothic.src"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -61,7 +65,7 @@ func BenchmarkGothicSrc(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		m := newParseResultsManager(nopLogger{})
 		m.NumParserThreads = 1
-		_, err := m.ParseSource(`testdata/Gothic.src`)
+		_, err := m.ParseSource(filepath.Join("testdata", "Gothic.src"))
 		if err != nil {
 			b.Error(err)
 		}

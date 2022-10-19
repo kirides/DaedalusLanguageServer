@@ -33,3 +33,6 @@ jobs:
 
     - name: build all binaries
       run: go build -v ./...
+    
+    - name: Test
+      run: go test -v ./...
