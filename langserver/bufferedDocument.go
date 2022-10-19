@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
 var (

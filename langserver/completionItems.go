@@ -5,7 +5,7 @@ import (
 
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	"github.com/kirides/DaedalusLanguageServer/javadoc"
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
 func completionItemFromSymbol(symbols SymbolProvider, s symbol.Symbol) (lsp.CompletionItem, error) {
@@ -27,15 +27,15 @@ func completionItemFromSymbol(symbols SymbolProvider, s symbol.Symbol) (lsp.Comp
 func completionItemKindForSymbol(s symbol.Symbol) (lsp.CompletionItemKind, error) {
 	switch s.(type) {
 	case symbol.ArrayVariable, symbol.Variable:
-		return lsp.CompletionItemKindVariable, nil
+		return lsp.VariableCompletion, nil
 	case symbol.Constant, symbol.ConstantArray:
-		return lsp.CompletionItemKindConstant, nil
+		return lsp.ConstantCompletion, nil
 	case symbol.Function:
-		return lsp.CompletionItemKindFunction, nil
+		return lsp.FunctionCompletion, nil
 	case symbol.Class:
-		return lsp.CompletionItemKindClass, nil
+		return lsp.ClassCompletion, nil
 	case symbol.ProtoTypeOrInstance:
-		return lsp.CompletionItemKindClass, nil
+		return lsp.ClassCompletion, nil
 	}
 	return lsp.CompletionItemKind(-1), fmt.Errorf("symbol not found")
 }

@@ -12,8 +12,8 @@ import (
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 	"go.lsp.dev/jsonrpc2"
-	lsp "go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 
@@ -239,17 +239,17 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Fo
 func getSymbolKind(s symbol.Symbol) lsp.SymbolKind {
 	switch s.(type) {
 	case symbol.ArrayVariable, symbol.ConstantArray:
-		return lsp.SymbolKindArray
+		return lsp.Array
 	case symbol.Class, symbol.ProtoTypeOrInstance:
-		return lsp.SymbolKindClass
+		return lsp.Class
 	case symbol.Function:
-		return lsp.SymbolKindFunction
+		return lsp.Function
 	case symbol.Constant:
-		return lsp.SymbolKindConstant
+		return lsp.Constant
 	case symbol.Variable:
-		return lsp.SymbolKindVariable
+		return lsp.Variable
 	}
-	return lsp.SymbolKindNull
+	return lsp.Null
 }
 
 func stringContainsAllAnywhere(value, set string) bool {
@@ -291,6 +291,14 @@ func prettyJSON(val interface{}) string {
 	return string(v)
 }
 
+func copyAndCastToStringSlice[T ~string](items []T) []string {
+	result := make([]string, len(items))
+	for i, v := range items {
+		result[i] = string(v)
+	}
+	return result
+}
+
 // Deliver ...
 func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonrpc2.Request) error {
 	h.LogDebug("Requested %q", r.Method())
@@ -306,35 +314,38 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		h.onInitialized()
 
 		if err := reply(ctx, lsp.InitializeResult{
-			ServerInfo: &lsp.ServerInfo{
+			ServerInfo: struct {
+				Name    string "json:\"name\""
+				Version string "json:\"version,omitempty\""
+			}{
 				Name:    "Daedalus Language Server",
 				Version: "dev",
 			},
 			Capabilities: lsp.ServerCapabilities{
-				CompletionProvider: &lsp.CompletionOptions{
+				CompletionProvider: lsp.CompletionOptions{
 					TriggerCharacters: []string{"."},
 				},
 				DefinitionProvider: true,
 				HoverProvider:      true,
-				SignatureHelpProvider: &lsp.SignatureHelpOptions{
+				SignatureHelpProvider: lsp.SignatureHelpOptions{
 					TriggerCharacters: []string{"(", ","},
 				},
 				TextDocumentSync: lsp.TextDocumentSyncOptions{
-					Change:    lsp.TextDocumentSyncKindFull,
+					Change:    lsp.Full,
 					OpenClose: true,
-					Save: &lsp.SaveOptions{
+					Save: lsp.SaveOptions{
 						IncludeText: true,
 					},
 				},
 				WorkspaceSymbolProvider: true,
 				DocumentSymbolProvider:  true,
 				ImplementationProvider:  true,
-				SemanticTokensProvider: &SemanticTokensOptions{
+				SemanticTokensProvider: &lsp.SemanticTokensOptions{
 					Range: false,
 					Full:  true,
-					Legend: SemanticTokensLegend{
-						TokenTypes:     SemanticTypes(),
-						TokenModifiers: SemanticModifiers(),
+					Legend: lsp.SemanticTokensLegend{
+						TokenTypes:     copyAndCastToStringSlice(SemanticTypes()),
+						TokenModifiers: copyAndCastToStringSlice(SemanticModifiers()),
 					},
 				},
 			},

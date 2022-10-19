@@ -6,3 +6,10 @@
 *.interp
 /antlr_parser/*.jar
 antlr_parser/.antlr
+
+protocol/gen/node_modules
+protocol/gen/*.js
+protocol/gen/*.js.*
+protocol/gen/package*.json
+protocol/gen/tmp/*
+!protocol/gen/tmp/.gitkeep

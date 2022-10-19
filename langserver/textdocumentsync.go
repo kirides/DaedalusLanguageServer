@@ -4,7 +4,7 @@ import (
 	"context"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 	"go.lsp.dev/uri"
 )
 
@@ -17,11 +17,11 @@ type textDocumentSync struct {
 func lspSeverityFromSeverity(severity ErrorSeverity) lsp.DiagnosticSeverity {
 	switch severity {
 	case SeverityInfo:
-		return lsp.DiagnosticSeverityInformation
+		return lsp.SeverityInformation
 	case SeverityWarning:
-		return lsp.DiagnosticSeverityWarning
+		return lsp.SeverityWarning
 	}
-	return lsp.DiagnosticSeverityError
+	return lsp.SeverityError
 }
 
 func (h *textDocumentSync) updateBuffer(ctx context.Context, documentURI, content string) {
@@ -61,7 +61,11 @@ func (h *textDocumentSync) handleTextDocumentDidChange(req dls.RpcContext, data 
 func (h *textDocumentSync) handleTextDocumentDidSave(req dls.RpcContext, data lsp.DidSaveTextDocumentParams) error {
 	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" {
-		h.updateBuffer(req.Context(), documentUri, data.Text)
+		text := ""
+		if data.Text != nil {
+			text = *data.Text
+		}
+		h.updateBuffer(req.Context(), documentUri, text)
 	}
 	return nil
 }

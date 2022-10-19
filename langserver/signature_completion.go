@@ -8,7 +8,7 @@ import (
 
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	"github.com/kirides/DaedalusLanguageServer/javadoc"
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
 func checkInheritance(docs SymbolProvider, sym symbol.Symbol, symToImplement string) bool {
@@ -339,7 +339,7 @@ func getHighestSortIndex(items []lsp.CompletionItem) int {
 	return max
 }
 
-func getLocalsAndParams(h *LspHandler, docURI lsp.URI, pos lsp.Position, varType string, filter func(symbol.Symbol) bool) []lsp.CompletionItem {
+func getLocalsAndParams(h *LspHandler, docURI lsp.DocumentURI, pos lsp.Position, varType string, filter func(symbol.Symbol) bool) []lsp.CompletionItem {
 	parsedDoc, err := h.parsedDocuments.Get(uriToFilename(docURI))
 	if err != nil {
 		return []lsp.CompletionItem{}

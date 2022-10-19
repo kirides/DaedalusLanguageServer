@@ -6,7 +6,7 @@ import (
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	"github.com/kirides/DaedalusLanguageServer/javadoc"
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
 func (h *LspHandler) handleTextDocumentHover(req dls.RpcContext, data lsp.TextDocumentPositionParams) error {
@@ -35,7 +35,7 @@ func (h *LspHandler) handleTextDocumentHover(req dls.RpcContext, data lsp.TextDo
 	}
 
 	return req.Reply(req.Context(), lsp.Hover{
-		Range: &lsp.Range{
+		Range: lsp.Range{
 			Start: data.Position,
 			End:   data.Position,
 		},

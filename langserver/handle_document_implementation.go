@@ -5,7 +5,7 @@ import (
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
 func (h *LspHandler) handleTextDocumentImplementation(req dls.RpcContext, params lsp.ImplementationParams) error {

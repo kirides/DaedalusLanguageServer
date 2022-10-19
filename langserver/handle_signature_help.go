@@ -6,7 +6,7 @@ import (
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/javadoc"
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
 func (h *LspHandler) getSignatureInfo(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.SignatureHelp, error) {
@@ -37,7 +37,7 @@ func (h *LspHandler) getSignatureInfo(ctx context.Context, params *lsp.TextDocum
 	return lsp.SignatureHelp{
 		Signatures: []lsp.SignatureInformation{
 			{
-				Documentation: &lsp.MarkupContent{
+				Documentation: lsp.MarkupContent{
 					Kind:  lsp.Markdown,
 					Value: javadoc.MarkdownSimple(fn),
 				},

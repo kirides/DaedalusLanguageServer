@@ -3,13 +3,13 @@ package langserver
 import (
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 	"go.lsp.dev/uri"
 )
 
 func getSymbolLocation(symbol symbol.Symbol) lsp.Location {
 	return lsp.Location{
-		URI: uri.File(symbol.Source()),
+		URI: lsp.DocumentURI(uri.File(symbol.Source())),
 		Range: lsp.Range{
 			Start: lsp.Position{
 				Character: uint32(symbol.Definition().Start.Column),

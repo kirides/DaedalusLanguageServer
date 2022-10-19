@@ -3,7 +3,7 @@ package langserver
 import (
 	"testing"
 
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
 func TestBufferedDocumentWordRange(t *testing.T) {

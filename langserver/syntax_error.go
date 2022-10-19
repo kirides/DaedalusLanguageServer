@@ -1,7 +1,7 @@
 package langserver
 
 import (
-	lsp "go.lsp.dev/protocol"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
 // ErrorSeverity ...

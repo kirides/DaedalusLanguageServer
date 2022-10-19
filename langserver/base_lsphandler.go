@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
+	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/uri"
 )
@@ -55,7 +56,7 @@ func fixURI(s string) (string, bool) {
 	return s, true
 }
 
-func uriToFilename(v uri.URI) string {
+func uriToFilename(v lsp.DocumentURI) string {
 	s := string(v)
 	if strings.HasPrefix(s, "git:/") {
 		return ""
@@ -65,7 +66,8 @@ func uriToFilename(v uri.URI) string {
 	if !ok {
 		return ""
 	}
-	v = uri.URI(fixed)
 
-	return v.Filename()
+	vr := uri.URI(fixed)
+
+	return vr.Filename()
 }
