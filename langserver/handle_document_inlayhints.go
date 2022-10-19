@@ -48,6 +48,13 @@ func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintPa
 
 		value := found.Location.String()
 		if cnst, ok := found.Symbol.(symbol.Constant); ok {
+			for ok {
+				var cnst2 symbol.Symbol
+				cnst2, ok = h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(cnst.Value), SymbolConstant)
+				if ok {
+					cnst = cnst2.(symbol.Constant)
+				}
+			}
 			value = ":" + cnst.Value
 		} else {
 			// only show value from constants for now
