@@ -218,6 +218,9 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 }
 
 func walkSymbols[T antlr.ParserRuleContext](rule antlr.RuleNode, walkFn func(symbol T) error) {
+	if rule == nil {
+		return
+	}
 	for _, v := range rule.GetChildren() {
 		if s, ok := v.(T); ok {
 			if err := walkFn(s); err != nil {
@@ -225,6 +228,31 @@ func walkSymbols[T antlr.ParserRuleContext](rule antlr.RuleNode, walkFn func(sym
 			}
 		}
 	}
+}
+
+func (l *DaedalusStatefulListener) getAssignedFields(ctx parser.IStatementBlockContext) []symbol.Constant {
+	cFields := []symbol.Constant{}
+
+	walkSymbols(ctx, func(v *parser.StatementContext) error {
+		if v.Assignment() != nil {
+			v := v.Assignment().(*parser.AssignmentContext)
+			ref := v.Reference().(*parser.ReferenceContext)
+			txt := ref.GetText()
+
+			expr := v.ExpressionBlock().GetText()
+
+			cFields = append(cFields,
+				symbol.NewConstant(txt,
+					"_",
+					l.source,
+					"",
+					symbolDefinitionForRuleContext(ref),
+					expr),
+			)
+		}
+		return nil
+	})
+	return cFields
 }
 
 // EnterBlockDef ...
@@ -281,6 +309,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 				symbolDefinitionForRuleContext(c.NameNode()),
 				symbolDefinitionForRuleContext(c.StatementBlock()),
 				false)
+			psym.Fields = l.getAssignedFields(c.StatementBlock())
 			l.Prototypes[strings.ToUpper(psym.Name())] = psym
 		} else if c, ok := ch.(*parser.InstanceDefContext); ok {
 			psym := symbol.NewPrototypeOrInstance(
@@ -291,6 +320,7 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 				symbolDefinitionForRuleContext(c.NameNode()),
 				symbolDefinitionForRuleContext(c.StatementBlock()),
 				true)
+			psym.Fields = l.getAssignedFields(c.StatementBlock())
 			l.Instances[strings.ToUpper(psym.Name())] = psym
 		}
 	}

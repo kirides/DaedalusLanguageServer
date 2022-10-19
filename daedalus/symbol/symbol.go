@@ -271,7 +271,7 @@ func (s Class) String() string {
 // ProtoTypeOrInstance ...
 type ProtoTypeOrInstance struct {
 	Parent string
-	Fields []Variable
+	Fields []Constant
 	symbolBase
 	BodyDefinition Definition
 	IsInstance     bool
