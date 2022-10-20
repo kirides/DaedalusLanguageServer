@@ -39,6 +39,30 @@ type CombinedDaedalusListener struct {
 	left, right parser.DaedalusListener
 }
 
+// EnterMainBlock implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) EnterMainBlock(c *parser.MainBlockContext) {
+	l.left.EnterMainBlock(c)
+	l.right.EnterMainBlock(c)
+}
+
+// ExitMainBlock implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) ExitMainBlock(c *parser.MainBlockContext) {
+	l.left.ExitMainBlock(c)
+	l.right.ExitMainBlock(c)
+}
+
+// EnterNamespaceDef implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) EnterNamespaceDef(c *parser.NamespaceDefContext) {
+	l.left.EnterNamespaceDef(c)
+	l.right.EnterNamespaceDef(c)
+}
+
+// ExitNamespaceDef implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) ExitNamespaceDef(c *parser.NamespaceDefContext) {
+	l.left.ExitNamespaceDef(c)
+	l.right.ExitNamespaceDef(c)
+}
+
 // EnterUnaryOperation implements parser.DaedalusListener
 func (l *CombinedDaedalusListener) EnterUnaryOperation(c *parser.UnaryOperationContext) {
 	l.left.EnterUnaryOperation(c)

@@ -35,6 +35,12 @@ type DaedalusListener interface {
 	// EnterInstanceDecl is called when entering the instanceDecl production.
 	EnterInstanceDecl(c *InstanceDeclContext)
 
+	// EnterNamespaceDef is called when entering the namespaceDef production.
+	EnterNamespaceDef(c *NamespaceDefContext)
+
+	// EnterMainBlock is called when entering the mainBlock production.
+	EnterMainBlock(c *MainBlockContext)
+
 	// EnterVarDecl is called when entering the varDecl production.
 	EnterVarDecl(c *VarDeclContext)
 
@@ -235,6 +241,12 @@ type DaedalusListener interface {
 
 	// ExitInstanceDecl is called when exiting the instanceDecl production.
 	ExitInstanceDecl(c *InstanceDeclContext)
+
+	// ExitNamespaceDef is called when exiting the namespaceDef production.
+	ExitNamespaceDef(c *NamespaceDefContext)
+
+	// ExitMainBlock is called when exiting the mainBlock production.
+	ExitMainBlock(c *MainBlockContext)
 
 	// ExitVarDecl is called when exiting the varDecl production.
 	ExitVarDecl(c *VarDeclContext)

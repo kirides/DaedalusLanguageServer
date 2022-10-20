@@ -103,6 +103,23 @@ func NewPrototypeOrInstance(name, parent, source, documentation string, definito
 	}
 }
 
+// NewNamespace ...
+func NewNamespace(name string, parent *Namespace, source, documentation string, definiton Definition, bodyDef Definition) Namespace {
+	ns := Namespace{
+		Parent:         parent,
+		symbolBase:     newSymbolBase(name, source, documentation, definiton),
+		BodyDefinition: bodyDef,
+		Constants:      make(map[string]Symbol, 1),
+		Variables:      make(map[string]Symbol, 1),
+		Functions:      make(map[string]Function, 1),
+		Classes:        make(map[string]Class, 1),
+		Prototypes:     make(map[string]ProtoTypeOrInstance, 1),
+		Instances:      make(map[string]ProtoTypeOrInstance, 1),
+	}
+	ns.fullName = ns.getFullName()
+	return ns
+}
+
 func writeParameterVariables(w io.StringWriter, symbols []Variable) {
 	for i, s := range symbols {
 		if i > 0 {
@@ -283,6 +300,43 @@ func (s ProtoTypeOrInstance) String() string {
 		return "instance " + s.Name() + "(" + s.Parent + ")"
 	}
 	return "prototype " + s.Name() + "(" + s.Parent + ")"
+}
+
+type Namespace struct {
+	symbolBase
+
+	Parent *Namespace
+
+	Constants  map[string]Symbol
+	Variables  map[string]Symbol
+	Functions  map[string]Function
+	Classes    map[string]Class
+	Prototypes map[string]ProtoTypeOrInstance
+	Instances  map[string]ProtoTypeOrInstance
+
+	BodyDefinition Definition
+	fullName       string
+}
+
+func (s Namespace) getFullName() string {
+	var parents []*Namespace
+	for p := s.Parent; p != nil; p = p.Parent {
+		parents = append(parents, p)
+	}
+	name := s.Name()
+	for i := len(parents) - 1; i >= 0; i-- {
+		name = parents[i].Name() + ":" + name
+	}
+	return name
+}
+
+func (s Namespace) FullName() string {
+	return s.fullName
+}
+
+// String ...
+func (s Namespace) String() string {
+	return "namespace " + s.FullName()
 }
 
 // Definition ...

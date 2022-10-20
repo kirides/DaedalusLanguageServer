@@ -46,12 +46,13 @@ func (m *parseResultsManager) ParseAndValidateScript(source, content string) *Pa
 
 	result := &ParseResult{
 		SyntaxErrors:    errListener.SyntaxErrors,
-		GlobalVariables: stateful.GlobalVariables,
-		GlobalConstants: stateful.GlobalConstants,
-		Functions:       stateful.Functions,
-		Classes:         stateful.Classes,
-		Prototypes:      stateful.Prototypes,
-		Instances:       stateful.Instances,
+		GlobalVariables: stateful.Globals.Variables,
+		GlobalConstants: stateful.Globals.Constants,
+		Functions:       stateful.Globals.Functions,
+		Classes:         stateful.Globals.Classes,
+		Prototypes:      stateful.Globals.Prototypes,
+		Instances:       stateful.Globals.Instances,
+		Namespaces:      stateful.Namespaces,
 		Source:          source,
 	}
 	return result
@@ -71,12 +72,13 @@ func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 
 	result := &ParseResult{
 		SyntaxErrors:    errListener.SyntaxErrors,
-		GlobalVariables: listener.GlobalVariables,
-		GlobalConstants: listener.GlobalConstants,
-		Functions:       listener.Functions,
-		Classes:         listener.Classes,
-		Prototypes:      listener.Prototypes,
-		Instances:       listener.Instances,
+		GlobalVariables: listener.Globals.Variables,
+		GlobalConstants: listener.Globals.Constants,
+		Functions:       listener.Globals.Functions,
+		Classes:         listener.Globals.Classes,
+		Prototypes:      listener.Globals.Prototypes,
+		Instances:       listener.Globals.Instances,
+		Namespaces:      listener.Namespaces,
 		Source:          source,
 	}
 	return result

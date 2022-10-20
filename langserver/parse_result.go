@@ -14,6 +14,7 @@ type ParseResult struct {
 	Functions       map[string]symbol.Function
 	Classes         map[string]symbol.Class
 	Prototypes      map[string]symbol.ProtoTypeOrInstance
+	Namespaces      map[string]symbol.Namespace
 	Source          string
 	SyntaxErrors    []SyntaxError
 }

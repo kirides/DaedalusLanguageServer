@@ -75,6 +75,18 @@ func (s *BaseDaedalusListener) EnterInstanceDecl(ctx *InstanceDeclContext) {}
 // ExitInstanceDecl is called when production instanceDecl is exited.
 func (s *BaseDaedalusListener) ExitInstanceDecl(ctx *InstanceDeclContext) {}
 
+// EnterNamespaceDef is called when production namespaceDef is entered.
+func (s *BaseDaedalusListener) EnterNamespaceDef(ctx *NamespaceDefContext) {}
+
+// ExitNamespaceDef is called when production namespaceDef is exited.
+func (s *BaseDaedalusListener) ExitNamespaceDef(ctx *NamespaceDefContext) {}
+
+// EnterMainBlock is called when production mainBlock is entered.
+func (s *BaseDaedalusListener) EnterMainBlock(ctx *MainBlockContext) {}
+
+// ExitMainBlock is called when production mainBlock is exited.
+func (s *BaseDaedalusListener) ExitMainBlock(ctx *MainBlockContext) {}
+
 // EnterVarDecl is called when production varDecl is entered.
 func (s *BaseDaedalusListener) EnterVarDecl(ctx *VarDeclContext) {}
 

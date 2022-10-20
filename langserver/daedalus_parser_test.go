@@ -39,6 +39,30 @@ func TestParseSingleScript(t *testing.T) {
 	}
 }
 
+func TestZParserExtender(t *testing.T) {
+	script := `
+	namespace zPE {
+		func void InitDamage() {
+			const int dmg = 0;
+			if (dmg) { return; };
+			HookEngineF(6736583/*0x66CAC7*/, 5, _DMG_OnDmg_Post);
+			const int oCNpc__OnDamage_Hit = 6710800;
+			HookEngineF(oCNpc__OnDamage_Hit, 7, _DMG_OnDmg_Pre);
+			dmg = 1;
+		};
+	};
+	`
+
+	m := newParseResultsManager(nopLogger{})
+	result := m.ParseScript("C:\\temp", script)
+	if _, ok := result.Namespaces[strings.ToUpper("zPE")].Functions[strings.ToUpper("InitDamage")]; !ok {
+		for _, v := range result.SyntaxErrors {
+			t.Logf("%d:%d %s: %s", v.Line, v.Column, v.ErrorCode.Code, v.ErrorCode.Description)
+		}
+		t.Fail()
+	}
+}
+
 func TestParseSingleScriptFromFile(t *testing.T) {
 	src := filepath.Join("testdata", "demo.d")
 	fileBody, _ := os.ReadFile(src)

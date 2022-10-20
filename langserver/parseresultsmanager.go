@@ -231,12 +231,12 @@ func (m *parseResultsManager) ParseSemanticsContentDataTypesRange(ctx context.Co
 	result := &SemanticParseResult{
 		ParseResult: ParseResult{
 			Source:          source,
-			Instances:       listener2.Instances,
-			GlobalVariables: listener2.GlobalVariables,
-			GlobalConstants: listener2.GlobalConstants,
-			Functions:       listener2.Functions,
-			Classes:         listener2.Classes,
-			Prototypes:      listener2.Prototypes,
+			Instances:       listener2.Globals.Instances,
+			GlobalVariables: listener2.Globals.Variables,
+			GlobalConstants: listener2.Globals.Constants,
+			Functions:       listener2.Globals.Functions,
+			Classes:         listener2.Globals.Classes,
+			Prototypes:      listener2.Globals.Prototypes,
 		},
 		GlobalIdentifiers: listener.GlobalIdentifiers,
 	}

@@ -25,6 +25,7 @@ Return: [Rr][Ee][Tt][Uu][Rr][Nn];
 Float: [Ff][Ll][Oo][Aa][Tt];
 Prototype: [Pp][Rr][Oo][Tt][Oo][Tt][Yy][Pp][Ee];
 Instance: [Ii][Nn][Ss][Tt][Aa][Nn][Cc][Ee];
+Namespace: [Nn][Aa][Mm][Ee][Ss][Pp][Aa][Cc][Ee];
 Null: [Nn][Uu][Ll][Ll];
 
 LeftParen: '(';
@@ -80,9 +81,9 @@ fragment ExponentFloat: (Digit+ | PointFloat) Exponent;
 fragment Exponent: [eE] [+-]? Digit+;
 
 //parser
-daedalusFile: (blockDef | inlineDef)*? EOF;
+daedalusFile: mainBlock EOF;
 blockDef:
-	(functionDef | classDef | prototypeDef | instanceDef) Semi?;
+	(functionDef | classDef | prototypeDef | instanceDef | namespaceDef) Semi?;
 inlineDef: (constDef | varDecl | instanceDecl) Semi;
 
 functionDef:
@@ -98,6 +99,10 @@ instanceDef:
 	Instance nameNode LeftParen parentReference RightParen statementBlock;
 instanceDecl:
 	Instance nameNode (',' nameNode)*? LeftParen parentReference RightParen;
+namespaceDef:
+	Namespace nameNode LeftBrace mainBlock RightBrace Semi;
+mainBlock:
+	(blockDef | inlineDef)*?;
 varDecl:
 	Var typeReference (varValueDecl | varArrayDecl) (
 		',' (varDecl | varValueDecl | varArrayDecl)
