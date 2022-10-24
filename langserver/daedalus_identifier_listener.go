@@ -88,6 +88,8 @@ func (l *DaedalusIdentifierListener) onIdentifier(ctx antlr.ParserRuleContext) {
 
 		strings.EqualFold(txt, "end") ||
 		strings.EqualFold(txt, "repeat") ||
+		strings.EqualFold(txt, "continue") ||
+		strings.EqualFold(txt, "break") ||
 		strings.EqualFold(txt, "while") ||
 
 		strings.EqualFold(txt, "item") {
