@@ -581,13 +581,15 @@ func SymbolToReadableCode(symbols SymbolProvider, s symbol.Symbol) string {
 	switch s := s.(type) {
 	case symbol.ConstantArray:
 		sb := strings.Builder{}
-		resolvedSize := resolveIntConstant(symbols, s.ArraySizeText)
-		s.Format(&sb, resolvedSize)
+		// TODO: this lock recursively!
+		// resolvedSize := resolveIntConstant(symbols, s.ArraySizeText)
+		s.Format(&sb, -1)
 		codeText = sb.String()
 	case symbol.ArrayVariable:
 		sb := strings.Builder{}
-		resolvedSize := resolveIntConstant(symbols, s.ArraySizeText)
-		s.Format(&sb, resolvedSize)
+		// TODO: this lock recursively!
+		// resolvedSize := resolveIntConstant(symbols, s.ArraySizeText)
+		s.Format(&sb, -1)
 		codeText = sb.String()
 	default:
 		codeText = s.String()
