@@ -116,7 +116,7 @@ func (m *parseResultsManager) LookupGlobalSymbol(name string, types SymbolType) 
 	return nil, false
 }
 
-func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) ([]symbol.Symbol, error) {
+func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) []symbol.Symbol {
 	result := make([]symbol.Symbol, 0, 200)
 
 	m.mtx.RLock()
@@ -129,7 +129,7 @@ func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) ([]symbol.Symbo
 		}, types)
 	}
 
-	return result, nil
+	return result
 }
 
 func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {

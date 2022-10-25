@@ -40,6 +40,8 @@ type DaedalusStatefulListener struct {
 type SymbolProvider interface {
 	WalkGlobalSymbols(walkFn func(symbol.Symbol) error, types SymbolType) error
 	LookupGlobalSymbol(name string, types SymbolType) (symbol.Symbol, bool)
+
+	GetGlobalSymbols(types SymbolType) []symbol.Symbol
 }
 
 // NewDaedalusStatefulListener ...

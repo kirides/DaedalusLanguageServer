@@ -53,14 +53,11 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, par
 				result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 			}
 
-			var symbols []symbol.Symbol
-			docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
-				if checkInheritance(docs, s, in) {
-					symbols = append(symbols, s)
-				}
-				return nil
-			}, SymbolInstance)
+			symbols := docs.GetGlobalSymbols(SymbolInstance)
 			for _, v := range symbols {
+				if !checkInheritance(docs, v, varType) {
+					continue
+				}
 				ci, err := completionItemFromSymbol(docs, v)
 				if err != nil {
 					continue
@@ -191,11 +188,7 @@ func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varTy
 		result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 	}
 
-	var symbols []symbol.Symbol
-	docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
-		symbols = append(symbols, s)
-		return nil
-	}, SymbolInstance)
+	symbols := docs.GetGlobalSymbols(SymbolInstance)
 
 	for _, s := range symbols {
 		if !checkInheritance(docs, s, varType) {
