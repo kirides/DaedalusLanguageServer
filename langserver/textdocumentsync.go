@@ -43,6 +43,13 @@ func (h *textDocumentSync) updateBuffer(ctx context.Context, documentURI, conten
 	h.LogDebug("Updated buffer for %q with %d chars", documentURI, len(chars))
 }
 
+func (h *textDocumentSync) handleTextDocumentDidClose(req dls.RpcContext, data lsp.DidCloseTextDocumentParams) error {
+	documentUri := uriToFilename(data.TextDocument.URI)
+	if documentUri != "" {
+		h.bufferManager.DeleteBuffer(documentUri)
+	}
+	return nil
+}
 func (h *textDocumentSync) handleTextDocumentDidOpen(req dls.RpcContext, data lsp.DidOpenTextDocumentParams) error {
 	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" {

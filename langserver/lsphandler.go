@@ -283,10 +283,10 @@ func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodSemanticTokensRange, dls.MakeHandler(h.handleSemanticTokensRange))
 	h.handlers.Register(lsp.MethodTextDocumentInlayHint, dls.MakeHandler(h.handleInlayHints))
 
-	// textDocument/didOpen/didSave/didChange
 	h.handlers.Register(lsp.MethodTextDocumentDidOpen, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidOpen))
 	h.handlers.Register(lsp.MethodTextDocumentDidChange, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidChange))
 	h.handlers.Register(lsp.MethodTextDocumentDidSave, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidSave))
+	h.handlers.Register(lsp.MethodTextDocumentDidClose, dls.MakeHandler(h.TextDocumentSync.handleTextDocumentDidClose))
 
 	h.handlers.Register(lsp.MethodTextDocumentDocumentSymbol, dls.MakeHandler(h.handleDocumentSymbol))
 	h.handlers.Register(lsp.MethodWorkspaceSymbol, dls.MakeHandler(h.handleWorkspaceSymbol))

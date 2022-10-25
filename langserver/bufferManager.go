@@ -20,6 +20,13 @@ func NewBufferManager() *BufferManager {
 	}
 }
 
+// DeleteBuffer ...
+func (m *BufferManager) DeleteBuffer(documentURI string) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	delete(m.documents, documentURI)
+}
+
 // UpdateBuffer ...
 func (m *BufferManager) UpdateBuffer(documentURI string, buf string) {
 	m.mtx.Lock()
