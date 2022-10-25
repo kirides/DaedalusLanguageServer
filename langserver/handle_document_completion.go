@@ -125,17 +125,22 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 		}
 	}
 
+	symbols := make([]symbol.Symbol, 0, 200)
 	h.parsedDocuments.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		if partialIdentifier != "" && !stringContainsAllAnywhere(s.Name(), partialIdentifier) {
 			return nil
 		}
-		ci, err := completionItemFromSymbol(h.parsedDocuments, s)
-		if err != nil {
-			return nil
-		}
-		result = append(result, ci)
+		symbols = append(symbols, s)
 		return nil
 	}, SymbolAll)
+
+	for _, v := range symbols {
+		ci, err := completionItemFromSymbol(h.parsedDocuments, v)
+		if err != nil {
+			continue
+		}
+		result = append(result, ci)
+	}
 
 	return result, nil
 }

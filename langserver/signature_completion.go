@@ -53,17 +53,21 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, par
 				result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 			}
 
+			var symbols []symbol.Symbol
 			docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
 				if checkInheritance(docs, s, in) {
-					ci, err := completionItemFromSymbol(docs, s)
-					if err != nil {
-						return nil
-					}
-					ci.Detail += " (" + strings.ToUpper(in) + " instance)"
-					result = append(result, ci)
+					symbols = append(symbols, s)
 				}
 				return nil
 			}, SymbolInstance)
+			for _, v := range symbols {
+				ci, err := completionItemFromSymbol(docs, v)
+				if err != nil {
+					continue
+				}
+				ci.Detail += " (" + strings.ToUpper(in) + " instance)"
+				result = append(result, ci)
+			}
 		}
 	} else if strings.HasPrefix(paramDocu, "[") { // if enum list directive
 		enums, _ := javadoc.ParseWithinDedup(paramDocu, "[", "]")
@@ -109,19 +113,23 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, par
 		})
 		result = append(result, ci...)
 
+		var symbols []symbol.Symbol
 		docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
 			if fnSymb, ok := s.(symbol.Function); ok {
 				if !fn.EqualSym(fnSymb) {
 					return nil
 				}
-				ci, err := completionItemFromSymbol(docs, s)
-				if err != nil {
-					return nil
-				}
-				result = append(result, ci)
+				symbols = append(symbols, s)
 			}
 			return nil
 		}, SymbolFunction)
+		for _, s := range symbols {
+			ci, err := completionItemFromSymbol(docs, s)
+			if err != nil {
+				continue
+			}
+			result = append(result, ci)
+		}
 	} else {
 		found = false
 	}
@@ -141,6 +149,7 @@ func getCompletionItemsSimple(result []lsp.CompletionItem, h *LspHandler, varTyp
 		types = SymbolFunction
 	}
 
+	var symbols []symbol.Symbol
 	docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		useIt := false
 		if typer, ok := s.(interface{ GetType() string }); ok {
@@ -155,14 +164,17 @@ func getCompletionItemsSimple(result []lsp.CompletionItem, h *LspHandler, varTyp
 			useIt = true
 		}
 		if useIt {
-			ci, err := completionItemFromSymbol(docs, s)
-			if err != nil {
-				return nil
-			}
-			result = append(result, ci)
+			symbols = append(symbols, s)
 		}
 		return nil
 	}, types)
+	for _, s := range symbols {
+		ci, err := completionItemFromSymbol(docs, s)
+		if err != nil {
+			continue
+		}
+		result = append(result, ci)
+	}
 
 	return result, true, nil
 }
@@ -179,16 +191,21 @@ func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varTy
 		result = append(result, getDefaultC_ITEMCompletions(docs, sortIdx)...)
 	}
 
+	var symbols []symbol.Symbol
 	docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
 		if checkInheritance(docs, s, varType) {
-			ci, err := completionItemFromSymbol(docs, s)
-			if err != nil {
-				return nil
-			}
-			result = append(result, ci)
+			symbols = append(symbols, s)
 		}
 		return nil
 	}, SymbolInstance)
+
+	for _, s := range symbols {
+		ci, err := completionItemFromSymbol(docs, s)
+		if err != nil {
+			continue
+		}
+		result = append(result, ci)
+	}
 	return result, true, nil
 }
 

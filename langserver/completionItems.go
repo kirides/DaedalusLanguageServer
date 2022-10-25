@@ -8,6 +8,7 @@ import (
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
+// DO NOT USE INSIDE Walk... Functions! This RLocks the symbolsProvider and leads to deadlocks otherwise
 func completionItemFromSymbol(symbols SymbolProvider, s symbol.Symbol) (lsp.CompletionItem, error) {
 	kind, err := completionItemKindForSymbol(s)
 	if err != nil {

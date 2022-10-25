@@ -215,13 +215,9 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) {
 	for _, ch := range ctx.GetChildren() {
 		if c, ok := ch.(*parser.ConstDefContext); ok {
-			for _, s := range l.constsFromContext(c) {
-				l.constants = append(l.constants, s)
-			}
+			l.constants = append(l.constants, l.constsFromContext(c)...)
 		} else if v, ok := ch.(*parser.VarDeclContext); ok {
-			for _, s := range l.variablesFromContext(v) {
-				l.variables = append(l.variables, s)
-			}
+			l.variables = append(l.variables, l.variablesFromContext(v)...)
 		} else if c, ok := ch.(*parser.InstanceDeclContext); ok {
 			walkSymbols(c, func(name parser.INameNodeContext) error {
 				psym := symbol.NewPrototypeOrInstance(
