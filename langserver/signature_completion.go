@@ -20,7 +20,7 @@ func checkInheritance(docs SymbolProvider, sym symbol.Symbol, symToImplement str
 		if strings.EqualFold(inst.Parent, symToImplement) {
 			return true
 		}
-		sym2, ok := docs.LookupGlobalSymbol(strings.ToUpper(inst.Parent), SymbolInstance|SymbolPrototype|SymbolClass)
+		sym2, ok := docs.LookupGlobalSymbol(strings.ToUpper(inst.Parent), SymbolPrototype|SymbolClass)
 		if ok {
 			return checkInheritance(docs, sym2, symToImplement)
 		}
@@ -193,13 +193,14 @@ func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varTy
 
 	var symbols []symbol.Symbol
 	docs.WalkGlobalSymbols(func(s symbol.Symbol) error {
-		if checkInheritance(docs, s, varType) {
-			symbols = append(symbols, s)
-		}
+		symbols = append(symbols, s)
 		return nil
 	}, SymbolInstance)
 
 	for _, s := range symbols {
+		if !checkInheritance(docs, s, varType) {
+			continue
+		}
 		ci, err := completionItemFromSymbol(docs, s)
 		if err != nil {
 			continue
