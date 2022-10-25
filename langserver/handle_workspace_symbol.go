@@ -20,7 +20,6 @@ func (w workspaceSymbol) getSymbolInformation(s symbol.Symbol) lsp.SymbolInforma
 
 func (w workspaceSymbol) collectWorkspaceSymbols(result []lsp.SymbolInformation, s symbol.Symbol) []lsp.SymbolInformation {
 	mainSymb := w.getSymbolInformation(s)
-	result = append(result, mainSymb)
 
 	if cls, ok := s.(symbol.Class); ok {
 		for _, v := range cls.Fields {
@@ -29,12 +28,14 @@ func (w workspaceSymbol) collectWorkspaceSymbols(result []lsp.SymbolInformation,
 			result = append(result, si)
 		}
 	} else if cls, ok := s.(symbol.ProtoTypeOrInstance); ok {
+		mainSymb.Name = mainSymb.Name + " (" + cls.Parent + ")"
 		for _, v := range cls.Fields {
 			si := w.getSymbolInformation(v)
 			si.ContainerName = s.Name()
 			result = append(result, si)
 		}
 	}
+	result = append(result, mainSymb)
 	return result
 }
 

@@ -1,6 +1,8 @@
 package langserver
 
 import (
+	"strings"
+
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
@@ -34,6 +36,7 @@ func (ds textDocumentDocumentSymbol) collectDocumentSymbols(result []lsp.Documen
 			},
 		}
 	} else if cls, ok := s.(symbol.ProtoTypeOrInstance); ok {
+		mainSymb.Name = mainSymb.Name + " (" + cls.Parent + ")"
 		for _, v := range cls.Fields {
 			si := ds.getDocumentSymbol(v)
 			mainSymb.Children = append(mainSymb.Children, si)
@@ -46,6 +49,12 @@ func (ds textDocumentDocumentSymbol) collectDocumentSymbols(result []lsp.Documen
 			},
 		}
 	} else if cls, ok := s.(symbol.Function); ok {
+		mainSymb.Name = cls.ReturnType + " " + mainSymb.Name + "("
+		for _, v := range cls.Parameters {
+			mainSymb.Name += v.Name() + ", "
+		}
+		mainSymb.Name = strings.TrimSuffix(mainSymb.Name, ", ")
+		mainSymb.Name += ")"
 		mainSymb.Range = lsp.Range{
 			Start: mainSymb.Range.Start,
 			End: lsp.Position{
