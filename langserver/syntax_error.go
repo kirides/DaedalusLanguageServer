@@ -39,6 +39,8 @@ var (
 	D0003MissingSemicolonMightCauseIssues = NewSyntaxErrorCode("D0003", "Missing ';' might cause issues.", SeverityError)
 	// D0004NotEnoughArgumentsSpecified ...
 	D0004NotEnoughArgumentsSpecified = NewSyntaxErrorCode("D0004", "Not enough arguments specified", SeverityError)
+	// D0005TooManyArgumentsSpecified
+	D0005TooManyArgumentsSpecified = NewSyntaxErrorCode("D0005", "Too many arguments specified", SeverityError)
 )
 
 // NewSyntaxError ...

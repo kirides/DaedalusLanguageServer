@@ -78,5 +78,7 @@ func (l *DaedalusValidatingListener) EnterFuncCall(ctx *parser.FuncCallContext) 
 
 	if len(ctx.AllFuncArgExpression()) < len(sym.(symbol.Function).Parameters) {
 		l.report(ctx.GetParser(), ctx, ctx.NameNode().GetStop(), D0004NotEnoughArgumentsSpecified)
+	} else if len(ctx.AllFuncArgExpression()) > len(sym.(symbol.Function).Parameters) {
+		l.report(ctx.GetParser(), ctx, ctx.NameNode().GetStop(), D0005TooManyArgumentsSpecified)
 	}
 }
