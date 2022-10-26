@@ -93,6 +93,18 @@ func (s *BaseDaedalusListener) EnterVarDecl(ctx *VarDeclContext) {}
 // ExitVarDecl is called when production varDecl is exited.
 func (s *BaseDaedalusListener) ExitVarDecl(ctx *VarDeclContext) {}
 
+// EnterMetaValue is called when production metaValue is entered.
+func (s *BaseDaedalusListener) EnterMetaValue(ctx *MetaValueContext) {}
+
+// ExitMetaValue is called when production metaValue is exited.
+func (s *BaseDaedalusListener) ExitMetaValue(ctx *MetaValueContext) {}
+
+// EnterZParserExtenderMetaBlock is called when production zParserExtenderMetaBlock is entered.
+func (s *BaseDaedalusListener) EnterZParserExtenderMetaBlock(ctx *ZParserExtenderMetaBlockContext) {}
+
+// ExitZParserExtenderMetaBlock is called when production zParserExtenderMetaBlock is exited.
+func (s *BaseDaedalusListener) ExitZParserExtenderMetaBlock(ctx *ZParserExtenderMetaBlockContext) {}
+
 // EnterConstArrayDef is called when production constArrayDef is entered.
 func (s *BaseDaedalusListener) EnterConstArrayDef(ctx *ConstArrayDefContext) {}
 

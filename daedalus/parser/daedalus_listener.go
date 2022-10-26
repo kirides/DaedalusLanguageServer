@@ -44,6 +44,12 @@ type DaedalusListener interface {
 	// EnterVarDecl is called when entering the varDecl production.
 	EnterVarDecl(c *VarDeclContext)
 
+	// EnterMetaValue is called when entering the metaValue production.
+	EnterMetaValue(c *MetaValueContext)
+
+	// EnterZParserExtenderMetaBlock is called when entering the zParserExtenderMetaBlock production.
+	EnterZParserExtenderMetaBlock(c *ZParserExtenderMetaBlockContext)
+
 	// EnterConstArrayDef is called when entering the constArrayDef production.
 	EnterConstArrayDef(c *ConstArrayDefContext)
 
@@ -250,6 +256,12 @@ type DaedalusListener interface {
 
 	// ExitVarDecl is called when exiting the varDecl production.
 	ExitVarDecl(c *VarDeclContext)
+
+	// ExitMetaValue is called when exiting the metaValue production.
+	ExitMetaValue(c *MetaValueContext)
+
+	// ExitZParserExtenderMetaBlock is called when exiting the zParserExtenderMetaBlock production.
+	ExitZParserExtenderMetaBlock(c *ZParserExtenderMetaBlockContext)
 
 	// ExitConstArrayDef is called when exiting the constArrayDef production.
 	ExitConstArrayDef(c *ConstArrayDefContext)

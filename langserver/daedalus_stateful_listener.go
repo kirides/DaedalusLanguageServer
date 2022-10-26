@@ -473,6 +473,9 @@ func (l *DaedalusStatefulListener) ExitNamespaceDef(ctx *parser.NamespaceDefCont
 	l.curentNamespace = l.curentNamespace.Parent
 }
 
+func (l *DaedalusStatefulListener) EnterZParserExtenderMetaBlock(ctx *parser.ZParserExtenderMetaBlockContext) {
+}
+
 // ExitNamespaceDef implements parser.DaedalusListener
 func (l *DaedalusStatefulListener) ExitDaedalusFile(ctx *parser.DaedalusFileContext) {
 	l.copySymbolsToCurrentScope()

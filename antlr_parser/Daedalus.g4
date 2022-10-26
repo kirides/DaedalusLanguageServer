@@ -12,21 +12,22 @@ IntegerLiteral: Digit+;
 FloatLiteral: PointFloat | ExponentFloat;
 StringLiteral: '"' (~["\r\n])* '"';
 
-Const: [Cc][Oo][Nn][Ss][Tt];
-Var: [Vv][Aa][Rr];
-If: [Ii][Ff];
-Int: [Ii][Nn][Tt];
-Else: [Ee][Ll][Ss][Ee];
-Func: [Ff][Uu][Nn][Cc];
-StringKeyword: [Ss][Tt][Rr][Ii][Nn][Gg];
-Class: [Cc][Ll][Aa][Ss][Ss];
-Void: [Vv][Oo][Ii][Dd];
-Return: [Rr][Ee][Tt][Uu][Rr][Nn];
-Float: [Ff][Ll][Oo][Aa][Tt];
-Prototype: [Pp][Rr][Oo][Tt][Oo][Tt][Yy][Pp][Ee];
-Instance: [Ii][Nn][Ss][Tt][Aa][Nn][Cc][Ee];
-Namespace: [Nn][Aa][Mm][Ee][Ss][Pp][Aa][Cc][Ee];
-Null: [Nn][Uu][Ll][Ll];
+Const: C O N S T;
+Var: V A R;
+If: I F;
+Int: I N T;
+Else: E L S E;
+Func: F U N C;
+StringKeyword: S T R I N G;
+Class: C L A S S;
+Void: V O I D;
+Return: R E T U R N;
+Float: F L O A T;
+Prototype: P R O T O T Y P E;
+Instance: I N S T A N C E;
+Namespace: N A M E S P A C E;
+Null: N U L L;
+Meta: M E T A;
 
 LeftParen: '(';
 RightParen: ')';
@@ -80,8 +81,35 @@ fragment PointFloat: Digit* '.' Digit+ | Digit+ '.';
 fragment ExponentFloat: (Digit+ | PointFloat) Exponent;
 fragment Exponent: [eE] [+-]? Digit+;
 
+fragment A: [Aa];
+fragment B: [Bb];
+fragment C: [Cc];
+fragment D: [Dd];
+fragment E: [Ee];
+fragment F: [Ff];
+fragment G: [Gg];
+fragment H: [Hh];
+fragment I: [Ii];
+fragment J: [Jj];
+fragment K: [Kk];
+fragment L: [Ll];
+fragment M: [Mm];
+fragment N: [Nn];
+fragment O: [Oo];
+fragment P: [Pp];
+fragment Q: [Qq];
+fragment R: [Rr];
+fragment S: [Ss];
+fragment T: [Tt];
+fragment U: [Uu];
+fragment V: [Vv];
+fragment W: [Ww];
+fragment X: [Xx];
+fragment Y: [Yy];
+fragment Z: [Zz];
+
 //parser
-daedalusFile: mainBlock EOF;
+daedalusFile: mainBlock? EOF;
 blockDef:
 	(functionDef | classDef | prototypeDef | instanceDef | namespaceDef) Semi?;
 inlineDef: (constDef | varDecl | instanceDecl) Semi;
@@ -102,12 +130,17 @@ instanceDecl:
 namespaceDef:
 	Namespace nameNode LeftBrace mainBlock RightBrace Semi;
 mainBlock:
-	(blockDef | inlineDef)*?;
+	zParserExtenderMetaBlock? (blockDef | inlineDef)+;
 varDecl:
 	Var typeReference (varValueDecl | varArrayDecl) (
 		',' (varDecl | varValueDecl | varArrayDecl)
 	)*;
 
+
+metaValue: .+?;
+zParserExtenderMetaBlock:
+	Meta LeftBrace ( Identifier Assign metaValue Semi)* RightBrace Semi
+	;
 constArrayDef:
 	nameNode LeftBracket arraySize RightBracket constArrayAssignment;
 constArrayAssignment:
@@ -198,6 +231,7 @@ anyIdentifier: (
 		| Class
 		| Prototype
 		| Null
+		| Meta
 		| Identifier
 	);
 
