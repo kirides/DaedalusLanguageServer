@@ -364,12 +364,19 @@ func (l *DaedalusStatefulListener) findVarsConstsInStatements(root antlr.Tree) [
 
 // EnterFunctionDef ...
 func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefContext) {
+	if ctx.NameNode() == nil {
+		return
+	}
+
 	statements := ctx.StatementBlock().(*parser.StatementBlockContext)
 
 	params := []symbol.Variable{}
 	locals := l.findVarsConstsInStatements(statements)
 
 	walkSymbols(ctx.ParameterList(), func(pdef *parser.ParameterDeclContext) error {
+		if pdef.NameNode() == nil {
+			return nil
+		}
 		params = append(params,
 			symbol.NewVariable(pdef.NameNode().GetText(),
 				pdef.TypeReference().GetText(),
