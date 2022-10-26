@@ -50,6 +50,9 @@ type DaedalusListener interface {
 	// EnterMetaValue is called when entering the metaValue production.
 	EnterMetaValue(c *MetaValueContext)
 
+	// EnterZParserExtenderMeta is called when entering the zParserExtenderMeta production.
+	EnterZParserExtenderMeta(c *ZParserExtenderMetaContext)
+
 	// EnterZParserExtenderMetaBlock is called when entering the zParserExtenderMetaBlock production.
 	EnterZParserExtenderMetaBlock(c *ZParserExtenderMetaBlockContext)
 
@@ -265,6 +268,9 @@ type DaedalusListener interface {
 
 	// ExitMetaValue is called when exiting the metaValue production.
 	ExitMetaValue(c *MetaValueContext)
+
+	// ExitZParserExtenderMeta is called when exiting the zParserExtenderMeta production.
+	ExitZParserExtenderMeta(c *ZParserExtenderMetaContext)
 
 	// ExitZParserExtenderMetaBlock is called when exiting the zParserExtenderMetaBlock production.
 	ExitZParserExtenderMetaBlock(c *ZParserExtenderMetaBlockContext)

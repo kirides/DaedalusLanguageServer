@@ -143,8 +143,11 @@ varDecl:
 	)*;
 
 metaValue: .+?;
+zParserExtenderMeta:
+nameNode Assign metaValue Semi
+;
 zParserExtenderMetaBlock:
-	Meta LeftBrace (Identifier Assign metaValue Semi)*? RightBrace Semi;
+	Meta LeftBrace zParserExtenderMeta*? RightBrace Semi;
 constArrayDef:
 	nameNode LeftBracket arraySize RightBracket constArrayAssignment;
 constArrayAssignment:

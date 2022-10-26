@@ -39,6 +39,18 @@ type CombinedDaedalusListener struct {
 	left, right parser.DaedalusListener
 }
 
+// EnterZParserExtenderMeta implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) EnterZParserExtenderMeta(c *parser.ZParserExtenderMetaContext) {
+	l.left.EnterZParserExtenderMeta(c)
+	l.right.EnterZParserExtenderMeta(c)
+}
+
+// ExitZParserExtenderMeta implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) ExitZParserExtenderMeta(c *parser.ZParserExtenderMetaContext) {
+	l.left.ExitZParserExtenderMeta(c)
+	l.right.ExitZParserExtenderMeta(c)
+}
+
 // EnterContentBlock implements parser.DaedalusListener
 func (l *CombinedDaedalusListener) EnterContentBlock(c *parser.ContentBlockContext) {
 	l.left.EnterContentBlock(c)

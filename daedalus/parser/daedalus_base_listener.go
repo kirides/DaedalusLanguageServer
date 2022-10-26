@@ -105,6 +105,12 @@ func (s *BaseDaedalusListener) EnterMetaValue(ctx *MetaValueContext) {}
 // ExitMetaValue is called when production metaValue is exited.
 func (s *BaseDaedalusListener) ExitMetaValue(ctx *MetaValueContext) {}
 
+// EnterZParserExtenderMeta is called when production zParserExtenderMeta is entered.
+func (s *BaseDaedalusListener) EnterZParserExtenderMeta(ctx *ZParserExtenderMetaContext) {}
+
+// ExitZParserExtenderMeta is called when production zParserExtenderMeta is exited.
+func (s *BaseDaedalusListener) ExitZParserExtenderMeta(ctx *ZParserExtenderMetaContext) {}
+
 // EnterZParserExtenderMetaBlock is called when production zParserExtenderMetaBlock is entered.
 func (s *BaseDaedalusListener) EnterZParserExtenderMetaBlock(ctx *ZParserExtenderMetaBlockContext) {}
 

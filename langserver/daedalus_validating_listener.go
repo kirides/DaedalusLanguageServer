@@ -1,10 +1,12 @@
 package langserver
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
+	"golang.org/x/exp/slices"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
@@ -80,5 +82,55 @@ func (l *DaedalusValidatingListener) EnterFuncCall(ctx *parser.FuncCallContext) 
 		l.report(ctx.GetParser(), ctx, ctx.NameNode().GetStop(), D0004NotEnoughArgumentsSpecified)
 	} else if len(ctx.AllFuncArgExpression()) > len(sym.(symbol.Function).Parameters) {
 		l.report(ctx.GetParser(), ctx, ctx.NameNode().GetStop(), D0005TooManyArgumentsSpecified)
+	}
+}
+
+// zParserExtender
+
+var metaFields = map[string][]string{
+	strings.ToUpper("Parser"):      {"GAME", "SFX", "PFX", "VFX", "CAMERA", "MENU", "MUSIC"},
+	strings.ToUpper("MergeMode"):   {"0", "1", "TRUE", "FALSE"},
+	strings.ToUpper("Engine"):      {"G1", "G1A", "G2", "G2A"},
+	strings.ToUpper("NativeWhile"): {"0", "1", "TRUE", "FALSE"},
+	strings.ToUpper("Namespace"):   nil,
+	strings.ToUpper("Using"):       nil,
+	strings.ToUpper("Mod"):         nil,
+	strings.ToUpper("After"):       nil,
+}
+
+// EnterZParserExtenderMeta implements parser.DaedalusListener
+func (l *DaedalusValidatingListener) EnterZParserExtenderMeta(ctx *parser.ZParserExtenderMetaContext) {
+	if ctx.NameNode() == nil || ctx.MetaValue() == nil {
+		return
+	}
+	key := strings.ToUpper(ctx.NameNode().GetText())
+	if values, ok := metaFields[key]; ok {
+		// nil means there are no checks
+		if values == nil {
+			return
+		}
+		switch key {
+		// these are comma separated
+		case "ENGINE", "NAMESPACE", "USING", "AFTER":
+			items := strings.Split(ctx.MetaValue().GetText(), ",")
+			for _, v := range items {
+				if !slices.Contains(values, strings.ToUpper(strings.TrimSpace(v))) {
+					l.report(ctx.GetParser(),
+						ctx.MetaValue(),
+						ctx.MetaValue().GetStart(),
+						NewSyntaxErrorCode("D0000", fmt.Sprintf("Unrecognized values. Known values are: %q", strings.Join(values, ", ")), SeverityError))
+					return
+				}
+			}
+		default:
+			if !slices.Contains(values, strings.ToUpper(ctx.MetaValue().GetText())) {
+				l.report(ctx.GetParser(),
+					ctx.MetaValue(),
+					ctx.MetaValue().GetStart(),
+					NewSyntaxErrorCode("D0000", fmt.Sprintf("Unrecognized value. Known values are: %q", strings.Join(values, ", ")), SeverityError))
+			}
+		}
+	} else {
+		l.report(ctx.GetParser(), ctx.NameNode(), ctx.NameNode().GetStart(), D0006UnrecognizedMetaField)
 	}
 }
