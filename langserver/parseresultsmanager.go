@@ -188,7 +188,7 @@ func (m *parseResultsManager) ParseSemanticsContentRange(ctx context.Context, so
 	return m.ParseSemanticsContentDataTypesRange(ctx, source, content, rang, DataAll)
 }
 
-type DataType int
+type DataType uint32
 
 const (
 	DataIdentifiers DataType = 1 << iota
