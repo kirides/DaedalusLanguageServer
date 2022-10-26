@@ -39,6 +39,18 @@ type CombinedDaedalusListener struct {
 	left, right parser.DaedalusListener
 }
 
+// EnterContentBlock implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) EnterContentBlock(c *parser.ContentBlockContext) {
+	l.left.EnterContentBlock(c)
+	l.right.EnterContentBlock(c)
+}
+
+// ExitContentBlock implements parser.DaedalusListener
+func (l *CombinedDaedalusListener) ExitContentBlock(c *parser.ContentBlockContext) {
+	l.left.ExitContentBlock(c)
+	l.right.ExitContentBlock(c)
+}
+
 // EnterMetaValue implements parser.DaedalusListener
 func (l *CombinedDaedalusListener) EnterMetaValue(c *parser.MetaValueContext) {
 	l.left.EnterMetaValue(c)

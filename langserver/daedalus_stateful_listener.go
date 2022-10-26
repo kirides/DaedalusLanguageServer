@@ -404,14 +404,22 @@ func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefConte
 func (l *DaedalusStatefulListener) EnterNamespaceDef(ctx *parser.NamespaceDefContext) {
 	l.copySymbolsToCurrentScope()
 
+	if ctx.NameNode() == nil {
+		return
+	}
+
 	parent := l.curentNamespace
+
+	bodyDef := symbol.NewDefinition(
+		ctx.NameNode().GetStop().GetLine(), ctx.GetStop().GetColumn(),
+		ctx.GetStop().GetLine(), ctx.GetStop().GetColumn())
 
 	ns := symbol.NewNamespace(ctx.NameNode().GetText(),
 		parent,
 		l.source,
 		l.symbolSummaryForContext(ctx.GetParent().(*parser.BlockDefContext)),
 		l.symbolDefinitionForRuleContext(ctx.NameNode()),
-		l.symbolDefinitionForRuleContext(ctx.MainBlock()),
+		bodyDef,
 	)
 	l.Namespaces[strings.ToUpper(ns.FullName())] = ns
 	l.curentNamespace = &ns

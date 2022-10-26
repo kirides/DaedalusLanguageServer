@@ -111,7 +111,13 @@ fragment Z: [Zz];
 //parser
 daedalusFile: mainBlock? EOF;
 blockDef:
-	(functionDef | classDef | prototypeDef | instanceDef | namespaceDef) Semi?;
+	(
+		functionDef
+		| classDef
+		| prototypeDef
+		| instanceDef
+		| namespaceDef
+	) Semi;
 inlineDef: (constDef | varDecl | instanceDecl) Semi;
 
 functionDef:
@@ -128,19 +134,17 @@ instanceDef:
 instanceDecl:
 	Instance nameNode (',' nameNode)*? LeftParen parentReference RightParen;
 namespaceDef:
-	Namespace nameNode LeftBrace mainBlock RightBrace Semi;
-mainBlock:
-	zParserExtenderMetaBlock? (blockDef | inlineDef)+;
+	Namespace nameNode LeftBrace contentBlock*? RightBrace;
+mainBlock: zParserExtenderMetaBlock? contentBlock+;
+contentBlock: (blockDef | inlineDef);
 varDecl:
 	Var typeReference (varValueDecl | varArrayDecl) (
 		',' (varDecl | varValueDecl | varArrayDecl)
 	)*;
 
-
 metaValue: .+?;
 zParserExtenderMetaBlock:
-	Meta LeftBrace ( Identifier Assign metaValue Semi)* RightBrace Semi
-	;
+	Meta LeftBrace (Identifier Assign metaValue Semi)*? RightBrace Semi;
 constArrayDef:
 	nameNode LeftBracket arraySize RightBracket constArrayAssignment;
 constArrayAssignment:
@@ -232,6 +236,7 @@ anyIdentifier: (
 		| Prototype
 		| Null
 		| Meta
+		| Namespace
 		| Identifier
 	);
 

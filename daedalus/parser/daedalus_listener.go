@@ -41,6 +41,9 @@ type DaedalusListener interface {
 	// EnterMainBlock is called when entering the mainBlock production.
 	EnterMainBlock(c *MainBlockContext)
 
+	// EnterContentBlock is called when entering the contentBlock production.
+	EnterContentBlock(c *ContentBlockContext)
+
 	// EnterVarDecl is called when entering the varDecl production.
 	EnterVarDecl(c *VarDeclContext)
 
@@ -253,6 +256,9 @@ type DaedalusListener interface {
 
 	// ExitMainBlock is called when exiting the mainBlock production.
 	ExitMainBlock(c *MainBlockContext)
+
+	// ExitContentBlock is called when exiting the contentBlock production.
+	ExitContentBlock(c *ContentBlockContext)
 
 	// ExitVarDecl is called when exiting the varDecl production.
 	ExitVarDecl(c *VarDeclContext)

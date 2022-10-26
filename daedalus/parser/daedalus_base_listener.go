@@ -87,6 +87,12 @@ func (s *BaseDaedalusListener) EnterMainBlock(ctx *MainBlockContext) {}
 // ExitMainBlock is called when production mainBlock is exited.
 func (s *BaseDaedalusListener) ExitMainBlock(ctx *MainBlockContext) {}
 
+// EnterContentBlock is called when production contentBlock is entered.
+func (s *BaseDaedalusListener) EnterContentBlock(ctx *ContentBlockContext) {}
+
+// ExitContentBlock is called when production contentBlock is exited.
+func (s *BaseDaedalusListener) ExitContentBlock(ctx *ContentBlockContext) {}
+
 // EnterVarDecl is called when production varDecl is entered.
 func (s *BaseDaedalusListener) EnterVarDecl(ctx *VarDeclContext) {}
 
