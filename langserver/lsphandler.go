@@ -290,6 +290,8 @@ func (h *LspHandler) onInitialized() {
 
 	h.handlers.Register(lsp.MethodTextDocumentDocumentSymbol, dls.MakeHandler(h.handleDocumentSymbol))
 	h.handlers.Register(lsp.MethodWorkspaceSymbol, dls.MakeHandler(h.handleWorkspaceSymbol))
+
+	h.handlers.Register(lsp.MethodTextDocumentCodeLens, dls.MakeHandler(h.handleTextDocumentCodeLens))
 }
 
 func prettyJSON(val interface{}) string {
@@ -360,6 +362,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 						TokenModifiers: copyAndCastToStringSlice(SemanticModifiers()),
 					},
 				},
+				CodeLensProvider: &lsp.CodeLensOptions{ResolveProvider: false},
 			},
 		}, nil); err != nil {
 			return fmt.Errorf("not initialized")

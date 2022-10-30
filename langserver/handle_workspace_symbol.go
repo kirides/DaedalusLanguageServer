@@ -70,9 +70,8 @@ func (h *LspHandler) handleWorkspaceSymbol(req dls.RpcContext, params lsp.Worksp
 	}, SymbolAll)
 
 	if err != nil {
-		return nil
+		return req.Reply(req.Context(), nil, nil)
 	}
 
-	req.Reply(req.Context(), result, nil)
-	return nil
+	return req.Reply(req.Context(), result, nil)
 }
