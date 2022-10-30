@@ -673,7 +673,7 @@ type Command struct {
 	 * Arguments that the command handler should be
 	 * invoked with.
 	 */
-	Arguments []json.RawMessage`json:"arguments,omitempty"`
+	Arguments []any `json:"arguments,omitempty"`
 }
 /**
  * Completion client capabilities
