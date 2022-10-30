@@ -1,38 +1,42 @@
 package langserver
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
+	"go.lsp.dev/uri"
 )
 
 type codeLensProvider interface {
-	Provide(source *ParseResult) []lsp.CodeLens
+	Provide(ctx context.Context, source *ParseResult) []lsp.CodeLens
 }
 
-type funcCodeLensProvider func(*ParseResult) []lsp.CodeLens
+type funcCodeLensProvider func(context.Context, *ParseResult) []lsp.CodeLens
 
-func (f funcCodeLensProvider) Provide(source *ParseResult) []lsp.CodeLens {
-	return f(source)
+func (f funcCodeLensProvider) Provide(ctx context.Context, source *ParseResult) []lsp.CodeLens {
+	return f(ctx, source)
 }
 
 type codeLensHandler struct {
+	lsp            *LspHandler
 	symbolProvider SymbolProvider
 	providers      []codeLensProvider
 }
 
-func (p *codeLensHandler) Provide(source *ParseResult) []lsp.CodeLens {
+func (p *codeLensHandler) Provide(ctx context.Context, source *ParseResult) []lsp.CodeLens {
 	var result []lsp.CodeLens
 	for _, v := range p.providers {
-		result = append(result, v.Provide(source)...)
+		result = append(result, v.Provide(ctx, source)...)
 	}
 	return result
 }
 
-func (p *codeLensHandler) provideImplementations(source *ParseResult) []lsp.CodeLens {
+func (p *codeLensHandler) provideImplementations(ctx context.Context, source *ParseResult) []lsp.CodeLens {
 	countClassesAndPrototypes := 0
 
 	source.WalkGlobalSymbols(func(s symbol.Symbol) error {
@@ -96,7 +100,7 @@ func (p *codeLensHandler) provideImplementations(source *ParseResult) []lsp.Code
 		location := getSymbolLocation(v)
 		lens := lsp.CodeLens{
 			Range: location.Range,
-			Command: lsp.Command{
+			Command: &lsp.Command{
 				Title:     txt,
 				Command:   "editor.action.showReferences",
 				Arguments: []any{getSymbolLocation(v).URI, location.Range.Start, locations},
@@ -108,15 +112,121 @@ func (p *codeLensHandler) provideImplementations(source *ParseResult) []lsp.Code
 	return result
 }
 
-func newCodeLensHandler(symbolProvider SymbolProvider) *codeLensHandler {
-	h := &codeLensHandler{
-		symbolProvider: symbolProvider,
-	}
-	h.providers = []codeLensProvider{
-		funcCodeLensProvider(h.provideImplementations),
+type resolveType string
+
+const (
+	resolveReferences      resolveType = "references"
+	resolveImplementations resolveType = "implementations"
+)
+
+type codeLensResolveMetadata struct {
+	Command         string
+	SourceURI       lsp.DocumentURI
+	Type            resolveType
+	SourceLocation  lsp.Location
+	ReferenceParams lsp.ReferenceParams
+}
+
+func (p *codeLensHandler) provideReferences(ctx context.Context, source *ParseResult) []lsp.CodeLens {
+
+	allSymbolsCount := 0
+	source.WalkGlobalSymbols(func(s symbol.Symbol) error {
+		allSymbolsCount++
+		return nil
+	}, SymbolAll)
+
+	if allSymbolsCount == 0 {
+		return nil
 	}
 
-	return h
+	allSymbols := make([]symbol.Symbol, 0, allSymbolsCount)
+	source.WalkGlobalSymbols(func(s symbol.Symbol) error {
+		allSymbols = append(allSymbols, s)
+		return nil
+	}, SymbolAll)
+
+	result := make([]lsp.CodeLens, 0, len(allSymbols))
+
+	for _, v := range allSymbols {
+		location := getSymbolLocation(v)
+
+		meta := codeLensResolveMetadata{
+			SourceURI:      location.URI,
+			SourceLocation: location,
+			Type:           resolveReferences,
+			Command:        "editor.action.showReferences",
+			ReferenceParams: lsp.ReferenceParams{
+				TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+					TextDocument: lsp.TextDocumentIdentifier{
+						URI: lsp.DocumentURI(uri.File(v.Source())),
+					},
+					Position: lsp.Position{
+						Line:      uint32(v.Definition().Start.Line - 1),
+						Character: uint32(v.Definition().Start.Column + 1),
+					},
+				}},
+		}
+		metaJson, err := json.Marshal(meta)
+		if err != nil {
+			continue
+		}
+		lens := lsp.CodeLens{
+			Command: nil,
+			Range:   location.Range,
+			Data:    metaJson,
+		}
+
+		result = append(result, lens)
+	}
+
+	return result
+}
+
+func newCodeLensHandler(h *LspHandler, symbolProvider SymbolProvider) *codeLensHandler {
+	handler := &codeLensHandler{
+		lsp:            h,
+		symbolProvider: symbolProvider,
+	}
+	handler.providers = []codeLensProvider{
+		funcCodeLensProvider(handler.provideImplementations),
+		funcCodeLensProvider(handler.provideReferences),
+	}
+
+	return handler
+}
+
+func (h *LspHandler) handleCodeLensResolve(req dls.RpcContext, params lsp.CodeLens) error {
+	var meta codeLensResolveMetadata
+	if err := json.Unmarshal(params.Data, &meta); err != nil {
+		req.Reply(req.Context(), nil, err)
+		return err
+	}
+	if meta.Type != resolveReferences {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
+	refsCh := h.getAllReferences(req.Context(), meta.ReferenceParams)
+	var locations []lsp.Location
+
+	for v := range refsCh {
+		if locations == nil {
+			locations = make([]lsp.Location, 0, 100)
+		}
+		locations = append(locations, v)
+	}
+	var txt string
+	if len(locations) > 1 {
+		txt = fmt.Sprintf("%d references", len(locations))
+	} else {
+		txt = "1 references"
+	}
+
+	params.Command = &lsp.Command{
+		Title:     txt,
+		Command:   meta.Command,
+		Arguments: []any{meta.SourceURI, meta.SourceLocation.Range.Start, locations},
+	}
+	return req.Reply(req.Context(), params, nil)
 }
 
 func (h *LspHandler) handleTextDocumentCodeLens(req dls.RpcContext, params lsp.CodeLensParams) error {
@@ -131,6 +241,6 @@ func (h *LspHandler) handleTextDocumentCodeLens(req dls.RpcContext, params lsp.C
 		req.Reply(req.Context(), nil, err)
 		return err
 	}
-	result := newCodeLensHandler(h.parsedDocuments).Provide(r)
-	return req.Reply(req.Context(), result, nil)
+	locations := newCodeLensHandler(h, h.parsedDocuments).Provide(req.Context(), r)
+	return req.Reply(req.Context(), locations, nil)
 }

@@ -292,6 +292,7 @@ func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodWorkspaceSymbol, dls.MakeHandler(h.handleWorkspaceSymbol))
 
 	h.handlers.Register(lsp.MethodTextDocumentCodeLens, dls.MakeHandler(h.handleTextDocumentCodeLens))
+	h.handlers.Register(lsp.MethodCodeLensResolve, dls.MakeHandler(h.handleCodeLensResolve))
 	h.handlers.Register(lsp.MethodTextDocumentReferences, dls.MakeHandler(h.handleTextDocumentReferences))
 }
 
@@ -363,7 +364,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 						TokenModifiers: copyAndCastToStringSlice(SemanticModifiers()),
 					},
 				},
-				CodeLensProvider:   &lsp.CodeLensOptions{ResolveProvider: false},
+				CodeLensProvider:   &lsp.CodeLensOptions{ResolveProvider: true},
 				ReferencesProvider: true,
 			},
 		}, nil); err != nil {

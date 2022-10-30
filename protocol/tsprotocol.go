@@ -528,13 +528,13 @@ type CodeLens struct {
 /**
 	 * The command this code lens represents.
 	 */
-	Command Command`json:"command,omitempty"`
+	Command *Command`json:"command,omitempty"`
 /**
 	 * A data entry field that is preserved on a code lens item between
 	 * a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
 	 * (#CodeLensResolveRequest)
 	 */
-	Data LSPAny`json:"data,omitempty"`
+	Data json.RawMessage `json:"data,omitempty"`
 }
 /**
  * The client capabilities  of a [CodeLensRequest](#CodeLensRequest).
