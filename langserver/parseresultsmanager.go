@@ -132,27 +132,27 @@ func (m *parseResultsManager) GetGlobalSymbols(types SymbolType) []symbol.Symbol
 	return result
 }
 
-func (m *parseResultsManager) Get(documentURI string) (*ParseResult, error) {
+func (m *parseResultsManager) Get(filePath string) (*ParseResult, error) {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()
 
-	if r, ok := m.parseResults[documentURI]; ok {
+	if r, ok := m.parseResults[filePath]; ok {
 		return r, nil
 	}
 	for k, v := range m.parseResults {
-		if strings.EqualFold(k, documentURI) {
+		if strings.EqualFold(k, filePath) {
 			return v, nil
 		}
 	}
-	return nil, fmt.Errorf("document %q not found", documentURI)
+	return nil, fmt.Errorf("document %q not found", filePath)
 }
 
-func (m *parseResultsManager) ParseSemantics(ctx context.Context, documentURI string) (*SemanticParseResult, error) {
-	return m.ParseSemanticsRange(ctx, documentURI, lsp.Range{})
+func (m *parseResultsManager) ParseSemantics(ctx context.Context, filePath string) (*SemanticParseResult, error) {
+	return m.ParseSemanticsRange(ctx, filePath, lsp.Range{})
 }
 
-func (m *parseResultsManager) LoadFile(ctx context.Context, documentURI string) (string, error) {
-	source := documentURI
+func (m *parseResultsManager) LoadFile(ctx context.Context, filePath string) (string, error) {
+	source := filePath
 
 	buf := bufferPool.Get().(*bytes.Buffer)
 	defer bufferPool.Put(buf)
@@ -173,6 +173,27 @@ func (m *parseResultsManager) LoadFile(ctx context.Context, documentURI string) 
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+func (m *parseResultsManager) LoadFileBuffer(ctx context.Context, filePath string, buffer *bytes.Buffer) error {
+	source := filePath
+
+	decoder := m.decoderPool.Get().(*encoding.Decoder)
+	defer m.decoderPool.Put(decoder)
+
+	f, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	decoder.Reset()
+	translated := decoder.Reader(f)
+	buffer.Reset()
+	_, err = buffer.ReadFrom(translated)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *parseResultsManager) ParseSemanticsRange(ctx context.Context, documentURI string, rang lsp.Range) (*SemanticParseResult, error) {

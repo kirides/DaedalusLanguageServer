@@ -46,6 +46,35 @@ func (r *ParseResult) CountSymbols() int64 {
 	return numSymbols
 }
 
+func (parsedDoc *ParseResult) LookupScopedVariable(di symbol.DefinitionIndex, name string) (symbol.Symbol, bool) {
+	for _, fn := range parsedDoc.Functions {
+		if fn.BodyDefinition.InBBox(di) {
+			for _, p := range fn.Parameters {
+				if strings.EqualFold(p.Name(), name) {
+					return p, true
+				}
+			}
+			for _, p := range fn.LocalVariables {
+				if strings.EqualFold(p.Name(), name) {
+					return p, true
+				}
+			}
+			break
+		}
+	}
+	for _, fn := range parsedDoc.Classes {
+		if fn.BodyDefinition.InBBox(di) {
+			for _, p := range fn.Fields {
+				if strings.EqualFold(p.Name(), name) {
+					return p, true
+				}
+			}
+			break
+		}
+	}
+	return nil, false
+}
+
 func (parsedDoc *ParseResult) WalkScopedVariables(di symbol.DefinitionIndex, walkFn func(symbol.Symbol) bool) {
 	for _, fn := range parsedDoc.Functions {
 		if fn.BodyDefinition.InBBox(di) {
