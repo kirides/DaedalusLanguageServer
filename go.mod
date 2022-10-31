@@ -8,7 +8,7 @@ require (
 	go.lsp.dev/uri v0.3.0
 	go.uber.org/zap v1.23.0
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.4.0
 )
 
 require (
