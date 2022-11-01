@@ -63,27 +63,67 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 		buffer := bytes.Buffer{}
 		rxWord := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(word) + `\b`)
 
-		getLineCol := func(buf *bytes.Buffer, start, end int) (int, int) {
+		rxBlockComment := regexp.MustCompile(`(?s)\/\*.*?\*\/`)
+
+		getLineCol := func(buf *bytes.Buffer, start, end int) ([]byte, int, int) {
 			line := 1
 			col := 0
+			lineStart := 0
 			for i := 0; i < buf.Len() && i < start; i++ {
 				if buf.Bytes()[i] == '\n' {
 					line++
 					col = 0
+					lineStart = i + 1
 				} else {
 					col++
 				}
 			}
-			return line, col
+			return buf.Bytes()[lineStart : lineStart+col], line, col
 		}
 		defer close(resultCh)
+
+		isComment := func(buf *bytes.Buffer, blockComments [][]int, segment []byte, idxInSegment int, startEnd []int) bool {
+			segment = bytes.TrimSpace(segment)
+			if bytes.HasPrefix(segment, []byte("//")) {
+				// definitely inside comment
+				return true
+			}
+
+			isString := false
+			for i := 0; i < len(segment); i++ {
+				if segment[i] == '"' {
+					isString = !isString
+					continue
+				}
+				if !isString && bytes.HasPrefix(segment[i:], []byte("//")) {
+					// is inline comment at the end somewhere
+					return true
+				}
+			}
+			if isString {
+				// if it's not a comment and still in a string, then it's not a reference
+				return true
+			}
+
+			for _, block := range blockComments {
+				if startEnd[0] >= block[0] && startEnd[1] <= block[1] {
+					// definitely inside block-comment
+					return true
+				}
+			}
+			return false
+		}
 
 		if inScope {
 			buffer.WriteString(string(content))
 			indices := rxWord.FindAllIndex(buffer.Bytes(), -1)
+			var blockComments [][]int
+			if len(indices) > 0 {
+				blockComments = rxBlockComment.FindAllIndex(buffer.Bytes(), -1)
+			}
 
 			for _, startEnd := range indices {
-				line, col := getLineCol(&buffer, startEnd[0], startEnd[1])
+				segment, line, col := getLineCol(&buffer, startEnd[0], startEnd[1])
 				if line > bbox.End.Line {
 					return
 				}
@@ -94,6 +134,10 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 
 				if wordDefIndex.Line == line+1 && wordDefIndex.Column == col {
 					// ignore itself
+					continue
+				}
+
+				if isComment(&buffer, blockComments, segment, col, startEnd) {
 					continue
 				}
 
@@ -122,14 +166,22 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 
 				indices := rxWord.FindAllIndex(buffer.Bytes(), -1)
 
+				var blockComments [][]int
+				if len(indices) > 0 {
+					blockComments = rxBlockComment.FindAllIndex(buffer.Bytes(), -1)
+				}
 				for _, startEnd := range indices {
-					line, col := getLineCol(&buffer, startEnd[0], startEnd[1])
+					segment, line, col := getLineCol(&buffer, startEnd[0], startEnd[1])
 
 					if k == doc {
 						if wordDefIndex.Line == line && wordDefIndex.Column == col {
 							// ignore itself
 							continue
 						}
+					}
+
+					if isComment(&buffer, blockComments, segment, col, startEnd) {
+						continue
 					}
 
 					resultCh <- lsp.Location{
