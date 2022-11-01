@@ -510,6 +510,12 @@ func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) (
 				if err != nil {
 					continue
 				}
+				var lastMod time.Time
+				if stat, err := f.Stat(); err == nil {
+					lastMod = stat.ModTime()
+				} else {
+					lastMod = time.Now()
+				}
 				decoder.Reset()
 				translated := decoder.Reader(f)
 				buf.Reset()
@@ -519,7 +525,7 @@ func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) (
 					continue
 				}
 
-				parsed := m.ParseScript(r, buf.String())
+				parsed := m.ParseScript(r, buf.String(), lastMod)
 
 				m.mtx.Lock()
 				m.parseResults[parsed.Source] = parsed
@@ -563,7 +569,12 @@ func (m *parseResultsManager) ParseFile(dFile string) (*ParseResult, error) {
 		return nil, err
 	}
 
-	parsed := m.ParseScript(dFile, buf.String())
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	parsed := m.ParseScript(dFile, buf.String(), stat.ModTime())
 
 	m.mtx.Lock()
 	m.parseResults[parsed.Source] = parsed

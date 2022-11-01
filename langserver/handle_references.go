@@ -3,7 +3,9 @@ package langserver
 import (
 	"bytes"
 	"context"
+	"os"
 	"regexp"
+	"time"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
@@ -159,6 +161,13 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 				if req.Err() != nil {
 					return
 				}
+
+				var lastMod time.Time
+				if stat, err := os.Stat(k); err == nil {
+					lastMod = stat.ModTime()
+				} else {
+					lastMod = time.Now()
+				}
 				err := h.parsedDocuments.LoadFileBuffer(req, k, &buffer)
 				if err != nil {
 					continue
@@ -187,7 +196,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 					}
 
 					if parsed == nil {
-						parsed = h.parsedDocuments.ParseScript(".", buffer.String())
+						parsed = h.parsedDocuments.ParseScript(".", buffer.String(), lastMod)
 					}
 					if parsed != nil {
 						if _, ok := parsed.LookupScopedVariable(symbol.DefinitionIndex{

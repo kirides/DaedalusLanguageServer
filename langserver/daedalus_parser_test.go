@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/text/encoding/charmap"
 )
@@ -33,7 +34,7 @@ func TestParseSingleScript(t *testing.T) {
 	};`
 
 	m := newParseResultsManager(nopLogger{})
-	result := m.ParseScript("C:\\temp", script)
+	result := m.ParseScript("C:\\temp", script, time.Now())
 	if _, ok := result.Functions[strings.ToUpper("InitDamage")]; !ok {
 		t.Fail()
 	}
@@ -54,7 +55,7 @@ func TestZParserExtender(t *testing.T) {
 	`
 
 	m := newParseResultsManager(nopLogger{})
-	result := m.ParseScript("C:\\temp", script)
+	result := m.ParseScript("C:\\temp", script, time.Now())
 	if _, ok := result.Namespaces[strings.ToUpper("zPE")].Functions[strings.ToUpper("InitDamage")]; !ok {
 		for _, v := range result.SyntaxErrors {
 			t.Logf("%d:%d %s: %s", v.Line, v.Column, v.ErrorCode.Code, v.ErrorCode.Description)
@@ -69,7 +70,7 @@ func TestParseSingleScriptFromFile(t *testing.T) {
 	script, _ := charmap.Windows1252.NewDecoder().Bytes(fileBody)
 
 	m := newParseResultsManager(nopLogger{})
-	result := m.ParseScript(src, string(script))
+	result := m.ParseScript(src, string(script), time.Now())
 	if _, ok := result.Functions[strings.ToUpper("Do")]; !ok {
 		t.Fail()
 	}

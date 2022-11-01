@@ -2,6 +2,7 @@ package langserver
 
 import (
 	"strings"
+	"time"
 
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 )
@@ -17,6 +18,8 @@ type ParseResult struct {
 	Namespaces      map[string]symbol.Namespace
 	Source          string
 	SyntaxErrors    []SyntaxError
+
+	lastModifiedAt time.Time
 }
 
 func (r *ParseResult) CountSymbols() int64 {

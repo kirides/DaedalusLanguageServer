@@ -2,6 +2,7 @@ package langserver
 
 import (
 	"sync"
+	"time"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
@@ -54,6 +55,7 @@ func (m *parseResultsManager) ParseAndValidateScript(source, content string) *Pa
 		Instances:       stateful.Globals.Instances,
 		Namespaces:      stateful.Namespaces,
 		Source:          source,
+		lastModifiedAt:  time.Now(),
 	}
 	return result
 }
@@ -64,7 +66,14 @@ func (m *parseResultsManager) ParseScriptListener(source, content string, listen
 }
 
 // ParseScript ...
-func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
+func (m *parseResultsManager) ParseScript(source, content string, lastModifiedAt time.Time) *ParseResult {
+	m.mtx.Lock()
+	if existing, ok := m.parseResults[source]; ok && existing.lastModifiedAt == lastModifiedAt {
+		m.mtx.Unlock()
+		return existing
+	}
+	m.mtx.Unlock()
+
 	listener := NewDaedalusStatefulListener(source, m)
 	errListener := &SyntaxErrorListener{}
 
@@ -80,6 +89,7 @@ func (m *parseResultsManager) ParseScript(source, content string) *ParseResult {
 		Instances:       listener.Globals.Instances,
 		Namespaces:      listener.Namespaces,
 		Source:          source,
+		lastModifiedAt:  lastModifiedAt,
 	}
 	return result
 }
