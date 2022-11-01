@@ -27,11 +27,11 @@ func TestBufferedDocumentWordRange(t *testing.T) {
         };
     };`)
 
-	word := doc.GetWordRangeAtPosition(lsp.Position{
+	word, pos := doc.GetWordRangeAtPosition(lsp.Position{
 		Character: 29,
 		Line:      8,
 	})
-	t.Logf("Found word: %q", word)
+	t.Logf("Found word: %q at %v", word, pos)
 }
 func TestBufferedDocumentMethodCall(t *testing.T) {
 	doc := BufferedDocument(`

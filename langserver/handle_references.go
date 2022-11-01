@@ -25,7 +25,7 @@ func (h *LspHandler) getAllReferences(req context.Context, params lsp.ReferenceP
 		close(resultCh)
 		return resultCh
 	}
-	word := content.GetWordRangeAtPosition(params.Position)
+	word, pos := content.GetWordRangeAtPosition(params.Position)
 	if word == "" {
 		close(resultCh)
 		return resultCh
@@ -37,8 +37,8 @@ func (h *LspHandler) getAllReferences(req context.Context, params lsp.ReferenceP
 		return resultCh
 	}
 	wordDefIndex := symbol.DefinitionIndex{
-		Line:   int(params.Position.Line) + 1,
-		Column: int(params.Position.Character),
+		Line:   int(pos.Start.Line) + 1,
+		Column: int(pos.Start.Character),
 	}
 
 	inScope := false
@@ -91,6 +91,12 @@ func (h *LspHandler) getAllReferences(req context.Context, params lsp.ReferenceP
 				if !bbox.InBBox(symbol.DefinitionIndex{Line: line, Column: col}) {
 					continue
 				}
+
+				if wordDefIndex.Line == line+1 && wordDefIndex.Column == col {
+					// ignore itself
+					continue
+				}
+
 				resultCh <- lsp.Location{
 					URI: lsp.DocumentURI(uri.File(doc)),
 					Range: lsp.Range{
@@ -118,6 +124,13 @@ func (h *LspHandler) getAllReferences(req context.Context, params lsp.ReferenceP
 
 				for _, startEnd := range indices {
 					line, col := getLineCol(&buffer, startEnd[0], startEnd[1])
+
+					if k == doc {
+						if wordDefIndex.Line == line && wordDefIndex.Column == col {
+							// ignore itself
+							continue
+						}
+					}
 
 					resultCh <- lsp.Location{
 						URI: lsp.DocumentURI(uri.File(k)),

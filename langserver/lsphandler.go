@@ -201,7 +201,7 @@ func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (Fo
 	if doc == "" {
 		return notFound, fmt.Errorf("document %q not found", documentURI)
 	}
-	identifier := doc.GetWordRangeAtPosition(position)
+	identifier, _ := doc.GetWordRangeAtPosition(position)
 
 	if v, ok := h.lookUpScope(documentURI, position); ok {
 		var ok bool

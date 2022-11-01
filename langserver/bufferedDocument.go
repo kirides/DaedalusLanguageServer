@@ -19,12 +19,12 @@ var (
 type BufferedDocument string
 
 // GetWordRangeAtPosition ...
-func (m BufferedDocument) GetWordRangeAtPosition(position lsp.Position) string {
+func (m BufferedDocument) GetWordRangeAtPosition(position lsp.Position) (string, lsp.Range) {
 	if m == "" {
-		return ""
+		return "", lsp.Range{}
 	}
 	if position.Character < 2 && position.Line < 1 {
-		return ""
+		return "", lsp.Range{}
 	}
 	line := 0
 	offset := 0
@@ -49,7 +49,7 @@ func (m BufferedDocument) GetWordRangeAtPosition(position lsp.Position) string {
 	start := center
 	end := center
 	if start >= len(doc) {
-		return ""
+		return "", lsp.Range{}
 	}
 	if end >= len(doc) {
 		end = len(doc)
@@ -63,7 +63,7 @@ func (m BufferedDocument) GetWordRangeAtPosition(position lsp.Position) string {
 	if start < center {
 		start++ // skip the first bad character
 	}
-	return doc[start : start+(end-start)]
+	return doc[start : start+(end-start)], lsp.Range{Start: lsp.Position{Line: position.Line, Character: uint32(start)}, End: lsp.Position{Line: position.Line, Character: uint32(end)}}
 }
 
 func (m BufferedDocument) GetIdentifier(position lsp.Position) (partial string, err error) {
