@@ -17,6 +17,8 @@ import (
 )
 
 type LspWorkspace struct {
+	path            string
+	uri             lsp.DocumentURI
 	logger          dls.Logger
 	bufferManager   *BufferManager
 	parsedDocuments *parseResultsManager
@@ -45,6 +47,40 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 
 	exe, _ := os.Executable()
 	if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
+		_, err = ws.parsedDocuments.ParseSource(ws.workspaceCtx, f)
+		if err != nil {
+			ws.logger.Errorf("Error parsing %q: %v", f, err)
+			return
+		}
+	}
+
+	if _, err := findPath(filepath.Join(ws.path, ".dls", "externals", "builtins.src")); err != nil {
+		req := DlsMessageRequest{
+			ShowMessageRequestParams: lsp.ShowMessageRequestParams{
+				Type:    lsp.Info,
+				Message: "Create neccessery workspace files",
+				Actions: []lsp.MessageActionItem{
+					{Title: "Cancel"},
+					{Title: "Gothic 1"},
+					{Title: "Gothic 2"},
+				},
+			},
+			WorkspaceURI: ws.uri,
+		}
+		var result lsp.MessageActionItem
+		id, err := ws.conn.Call(context.Background(), lsp.MethodWindowShowMessageRequest, req, &result)
+		if err != nil {
+			ws.logger.Errorf("Error requesting message %q: %v", id, err)
+		}
+		ws.logger.Debugf("Result: %#v", result)
+		if result.Title == "Gothic 2" {
+			ws.commandSetupWorkspace(ws, "G2A")
+		} else if result.Title == "Gothic 1" {
+			ws.commandSetupWorkspace(ws, "G1")
+		}
+	}
+
+	if f, err := findPath(filepath.Join(ws.path, ".dls", "externals", "builtins.src")); err == nil {
 		_, err = ws.parsedDocuments.ParseSource(ws.workspaceCtx, f)
 		if err != nil {
 			ws.logger.Errorf("Error parsing %q: %v", f, err)

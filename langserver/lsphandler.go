@@ -85,6 +85,10 @@ func (h *LspHandler) OnConfigChanged(handler func(config LspConfig)) {
 	h.onConfigChangedHandlers = append(h.onConfigChangedHandlers, handler)
 }
 
+func (h *LspHandler) handleWorkspaceExecuteCommand(req dls.RpcContext, params lsp.ExecuteCommandParams) error {
+	return req.Reply(req.Context(), nil, nil)
+}
+
 func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentCompletion, dls.MakeHandler(h.handleTextDocumentCompletion))
 	h.handlers.Register(lsp.MethodTextDocumentDefinition, dls.MakeHandler(h.handleTextDocumentDefinition))
@@ -106,6 +110,7 @@ func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentCodeLens, dls.MakeHandler(h.handleTextDocumentCodeLens))
 	h.handlers.Register(lsp.MethodCodeLensResolve, dls.MakeHandler(h.handleCodeLensResolve))
 	h.handlers.Register(lsp.MethodTextDocumentReferences, dls.MakeHandler(h.handleTextDocumentReferences))
+	h.handlers.Register(lsp.MethodWorkspaceExecuteCommand, dls.MakeHandler(h.handleWorkspaceExecuteCommand))
 }
 
 func prettyJSON(val interface{}) string {
@@ -149,6 +154,8 @@ func (h *LspHandler) initializeWorkspaces(ctx context.Context, workspaceURIs ...
 			config:          h.config,
 			logger:          h.logger,
 			conn:            h.conn,
+			path:            p,
+			uri:             lsp.DocumentURI(v),
 		}
 		ws.workspaceCtx, ws.cancelWorkspaceCtx = context.WithCancel(context.Background())
 		h.workspaces[p] = ws
@@ -225,6 +232,9 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				Version: "dev",
 			},
 			Capabilities: lsp.ServerCapabilities{
+				ExecuteCommandProvider: lsp.ExecuteCommandOptions{
+					Commands: []string{CommandSetupWorkspace},
+				},
 				CompletionProvider: lsp.CompletionOptions{
 					TriggerCharacters: []string{"."},
 				},
