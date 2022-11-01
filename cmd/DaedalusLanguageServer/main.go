@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+
+	"github.com/segmentio/encoding/json"
 
 	"github.com/kirides/DaedalusLanguageServer/langserver"
 

@@ -2,9 +2,10 @@ package langserver
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/segmentio/encoding/json"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"

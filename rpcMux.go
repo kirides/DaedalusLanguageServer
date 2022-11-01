@@ -2,8 +2,9 @@ package DaedalusLanguageServer
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+
+	"github.com/segmentio/encoding/json"
 
 	"go.lsp.dev/jsonrpc2"
 )

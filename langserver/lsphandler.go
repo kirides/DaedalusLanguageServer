@@ -2,13 +2,14 @@ package langserver
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"unicode"
+
+	"github.com/segmentio/encoding/json"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
@@ -44,8 +45,9 @@ type LspHandler struct {
 	onConfigChangedHandlers []func(config LspConfig)
 	parsedKnownSrcFiles     concurrentSet[string]
 	baseLspHandler
-	initialized     context.Context
-	markInitialized func()
+	initialized          context.Context
+	workspaceInitialized bool
+	markInitialized      func()
 }
 
 var (
@@ -429,104 +431,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 	}
 
 	if r.Method() == lsp.MethodTextDocumentDidOpen {
-		h.onceParseAll.Do(func() {
-			exe, _ := os.Executable()
-			if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
-				_, err = h.parsedDocuments.ParseSource(context.TODO(), f)
-				if err != nil {
-					h.LogError("Error parsing %q: %v", f, err)
-					return
-				}
-			}
-			var openParams lsp.DidOpenTextDocumentParams
-			json.Unmarshal(r.Params(), &openParams)
-			wd := uriToFilename(openParams.TextDocument.URI)
-			if wd == "" {
-				h.LogError("Error locating current file")
-				return
-			}
-
-			var resultsX []*ParseResult
-			if externalsSrc, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.src")); err == nil {
-				if !h.parsedKnownSrcFiles.Contains(externalsSrc) {
-					h.parsedKnownSrcFiles.Store(externalsSrc)
-					customBuiltins, err := h.parsedDocuments.ParseSource(context.TODO(), externalsSrc)
-					if err != nil {
-						h.LogError("Error parsing %q: %v", externalsSrc, err)
-					} else {
-						resultsX = append(resultsX, customBuiltins...)
-					}
-				}
-			} else if externalsDaedalus, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.d")); err == nil {
-				if !h.parsedKnownSrcFiles.Contains(externalsDaedalus) {
-					h.parsedKnownSrcFiles.Store(externalsDaedalus)
-					parsed, err := h.parsedDocuments.ParseFile(externalsDaedalus)
-					if err != nil {
-						h.LogError("Error parsing %q: %v", externalsDaedalus, err)
-					} else {
-						resultsX = append(resultsX, parsed)
-					}
-				}
-			}
-
-			for _, v := range h.config.ProjectFiles {
-				var err error
-				full := v
-				if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
-					// User defined hardcoded project file, either absolute or relative
-					if _, err := os.Stat(full); err != nil {
-						h.LogError("Error user-define project file %s: %v", full, err)
-						continue
-					}
-				} else {
-					full, err = findPathAnywhereUpToRoot(wd, v)
-				}
-				if err != nil {
-					h.LogDebug("Did not parse %q: %v", v, err)
-					continue
-				}
-				if h.parsedKnownSrcFiles.Contains(full) {
-					continue
-				}
-				h.parsedKnownSrcFiles.Store(full)
-				results, err := h.parsedDocuments.ParseSource(context.TODO(), full)
-				if err != nil {
-					h.LogError("Error parsing %s: %v", full, err)
-					continue
-				}
-				resultsX = append(resultsX, results...)
-			}
-
-			var diagnostics = make([]lsp.Diagnostic, 0)
-			for _, p := range resultsX {
-				if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
-					diagnostics = diagnostics[:0]
-
-					for _, se := range p.SyntaxErrors {
-						diag := se.Diagnostic()
-
-						// TODO: sometimes syntax errors are in here twice...
-						add := true
-						for _, v := range diagnostics {
-							if v.Range == diag.Range {
-								add = false
-								break
-							}
-						}
-						if !add {
-							continue
-						}
-						diagnostics = append(diagnostics, diag)
-					}
-					h.LogInfo("> %s", p.Source)
-					h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
-						URI:         lsp.DocumentURI(uri.File(p.Source)),
-						Diagnostics: diagnostics,
-					})
-				}
-			}
-			h.LogInfo("Initial diagnostics completed")
-		})
+		h.tryInitializeWorkspace(r, ctx)
 	}
 
 	handled, err := h.handlers.Handle(ctx, reply, r)
@@ -537,4 +442,133 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		return nil
 	}
 	return h.baseLspHandler.Handle(ctx, reply, r)
+}
+
+// TODO: We need to figure out a better way to handle workspaces.
+// We might have to separate the parsers for Gothic/Music/SFX/VFX/...
+func (h *LspHandler) tryInitializeWorkspace(r jsonrpc2.Request, ctx context.Context) {
+	if h.workspaceInitialized {
+		return
+	}
+
+	exe, _ := os.Executable()
+	if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
+		_, err = h.parsedDocuments.ParseSource(context.TODO(), f)
+		if err != nil {
+			h.LogError("Error parsing %q: %v", f, err)
+			return
+		}
+	}
+
+	var openParams lsp.DidOpenTextDocumentParams
+	json.Unmarshal(r.Params(), &openParams)
+	wd := uriToFilename(openParams.TextDocument.URI)
+	if wd == "" {
+		h.LogError("Error locating current file")
+		return
+	}
+
+	// Try to locate a workspace file
+	foundProjectFile := false
+	for _, v := range h.config.ProjectFiles {
+		full := v
+		if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
+			if _, err := os.Stat(full); err != nil {
+				h.LogError("Error user-define project file %s: %v", full, err)
+				continue
+			}
+		} else {
+			if _, err := findPathAnywhereUpToRoot(wd, v); err != nil {
+				continue
+			}
+		}
+		foundProjectFile = true
+	}
+	if !foundProjectFile {
+		h.LogDebug("No project file found, deferring workspace initialization")
+		return
+	}
+	h.workspaceInitialized = true
+
+	h.onceParseAll.Do(func() {
+		var resultsX []*ParseResult
+		if externalsSrc, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.src")); err == nil {
+			if !h.parsedKnownSrcFiles.Contains(externalsSrc) {
+				h.parsedKnownSrcFiles.Store(externalsSrc)
+				customBuiltins, err := h.parsedDocuments.ParseSource(context.TODO(), externalsSrc)
+				if err != nil {
+					h.LogError("Error parsing %q: %v", externalsSrc, err)
+				} else {
+					resultsX = append(resultsX, customBuiltins...)
+				}
+			}
+		} else if externalsDaedalus, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.d")); err == nil {
+			if !h.parsedKnownSrcFiles.Contains(externalsDaedalus) {
+				h.parsedKnownSrcFiles.Store(externalsDaedalus)
+				parsed, err := h.parsedDocuments.ParseFile(externalsDaedalus)
+				if err != nil {
+					h.LogError("Error parsing %q: %v", externalsDaedalus, err)
+				} else {
+					resultsX = append(resultsX, parsed)
+				}
+			}
+		}
+
+		for _, v := range h.config.ProjectFiles {
+			var err error
+			full := v
+			if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
+
+				if _, err := os.Stat(full); err != nil {
+					h.LogError("Error user-define project file %s: %v", full, err)
+					continue
+				}
+			} else {
+				full, err = findPathAnywhereUpToRoot(wd, v)
+			}
+			if err != nil {
+				h.LogDebug("Did not parse %q: %v", v, err)
+				continue
+			}
+			if h.parsedKnownSrcFiles.Contains(full) {
+				continue
+			}
+			h.parsedKnownSrcFiles.Store(full)
+			results, err := h.parsedDocuments.ParseSource(context.TODO(), full)
+			if err != nil {
+				h.LogError("Error parsing %s: %v", full, err)
+				continue
+			}
+			resultsX = append(resultsX, results...)
+		}
+
+		var diagnostics = make([]lsp.Diagnostic, 0)
+		for _, p := range resultsX {
+			if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
+				diagnostics = diagnostics[:0]
+
+				for _, se := range p.SyntaxErrors {
+					diag := se.Diagnostic()
+
+					add := true
+					for _, v := range diagnostics {
+						if v.Range == diag.Range {
+							add = false
+							break
+						}
+					}
+					if !add {
+						continue
+					}
+					diagnostics = append(diagnostics, diag)
+				}
+				h.LogInfo("> %s", p.Source)
+				h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
+					URI:         lsp.DocumentURI(uri.File(p.Source)),
+					Diagnostics: diagnostics,
+				})
+			}
+		}
+		h.LogInfo("Initial diagnostics completed")
+	})
 }
