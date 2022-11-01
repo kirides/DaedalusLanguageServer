@@ -170,6 +170,8 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 				if len(indices) > 0 {
 					blockComments = rxBlockComment.FindAllIndex(buffer.Bytes(), -1)
 				}
+
+				var parsed *ParseResult
 				for _, startEnd := range indices {
 					segment, line, col := getLineCol(&buffer, startEnd[0], startEnd[1])
 
@@ -182,6 +184,19 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 
 					if isCommentOrString(&buffer, blockComments, segment, col, startEnd) {
 						continue
+					}
+
+					if parsed == nil {
+						parsed = h.parsedDocuments.ParseScript(".", buffer.String())
+					}
+					if parsed != nil {
+						if _, ok := parsed.LookupScopedVariable(symbol.DefinitionIndex{
+							Line:   line,
+							Column: col,
+						}, word); ok {
+							// we're looking for a GLOBAL variable, so skip any locals with the same name
+							continue
+						}
 					}
 
 					resultCh <- lsp.Location{
