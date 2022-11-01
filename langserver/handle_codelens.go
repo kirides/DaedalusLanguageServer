@@ -218,14 +218,18 @@ func (h *LspHandler) handleCodeLensResolve(req dls.RpcContext, params lsp.CodeLe
 	var txt string
 	if len(locations) > 1 {
 		txt = fmt.Sprintf("%d references", len(locations))
-	} else {
+	} else if len(locations) == 1 {
 		txt = "1 references"
+	} else {
+		txt = "no references"
 	}
 
 	params.Command = &lsp.Command{
-		Title:     txt,
-		Command:   meta.Command,
-		Arguments: []any{meta.SourceURI, meta.SourceLocation.Range.Start, locations},
+		Title: txt,
+	}
+	if len(locations) != 0 {
+		params.Command.Command = meta.Command
+		params.Command.Arguments = []any{meta.SourceURI, meta.SourceLocation.Range.Start, locations}
 	}
 	return req.Reply(req.Context(), params, nil)
 }
