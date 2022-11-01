@@ -3,6 +3,8 @@ package langserver
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"unicode"
@@ -10,6 +12,8 @@ import (
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
+	"go.lsp.dev/jsonrpc2"
+	"go.lsp.dev/uri"
 )
 
 type LspWorkspace struct {
@@ -18,12 +22,139 @@ type LspWorkspace struct {
 	parsedDocuments *parseResultsManager
 	config          LspConfig
 	onceParseAll    sync.Once
+	conn            jsonrpc2.Conn
 
 	parsedKnownSrcFiles  concurrentSet[string]
 	workspaceInitialized bool
 
 	workspaceCtx       context.Context
 	cancelWorkspaceCtx context.CancelFunc
+}
+
+// TODO: We need to figure out a better way to handle workspaces.
+// We might have to separate the parsers for Gothic/Music/SFX/VFX/...
+func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.DidOpenTextDocumentParams, config LspConfig) {
+	if ws.workspaceInitialized {
+		return
+	}
+	wd := uriToFilename(params.TextDocument.URI)
+	if wd == "" {
+		ws.logger.Errorf("Error locating current file")
+		return
+	}
+
+	exe, _ := os.Executable()
+	if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
+		_, err = ws.parsedDocuments.ParseSource(ws.workspaceCtx, f)
+		if err != nil {
+			ws.logger.Errorf("Error parsing %q: %v", f, err)
+			return
+		}
+	}
+
+	// Try to locate a workspace file
+	foundProjectFile := false
+	for _, v := range config.ProjectFiles {
+		full := v
+		if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
+			if _, err := os.Stat(full); err != nil {
+				ws.logger.Errorf("Error user-define project file %s: %v", full, err)
+				continue
+			}
+		} else {
+			if _, err := findPathAnywhereUpToRoot(wd, v); err != nil {
+				continue
+			}
+		}
+		foundProjectFile = true
+	}
+	if !foundProjectFile {
+		ws.logger.Debugf("No project file found, deferring workspace initialization")
+		return
+	}
+	ws.workspaceInitialized = true
+
+	ws.onceParseAll.Do(func() {
+		var resultsX []*ParseResult
+		if externalsSrc, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.src")); err == nil {
+			if !ws.parsedKnownSrcFiles.Contains(externalsSrc) {
+				ws.parsedKnownSrcFiles.Store(externalsSrc)
+				customBuiltins, err := ws.parsedDocuments.ParseSource(ws.workspaceCtx, externalsSrc)
+				if err != nil {
+					ws.logger.Errorf("Error parsing %q: %v", externalsSrc, err)
+				} else {
+					resultsX = append(resultsX, customBuiltins...)
+				}
+			}
+		} else if externalsDaedalus, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.d")); err == nil {
+			if !ws.parsedKnownSrcFiles.Contains(externalsDaedalus) {
+				ws.parsedKnownSrcFiles.Store(externalsDaedalus)
+				parsed, err := ws.parsedDocuments.ParseFile(externalsDaedalus)
+				if err != nil {
+					ws.logger.Errorf("Error parsing %q: %v", externalsDaedalus, err)
+				} else {
+					resultsX = append(resultsX, parsed)
+				}
+			}
+		}
+
+		for _, v := range config.ProjectFiles {
+			var err error
+			full := v
+			if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
+
+				if _, err := os.Stat(full); err != nil {
+					ws.logger.Errorf("Error user-define project file %s: %v", full, err)
+					continue
+				}
+			} else {
+				full, err = findPathAnywhereUpToRoot(wd, v)
+			}
+			if err != nil {
+				ws.logger.Debugf("Did not parse %q: %v", v, err)
+				continue
+			}
+			if ws.parsedKnownSrcFiles.Contains(full) {
+				continue
+			}
+			ws.parsedKnownSrcFiles.Store(full)
+			results, err := ws.parsedDocuments.ParseSource(ws.workspaceCtx, full)
+			if err != nil {
+				ws.logger.Errorf("Error parsing %s: %v", full, err)
+				continue
+			}
+			resultsX = append(resultsX, results...)
+		}
+
+		var diagnostics = make([]lsp.Diagnostic, 0)
+		for _, p := range resultsX {
+			if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
+				diagnostics = diagnostics[:0]
+
+				for _, se := range p.SyntaxErrors {
+					diag := se.Diagnostic()
+
+					add := true
+					for _, v := range diagnostics {
+						if v.Range == diag.Range {
+							add = false
+							break
+						}
+					}
+					if !add {
+						continue
+					}
+					diagnostics = append(diagnostics, diag)
+				}
+				ws.logger.Infof("> %s", p.Source)
+				ws.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
+					URI:         lsp.DocumentURI(uri.File(p.Source)),
+					Diagnostics: diagnostics,
+				})
+			}
+		}
+		ws.logger.Infof("Initial diagnostics completed")
+	})
 }
 
 func (h *LspWorkspace) lookUpScope(documentURI string, position lsp.Position) (symbol.Symbol, bool) {
