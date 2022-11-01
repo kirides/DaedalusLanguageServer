@@ -9,9 +9,9 @@ import (
 )
 
 type textDocumentSync struct {
-	bufferManager   *BufferManager
-	parsedDocuments *parseResultsManager
 	baseLspHandler
+
+	GetWorkspace func(lsp.DocumentURI) *LspWorkspace
 }
 
 func lspSeverityFromSeverity(severity ErrorSeverity) lsp.DiagnosticSeverity {
@@ -24,10 +24,10 @@ func lspSeverityFromSeverity(severity ErrorSeverity) lsp.DiagnosticSeverity {
 	return lsp.SeverityError
 }
 
-func (h *textDocumentSync) updateBuffer(ctx context.Context, documentURI, content string) {
+func (h *textDocumentSync) updateBuffer(ctx context.Context, ws *LspWorkspace, filePath, content string) {
 	chars := content
-	h.bufferManager.UpdateBuffer(documentURI, chars)
-	p, _ := h.parsedDocuments.Update(documentURI, content)
+	ws.bufferManager.UpdateBuffer(filePath, chars)
+	p, _ := ws.parsedDocuments.Update(filePath, content)
 
 	diagnostics := []lsp.Diagnostic{}
 	if p.SyntaxErrors != nil && len(p.SyntaxErrors) > 0 {
@@ -36,43 +36,63 @@ func (h *textDocumentSync) updateBuffer(ctx context.Context, documentURI, conten
 		}
 	}
 	h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
-		URI:         lsp.DocumentURI(uri.File(documentURI)),
+		URI:         lsp.DocumentURI(uri.File(filePath)),
 		Diagnostics: diagnostics,
 	})
 
-	h.LogDebug("Updated buffer for %q with %d chars", documentURI, len(chars))
+	h.LogDebug("Updated buffer for %q with %d chars", filePath, len(chars))
 }
 
 func (h *textDocumentSync) handleTextDocumentDidClose(req dls.RpcContext, data lsp.DidCloseTextDocumentParams) error {
+	ws := h.GetWorkspace(data.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
 	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" {
-		h.bufferManager.DeleteBuffer(documentUri)
+		ws.bufferManager.DeleteBuffer(documentUri)
 	}
 	return nil
 }
 func (h *textDocumentSync) handleTextDocumentDidOpen(req dls.RpcContext, data lsp.DidOpenTextDocumentParams) error {
+	ws := h.GetWorkspace(data.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
 	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" {
-		h.updateBuffer(req.Context(), documentUri, data.TextDocument.Text)
+		h.updateBuffer(req.Context(), ws, documentUri, data.TextDocument.Text)
 	}
 	return nil
 }
 func (h *textDocumentSync) handleTextDocumentDidChange(req dls.RpcContext, data lsp.DidChangeTextDocumentParams) error {
+	ws := h.GetWorkspace(data.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
 	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" && len(data.ContentChanges) > 0 {
-		h.updateBuffer(req.Context(), documentUri, data.ContentChanges[0].Text)
+		h.updateBuffer(req.Context(), ws, documentUri, data.ContentChanges[0].Text)
 	}
 	return nil
 }
 
 func (h *textDocumentSync) handleTextDocumentDidSave(req dls.RpcContext, data lsp.DidSaveTextDocumentParams) error {
+	ws := h.GetWorkspace(data.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
 	documentUri := uriToFilename(data.TextDocument.URI)
 	if documentUri != "" {
 		text := ""
 		if data.Text != nil {
 			text = *data.Text
 		}
-		h.updateBuffer(req.Context(), documentUri, text)
+		h.updateBuffer(req.Context(), ws, documentUri, text)
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20220911224424-aa1f1f12a846
+	github.com/google/uuid v1.3.0
 	github.com/segmentio/encoding v0.3.6
 	go.lsp.dev/jsonrpc2 v0.10.0
 	go.lsp.dev/uri v0.3.0

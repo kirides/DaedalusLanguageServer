@@ -30,7 +30,7 @@ func checkInheritance(docs SymbolProvider, sym symbol.Symbol, symToImplement str
 
 func noFilter(symbol.Symbol) bool { return true }
 
-func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, parentDocu, paramDocu, varType string, docs SymbolProvider, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
+func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspWorkspace, parentDocu, paramDocu, varType string, docs SymbolProvider, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
 	found := true
 	if strings.HasPrefix(paramDocu, "{") { // if instance list directive
 		instances, _ := javadoc.ParseWithinDedup(paramDocu, "{", "}")
@@ -133,7 +133,7 @@ func getCompletionItemsByJavadoc(result []lsp.CompletionItem, h *LspHandler, par
 	return result, found, nil
 }
 
-func getCompletionItemsSimple(result []lsp.CompletionItem, h *LspHandler, varType string, docs SymbolProvider, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
+func getCompletionItemsSimple(result []lsp.CompletionItem, h *LspWorkspace, varType string, docs SymbolProvider, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
 	ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType, noFilter)
 	result = append(result, ci...)
 
@@ -176,7 +176,7 @@ func getCompletionItemsSimple(result []lsp.CompletionItem, h *LspHandler, varTyp
 	return result, true, nil
 }
 
-func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varType string, docs SymbolProvider, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
+func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspWorkspace, varType string, docs SymbolProvider, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
 	ci := getLocalsAndParams(h, params.TextDocument.URI, params.Position, varType, noFilter)
 	result = append(result, ci...)
 
@@ -203,7 +203,7 @@ func getCompletionItemsComplex(result []lsp.CompletionItem, h *LspHandler, varTy
 	return result, true, nil
 }
 
-func getTypedCompletionItems(h *LspHandler, docs *parseResultsManager, sym symbol.Function, paramIndex int, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
+func getTypedCompletionItems(h *LspWorkspace, docs *parseResultsManager, sym symbol.Function, paramIndex int, params *lsp.CompletionParams) ([]lsp.CompletionItem, bool, error) {
 	// Pre-allocate buffer
 	result := make([]lsp.CompletionItem, 0, 200)
 
@@ -279,7 +279,7 @@ func getFunctionCallContext(doc BufferedDocument, symbols SymbolProvider, pos ls
 }
 
 // TODO: refactor this - duplicate code
-func getSignatureCompletions(params *lsp.CompletionParams, h *LspHandler) ([]lsp.CompletionItem, bool, error) {
+func getSignatureCompletions(params *lsp.CompletionParams, h *LspWorkspace) ([]lsp.CompletionItem, bool, error) {
 	doc := h.bufferManager.GetBuffer(uriToFilename(params.TextDocument.URI))
 	ctx, err := getFunctionCallContext(doc, h.parsedDocuments, params.Position)
 	if err != nil {
@@ -350,7 +350,7 @@ func getHighestSortIndex(items []lsp.CompletionItem) int {
 	return max
 }
 
-func getLocalsAndParams(h *LspHandler, docURI lsp.DocumentURI, pos lsp.Position, varType string, filter func(symbol.Symbol) bool) []lsp.CompletionItem {
+func getLocalsAndParams(h *LspWorkspace, docURI lsp.DocumentURI, pos lsp.Position, varType string, filter func(symbol.Symbol) bool) []lsp.CompletionItem {
 	parsedDoc, err := h.parsedDocuments.Get(uriToFilename(docURI))
 	if err != nil {
 		return []lsp.CompletionItem{}

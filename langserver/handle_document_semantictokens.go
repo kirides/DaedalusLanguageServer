@@ -270,7 +270,11 @@ func (h *semanticTokensHandler) getSemanticTokens(r *SemanticParseResult, area *
 }
 
 func (h *LspHandler) handleSemanticTokensFull(req dls.RpcContext, params lsp.SemanticTokensParams) error {
-	handler := &semanticTokensHandler{parsedDocuments: h.parsedDocuments}
+	ws := h.GetWorkspace(params.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+	handler := &semanticTokensHandler{parsedDocuments: ws.parsedDocuments}
 
 	source := uriToFilename(params.TextDocument.URI)
 	if source == "" {
@@ -278,7 +282,7 @@ func (h *LspHandler) handleSemanticTokensFull(req dls.RpcContext, params lsp.Sem
 		return nil
 	}
 
-	buf, err := h.bufferManager.GetBufferCtx(req.Context(), source)
+	buf, err := ws.bufferManager.GetBufferCtx(req.Context(), source)
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
 		return err
@@ -300,7 +304,12 @@ func (h *LspHandler) handleSemanticTokensFull(req dls.RpcContext, params lsp.Sem
 }
 
 func (h *LspHandler) handleSemanticTokensRange(req dls.RpcContext, params lsp.SemanticTokensRangeParams) error {
-	handler := &semanticTokensHandler{parsedDocuments: h.parsedDocuments}
+	ws := h.GetWorkspace(params.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
+	handler := &semanticTokensHandler{parsedDocuments: ws.parsedDocuments}
 
 	source := uriToFilename(params.TextDocument.URI)
 	if source == "" {
@@ -308,7 +317,7 @@ func (h *LspHandler) handleSemanticTokensRange(req dls.RpcContext, params lsp.Se
 		return nil
 	}
 
-	buf, err := h.bufferManager.GetBufferCtx(req.Context(), source)
+	buf, err := ws.bufferManager.GetBufferCtx(req.Context(), source)
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
 		return err

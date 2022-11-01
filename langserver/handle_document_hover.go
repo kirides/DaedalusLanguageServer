@@ -10,13 +10,18 @@ import (
 )
 
 func (h *LspHandler) handleTextDocumentHover(req dls.RpcContext, data lsp.TextDocumentPositionParams) error {
-	found, err := h.lookUpSymbol(uriToFilename(data.TextDocument.URI), data.Position)
+	ws := h.GetWorkspace(data.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
+	found, err := ws.lookUpSymbol(uriToFilename(data.TextDocument.URI), data.Position)
 	if err != nil {
 		return req.Reply(req.Context(), nil, nil)
 	}
 	h.LogDebug("Found Symbol for Hover: %s", found.Symbol.String())
 
-	codeSnippet := SymbolToReadableCode(h.parsedDocuments, found.Symbol)
+	codeSnippet := SymbolToReadableCode(ws.parsedDocuments, found.Symbol)
 	codeSnippetFinal := codeSnippet
 
 	if found.Location == FoundField {
@@ -24,7 +29,7 @@ func (h *LspHandler) handleTextDocumentHover(req dls.RpcContext, data lsp.TextDo
 		ogVal := cnst.Value
 		for ok {
 			var cnst2 symbol.Symbol
-			cnst2, ok = h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(cnst.Value), SymbolConstant)
+			cnst2, ok = ws.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(cnst.Value), SymbolConstant)
 			if ok {
 				cnst = cnst2.(symbol.Constant)
 			}

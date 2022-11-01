@@ -51,7 +51,7 @@ func (tdc textDocumentCompletion) getTypeFieldsAsCompletionItems(docs SymbolProv
 	return []lsp.CompletionItem{}, nil
 }
 
-func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+func (h *LspWorkspace) getTextDocumentCompletion(params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
 	// TODO: split up further
 	tdc := textDocumentCompletion{symbols: h.parsedDocuments}
 
@@ -146,7 +146,11 @@ func (h *LspHandler) getTextDocumentCompletion(params *lsp.CompletionParams) ([]
 }
 
 func (h *LspHandler) handleTextDocumentCompletion(req dls.RpcContext, data lsp.CompletionParams) error {
-	items, err := h.getTextDocumentCompletion(&data)
+	ws := h.GetWorkspace(data.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+	items, err := ws.getTextDocumentCompletion(&data)
 	req.ReplyEither(req.Context(), items, err)
 	return nil
 }

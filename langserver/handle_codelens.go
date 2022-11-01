@@ -24,7 +24,7 @@ func (f funcCodeLensProvider) Provide(ctx context.Context, source *ParseResult) 
 }
 
 type codeLensHandler struct {
-	lsp            *LspHandler
+	lsp            *LspWorkspace
 	symbolProvider SymbolProvider
 	providers      []codeLensProvider
 }
@@ -183,7 +183,7 @@ func (p *codeLensHandler) provideReferences(ctx context.Context, source *ParseRe
 	return result
 }
 
-func newCodeLensHandler(h *LspHandler, symbolProvider SymbolProvider) *codeLensHandler {
+func newCodeLensHandler(h *LspWorkspace, symbolProvider SymbolProvider) *codeLensHandler {
 	handler := &codeLensHandler{
 		lsp:            h,
 		symbolProvider: symbolProvider,
@@ -206,7 +206,12 @@ func (h *LspHandler) handleCodeLensResolve(req dls.RpcContext, params lsp.CodeLe
 		return req.Reply(req.Context(), nil, nil)
 	}
 
-	refsCh := h.getAllReferences(req.Context(), meta.ReferenceParams)
+	ws := h.GetWorkspace(meta.SourceURI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
+	refsCh := ws.getAllReferences(req.Context(), meta.ReferenceParams)
 	var locations []lsp.Location
 
 	for v := range refsCh {
@@ -235,17 +240,22 @@ func (h *LspHandler) handleCodeLensResolve(req dls.RpcContext, params lsp.CodeLe
 }
 
 func (h *LspHandler) handleTextDocumentCodeLens(req dls.RpcContext, params lsp.CodeLensParams) error {
+	ws := h.GetWorkspace(params.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
 	source := uriToFilename(params.TextDocument.URI)
 	if source == "" {
 
 		return req.Reply(req.Context(), nil, nil)
 	}
 
-	r, err := h.parsedDocuments.GetCtx(req.Context(), source)
+	r, err := ws.parsedDocuments.GetCtx(req.Context(), source)
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
 		return err
 	}
-	locations := newCodeLensHandler(h, h.parsedDocuments).Provide(req.Context(), r)
+	locations := newCodeLensHandler(ws, ws.parsedDocuments).Provide(req.Context(), r)
 	return req.Reply(req.Context(), locations, nil)
 }

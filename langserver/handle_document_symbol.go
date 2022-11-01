@@ -69,6 +69,10 @@ func (ds textDocumentDocumentSymbol) collectDocumentSymbols(result []lsp.Documen
 }
 
 func (h *LspHandler) handleDocumentSymbol(req dls.RpcContext, params lsp.DocumentSymbolParams) error {
+	ws := h.GetWorkspace(params.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
 	source := uriToFilename(params.TextDocument.URI)
 	if source == "" {
 		req.Reply(req.Context(), nil, nil)
@@ -77,7 +81,7 @@ func (h *LspHandler) handleDocumentSymbol(req dls.RpcContext, params lsp.Documen
 
 	ds := textDocumentDocumentSymbol{}
 
-	r, err := h.parsedDocuments.GetCtx(req.Context(), source)
+	r, err := ws.parsedDocuments.GetCtx(req.Context(), source)
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
 		return err

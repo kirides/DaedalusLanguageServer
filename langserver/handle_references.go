@@ -11,7 +11,7 @@ import (
 	"go.lsp.dev/uri"
 )
 
-func (h *LspHandler) getAllReferences(req context.Context, params lsp.ReferenceParams) <-chan lsp.Location {
+func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.ReferenceParams) <-chan lsp.Location {
 	resultCh := make(chan lsp.Location, 1)
 
 	doc := uriToFilename(params.TextDocument.URI)
@@ -111,7 +111,7 @@ func (h *LspHandler) getAllReferences(req context.Context, params lsp.ReferenceP
 					}}
 			}
 		} else {
-			for k, _ := range h.parsedDocuments.parseResults {
+			for k := range h.parsedDocuments.parseResults {
 				if req.Err() != nil {
 					return
 				}
@@ -153,9 +153,13 @@ func (h *LspHandler) getAllReferences(req context.Context, params lsp.ReferenceP
 }
 
 func (h *LspHandler) handleTextDocumentReferences(req dls.RpcContext, params lsp.ReferenceParams) error {
+	ws := h.GetWorkspace(params.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
 	var result []lsp.Location
 
-	refsCh := h.getAllReferences(req.Context(), params)
+	refsCh := ws.getAllReferences(req.Context(), params)
 	for v := range refsCh {
 		if result == nil {
 			result = make([]lsp.Location, 0, 100)

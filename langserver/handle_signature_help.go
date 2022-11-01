@@ -9,7 +9,7 @@ import (
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 )
 
-func (h *LspHandler) getSignatureInfo(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.SignatureHelp, error) {
+func (h *LspWorkspace) getSignatureInfo(ctx context.Context, params *lsp.TextDocumentPositionParams) (lsp.SignatureHelp, error) {
 	doc := h.bufferManager.GetBuffer(uriToFilename(params.TextDocument.URI))
 	fnCtx, err := getFunctionCallContext(doc, h.parsedDocuments, params.Position)
 	if err != nil {
@@ -51,7 +51,11 @@ func (h *LspHandler) getSignatureInfo(ctx context.Context, params *lsp.TextDocum
 }
 
 func (h *LspHandler) handleTextDocumentSignatureHelp(req dls.RpcContext, data lsp.TextDocumentPositionParams) error {
-	result, err := h.getSignatureInfo(req.Context(), &data)
+	ws := h.GetWorkspace(data.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+	result, err := ws.getSignatureInfo(req.Context(), &data)
 	if err != nil {
 		return req.Reply(req.Context(), nil, nil)
 	}

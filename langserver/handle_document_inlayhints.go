@@ -9,6 +9,11 @@ import (
 )
 
 func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintParams) error {
+	ws := h.GetWorkspace(params.TextDocument.URI)
+	if ws == nil {
+		return req.Reply(req.Context(), nil, nil)
+	}
+
 	var hints []lsp.InlayHint
 
 	if !h.config.InlayHints.Constants {
@@ -23,13 +28,13 @@ func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintPa
 		return nil
 	}
 
-	buf, err := h.bufferManager.GetBufferCtx(req.Context(), source)
+	buf, err := ws.bufferManager.GetBufferCtx(req.Context(), source)
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
 		return err
 	}
 
-	parsed, err := h.parsedDocuments.ParseSemanticsContentRange(req.Context(), source, string(buf), lsp.Range{})
+	parsed, err := ws.parsedDocuments.ParseSemanticsContentRange(req.Context(), source, string(buf), lsp.Range{})
 	if err != nil {
 		req.Reply(req.Context(), nil, err)
 		return err
@@ -56,7 +61,7 @@ func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintPa
 		if cnst, ok := found.Symbol.(symbol.Constant); ok {
 			for ok {
 				var cnst2 symbol.Symbol
-				cnst2, ok = h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(cnst.Value), SymbolConstant)
+				cnst2, ok = ws.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(cnst.Value), SymbolConstant)
 				if ok {
 					cnst = cnst2.(symbol.Constant)
 				}
@@ -86,7 +91,7 @@ func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintPa
 			found, ok := parsed.FindScopedVariableDeclaration(v.Definition().Start, v.Name())
 			if !ok {
 				var symb symbol.Symbol
-				symb, ok = h.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(v.Name()), SymbolAll)
+				symb, ok = ws.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(v.Name()), SymbolAll)
 				found = FoundSymbol{symb, FoundGlobal}
 			}
 			if !ok {

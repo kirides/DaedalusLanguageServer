@@ -40,37 +40,44 @@ func (w workspaceSymbol) collectWorkspaceSymbols(result []lsp.SymbolInformation,
 }
 
 func (h *LspHandler) handleWorkspaceSymbol(req dls.RpcContext, params lsp.WorkspaceSymbolParams) error {
+
 	w := workspaceSymbol{}
+	var result []lsp.SymbolInformation
 
-	numSymbols := h.parsedDocuments.CountSymbols()
-	result := make([]lsp.SymbolInformation, 0, numSymbols)
-	buffer := make([]lsp.SymbolInformation, 0, 50)
-
-	qlower := strings.ToLower(params.Query)
-
-	err := h.parsedDocuments.WalkGlobalSymbols(func(s symbol.Symbol) error {
-		if req.Context().Err() != nil {
-			h.logger.Debugf("request cancelled", "method", req.Request().Method())
-			return req.Context().Err()
+	for _, ws := range h.workspaces {
+		numSymbols := ws.parsedDocuments.CountSymbols()
+		if result == nil {
+			result = make([]lsp.SymbolInformation, 0, numSymbols)
 		}
-		if qlower == "" {
-			result = w.collectWorkspaceSymbols(result, s)
-			return nil
-		}
+		buffer := make([]lsp.SymbolInformation, 0, 50)
 
-		// pre filtering
-		buffer = buffer[:0]
-		buffer = w.collectWorkspaceSymbols(buffer, s)
-		for _, v := range buffer {
-			if stringContainsAllAnywhere(v.Name, params.Query) {
-				result = append(result, v)
+		qlower := strings.ToLower(params.Query)
+
+		err := ws.parsedDocuments.WalkGlobalSymbols(func(s symbol.Symbol) error {
+			if req.Context().Err() != nil {
+				h.logger.Debugf("request cancelled", "method", req.Request().Method())
+				return req.Context().Err()
 			}
-		}
-		return nil
-	}, SymbolAll)
+			if qlower == "" {
+				result = w.collectWorkspaceSymbols(result, s)
+				return nil
+			}
 
-	if err != nil {
-		return req.Reply(req.Context(), nil, nil)
+			// pre filtering
+			buffer = buffer[:0]
+			buffer = w.collectWorkspaceSymbols(buffer, s)
+			for _, v := range buffer {
+				if stringContainsAllAnywhere(v.Name, params.Query) {
+					result = append(result, v)
+				}
+			}
+			return nil
+		}, SymbolAll)
+
+		if err != nil {
+			h.logger.Warnf("Error collecting workspace symbols. %v", err)
+			continue
+		}
 	}
 
 	return req.Reply(req.Context(), result, nil)

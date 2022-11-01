@@ -9,6 +9,7 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/google/uuid"
 	"github.com/segmentio/encoding/json"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
@@ -36,18 +37,29 @@ type LspConfig struct {
 // LspHandler ...
 type LspHandler struct {
 	TextDocumentSync *textDocumentSync
-	bufferManager    *BufferManager
-	parsedDocuments  *parseResultsManager
 	handlers         *dls.RpcMux
 	config           LspConfig
-	onceParseAll     sync.Once
 
 	onConfigChangedHandlers []func(config LspConfig)
-	parsedKnownSrcFiles     concurrentSet[string]
 	baseLspHandler
-	initialized          context.Context
+	initialized     context.Context
+	markInitialized func()
+
+	workspaces map[string]*LspWorkspace
+}
+
+type LspWorkspace struct {
+	logger          dls.Logger
+	bufferManager   *BufferManager
+	parsedDocuments *parseResultsManager
+	config          LspConfig
+	onceParseAll    sync.Once
+
+	parsedKnownSrcFiles  concurrentSet[string]
 	workspaceInitialized bool
-	markInitialized      func()
+
+	workspaceCtx       context.Context
+	cancelWorkspaceCtx context.CancelFunc
 }
 
 var (
@@ -57,27 +69,16 @@ var (
 
 // NewLspHandler ...
 func NewLspHandler(conn jsonrpc2.Conn, logger dls.Logger) *LspHandler {
-	bufferManager := NewBufferManager()
-	parsedDocuments := newParseResultsManager(logger)
 	initialized, markInitialized := context.WithCancel(context.Background())
-	return &LspHandler{
+	h := &LspHandler{
 		baseLspHandler: baseLspHandler{
 			logger: logger,
 			conn:   conn,
 		},
-		handlers:        dls.NewMux(),
-		initialized:     initialized,
-		markInitialized: markInitialized,
-		bufferManager:   bufferManager,
-		parsedDocuments: parsedDocuments,
-		TextDocumentSync: &textDocumentSync{
-			baseLspHandler: baseLspHandler{
-				logger: logger,
-				conn:   conn,
-			},
-			bufferManager:   bufferManager,
-			parsedDocuments: parsedDocuments,
-		},
+		workspaces:              make(map[string]*LspWorkspace),
+		handlers:                dls.NewMux(),
+		initialized:             initialized,
+		markInitialized:         markInitialized,
 		onConfigChangedHandlers: []func(config LspConfig){},
 		config: LspConfig{
 			FileEncoding:    "1252",
@@ -89,13 +90,22 @@ func NewLspHandler(conn jsonrpc2.Conn, logger dls.Logger) *LspHandler {
 			},
 		},
 	}
+
+	h.TextDocumentSync = &textDocumentSync{
+		baseLspHandler: baseLspHandler{
+			logger: logger,
+			conn:   conn,
+		},
+		GetWorkspace: h.GetWorkspace,
+	}
+	return h
 }
 
 func (h *LspHandler) OnConfigChanged(handler func(config LspConfig)) {
 	h.onConfigChangedHandlers = append(h.onConfigChangedHandlers, handler)
 }
 
-func (h *LspHandler) lookUpScope(documentURI string, position lsp.Position) (symbol.Symbol, bool) {
+func (h *LspWorkspace) lookUpScope(documentURI string, position lsp.Position) (symbol.Symbol, bool) {
 	p, err := h.parsedDocuments.Get(documentURI)
 	if err != nil {
 		return nil, false
@@ -106,7 +116,7 @@ func (h *LspHandler) lookUpScope(documentURI string, position lsp.Position) (sym
 	return p.FindContainingScope(di)
 }
 
-func (h *LspHandler) getEffectiveValue(sym symbol.ProtoTypeOrInstance, field string) (symbol.Constant, bool) {
+func (h *LspWorkspace) getEffectiveValue(sym symbol.ProtoTypeOrInstance, field string) (symbol.Constant, bool) {
 	var own symbol.Constant
 	found := false
 	for _, v := range sym.Fields {
@@ -195,7 +205,7 @@ type FoundSymbol struct {
 	Location FoundLocation
 }
 
-func (h *LspHandler) lookUpSymbol(documentURI string, position lsp.Position) (FoundSymbol, error) {
+func (h *LspWorkspace) lookUpSymbol(documentURI string, position lsp.Position) (FoundSymbol, error) {
 	var notFound FoundSymbol
 	doc := h.bufferManager.GetBuffer(documentURI)
 	if doc == "" {
@@ -314,19 +324,96 @@ func copyAndCastToStringSlice[T ~string](items []T) []string {
 	return result
 }
 
+func (h *LspHandler) GetWorkspace(docURI lsp.DocumentURI) *LspWorkspace {
+	p := uriToFilename(docURI)
+
+	for dir, ws := range h.workspaces {
+		if strings.HasPrefix(p, dir) {
+			return ws
+		}
+	}
+	return nil
+}
+
+func (h *LspHandler) initializeWorkspaces(ctx context.Context, workspaceURIs ...string) {
+	for _, v := range workspaceURIs {
+		p := uriToFilename(lsp.DocumentURI(v))
+		if _, ok := h.workspaces[p]; ok {
+			// already set-up
+			continue
+		}
+		h.logger.Infof("Setting up workspace %q", p)
+		ws := &LspWorkspace{
+			bufferManager:   NewBufferManager(),
+			parsedDocuments: newParseResultsManager(h.logger),
+			config:          h.config,
+			logger:          h.logger,
+		}
+		ws.workspaceCtx, ws.cancelWorkspaceCtx = context.WithCancel(context.Background())
+		h.workspaces[p] = ws
+	}
+}
+
+func (h *LspHandler) removeWorkspaces(ctx context.Context, workspaceURIs ...string) {
+	for _, v := range workspaceURIs {
+		p := uriToFilename(lsp.DocumentURI(v))
+		if ws, ok := h.workspaces[p]; ok {
+			ws.cancelWorkspaceCtx()
+			delete(h.workspaces, p)
+		}
+	}
+}
+
 // Deliver ...
 func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonrpc2.Request) error {
 	h.LogDebug("Requested %q", r.Method())
 
-	// if r.Params != nil {
+	// if r.Params() != nil {
 	// 	var paramsMap map[string]interface{}
-	// 	json.Unmarshal(*r.Params, &paramsMap)
+	// 	json.Unmarshal(r.Params(), &paramsMap)
 	// 	fmt.Fprintf(os.Stderr, "Params: %+v\n", paramsMap)
 	// }
 
 	switch r.Method() {
+	case lsp.MethodWorkspaceDidChangeWorkspaceFolders:
+		var params lsp.DidChangeWorkspaceFoldersParams
+		if err := json.Unmarshal(r.Params(), &params); err != nil {
+			reply(ctx, nil, err)
+		}
+		for _, v := range params.Event.Added {
+			h.logger.Infof("Adding workspace folder: %s", v)
+			h.initializeWorkspaces(ctx, v.URI)
+		}
+		for _, v := range params.Event.Removed {
+			h.logger.Infof("Removing workspace folder: %s", v)
+			h.removeWorkspaces(ctx, v.URI)
+		}
+		reply(ctx, nil, nil)
+	case lsp.MethodWorkspaceWorkspaceFolders:
+		// if r.Params() != nil {
+		// 	var paramsMap map[string]interface{}
+		// 	json.Unmarshal(r.Params(), &paramsMap)
+		// 	fmt.Fprintf(os.Stderr, "Params: %+v\n", paramsMap)
+		// }
+		reply(ctx, nil, nil)
 	case lsp.MethodInitialize:
+		var params lsp.InitializeParams
+		if err := json.Unmarshal(r.Params(), &params); err != nil {
+			reply(ctx, nil, err)
+			return err
+		}
 		h.onInitialized()
+		h.logger.Infof("Lsp Client: %s %s", params.ClientInfo.Name, params.ClientInfo.Version)
+
+		var workspaceURIs []string
+		if len(params.WorkspaceFolders) > 0 {
+			for _, v := range params.WorkspaceFolders {
+				workspaceURIs = append(workspaceURIs, v.URI)
+			}
+		} else {
+			workspaceURIs = append(workspaceURIs, string(params.RootURI))
+		}
+		h.initializeWorkspaces(ctx, workspaceURIs...)
 
 		if err := reply(ctx, lsp.InitializeResult{
 			ServerInfo: struct {
@@ -353,8 +440,14 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 					},
 				},
 				WorkspaceSymbolProvider: true,
-				DocumentSymbolProvider:  true,
-				ImplementationProvider:  true,
+				Workspace: lsp.Workspace6Gn{
+					WorkspaceFolders: lsp.WorkspaceFolders5Gn{
+						Supported:           true,
+						ChangeNotifications: uuid.NewString(),
+					},
+				},
+				DocumentSymbolProvider: true,
+				ImplementationProvider: true,
 				InlayHintProvider: lsp.InlayHintOptions{
 					ResolveProvider: false,
 				},
@@ -394,9 +487,11 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 		json.Unmarshal(paramsToMerge.Settings.DaedalusLanguageServer, &h.config)
 		h.LogInfo("%s: %v", r.Method(), prettyJSON(configRaw))
 
-		h.parsedDocuments.SetFileEncoding(h.config.FileEncoding)
-		h.parsedDocuments.SetSrcEncoding(h.config.SrcFileEncoding)
-		h.parsedDocuments.NumParserThreads = h.config.NumParserThreads
+		for _, ws := range h.workspaces {
+			ws.parsedDocuments.SetFileEncoding(h.config.FileEncoding)
+			ws.parsedDocuments.SetSrcEncoding(h.config.SrcFileEncoding)
+			ws.parsedDocuments.NumParserThreads = h.config.NumParserThreads
+		}
 
 		for _, v := range h.onConfigChangedHandlers {
 			v(h.config)
@@ -447,25 +542,30 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 // TODO: We need to figure out a better way to handle workspaces.
 // We might have to separate the parsers for Gothic/Music/SFX/VFX/...
 func (h *LspHandler) tryInitializeWorkspace(r jsonrpc2.Request, ctx context.Context) {
-	if h.workspaceInitialized {
+	var openParams lsp.DidOpenTextDocumentParams
+	json.Unmarshal(r.Params(), &openParams)
+
+	ws := h.GetWorkspace(openParams.TextDocument.URI)
+	if ws == nil {
+		return
+	}
+
+	if ws.workspaceInitialized {
+		return
+	}
+	wd := uriToFilename(openParams.TextDocument.URI)
+	if wd == "" {
+		h.LogError("Error locating current file")
 		return
 	}
 
 	exe, _ := os.Executable()
 	if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
-		_, err = h.parsedDocuments.ParseSource(context.TODO(), f)
+		_, err = ws.parsedDocuments.ParseSource(ws.workspaceCtx, f)
 		if err != nil {
 			h.LogError("Error parsing %q: %v", f, err)
 			return
 		}
-	}
-
-	var openParams lsp.DidOpenTextDocumentParams
-	json.Unmarshal(r.Params(), &openParams)
-	wd := uriToFilename(openParams.TextDocument.URI)
-	if wd == "" {
-		h.LogError("Error locating current file")
-		return
 	}
 
 	// Try to locate a workspace file
@@ -488,14 +588,14 @@ func (h *LspHandler) tryInitializeWorkspace(r jsonrpc2.Request, ctx context.Cont
 		h.LogDebug("No project file found, deferring workspace initialization")
 		return
 	}
-	h.workspaceInitialized = true
+	ws.workspaceInitialized = true
 
-	h.onceParseAll.Do(func() {
+	ws.onceParseAll.Do(func() {
 		var resultsX []*ParseResult
 		if externalsSrc, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.src")); err == nil {
-			if !h.parsedKnownSrcFiles.Contains(externalsSrc) {
-				h.parsedKnownSrcFiles.Store(externalsSrc)
-				customBuiltins, err := h.parsedDocuments.ParseSource(context.TODO(), externalsSrc)
+			if !ws.parsedKnownSrcFiles.Contains(externalsSrc) {
+				ws.parsedKnownSrcFiles.Store(externalsSrc)
+				customBuiltins, err := ws.parsedDocuments.ParseSource(ws.workspaceCtx, externalsSrc)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", externalsSrc, err)
 				} else {
@@ -503,9 +603,9 @@ func (h *LspHandler) tryInitializeWorkspace(r jsonrpc2.Request, ctx context.Cont
 				}
 			}
 		} else if externalsDaedalus, err := findPathAnywhereUpToRoot(wd, filepath.Join("_externals", "externals.d")); err == nil {
-			if !h.parsedKnownSrcFiles.Contains(externalsDaedalus) {
-				h.parsedKnownSrcFiles.Store(externalsDaedalus)
-				parsed, err := h.parsedDocuments.ParseFile(externalsDaedalus)
+			if !ws.parsedKnownSrcFiles.Contains(externalsDaedalus) {
+				ws.parsedKnownSrcFiles.Store(externalsDaedalus)
+				parsed, err := ws.parsedDocuments.ParseFile(externalsDaedalus)
 				if err != nil {
 					h.LogError("Error parsing %q: %v", externalsDaedalus, err)
 				} else {
@@ -530,11 +630,11 @@ func (h *LspHandler) tryInitializeWorkspace(r jsonrpc2.Request, ctx context.Cont
 				h.LogDebug("Did not parse %q: %v", v, err)
 				continue
 			}
-			if h.parsedKnownSrcFiles.Contains(full) {
+			if ws.parsedKnownSrcFiles.Contains(full) {
 				continue
 			}
-			h.parsedKnownSrcFiles.Store(full)
-			results, err := h.parsedDocuments.ParseSource(context.TODO(), full)
+			ws.parsedKnownSrcFiles.Store(full)
+			results, err := ws.parsedDocuments.ParseSource(ws.workspaceCtx, full)
 			if err != nil {
 				h.LogError("Error parsing %s: %v", full, err)
 				continue
