@@ -82,7 +82,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 		}
 		defer close(resultCh)
 
-		isComment := func(buf *bytes.Buffer, blockComments [][]int, segment []byte, idxInSegment int, startEnd []int) bool {
+		isCommentOrString := func(buf *bytes.Buffer, blockComments [][]int, segment []byte, idxInSegment int, startEnd []int) bool {
 			segment = bytes.TrimSpace(segment)
 			if bytes.HasPrefix(segment, []byte("//")) {
 				// definitely inside comment
@@ -137,7 +137,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 					continue
 				}
 
-				if isComment(&buffer, blockComments, segment, col, startEnd) {
+				if isCommentOrString(&buffer, blockComments, segment, col, startEnd) {
 					continue
 				}
 
@@ -180,7 +180,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 						}
 					}
 
-					if isComment(&buffer, blockComments, segment, col, startEnd) {
+					if isCommentOrString(&buffer, blockComments, segment, col, startEnd) {
 						continue
 					}
 
