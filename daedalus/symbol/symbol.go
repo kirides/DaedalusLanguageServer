@@ -76,11 +76,12 @@ func NewConstant(name, varType, source, documentation string, definiton Definiti
 }
 
 // NewConstantArray ...
-func NewConstantArray(name, varType, arraySizeText, source, documentation string, definiton Definition, value string) ConstantArray {
+func NewConstantArray(name, varType, arraySizeText, source, documentation string, definiton Definition, value string, elements []ArrayElement) ConstantArray {
 	return ConstantArray{
 		Variable:      NewVariable(name, varType, source, documentation, definiton),
 		Value:         value,
 		ArraySizeText: arraySizeText,
+		Elements:      elements,
 	}
 }
 
@@ -241,9 +242,10 @@ func (s Constant) GetType() string {
 }
 
 type ConstantArray struct {
+	Variable
 	Value         string
 	ArraySizeText string
-	Variable
+	Elements      []ArrayElement
 }
 
 // String ...
@@ -337,6 +339,23 @@ func (s Namespace) FullName() string {
 // String ...
 func (s Namespace) String() string {
 	return "namespace " + s.FullName()
+}
+
+// ArrayElement ...
+type ArrayElement struct {
+	Value      string
+	Definition Definition
+}
+
+func NewArrayElement(value string, definiton Definition) ArrayElement {
+	return ArrayElement{
+		Value:      value,
+		Definition: definiton,
+	}
+}
+
+func (el ArrayElement) GetValue() string {
+	return el.Value
 }
 
 // Definition ...

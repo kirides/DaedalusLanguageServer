@@ -1,6 +1,7 @@
 package langserver
 
 import (
+	"strconv"
 	"strings"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
@@ -51,6 +52,16 @@ func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintPa
 		},
 	}
 
+	getSymbolFromToken := func(v token) string {
+		name := v.Name()
+		idxOpen := strings.Index(name, "[")
+		if idxOpen == -1 {
+			return name
+		}
+		actualName := name[:idxOpen]
+		return actualName
+	}
+
 	onSymbolFound := func(v token, found FoundSymbol) {
 		kind := lsp.InlayHintKind(0)
 		if found.Location == FoundParameter {
@@ -67,6 +78,34 @@ func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintPa
 				}
 			}
 			value = ":" + cnst.Value
+
+		} else if cnst, ok := found.Symbol.(symbol.ConstantArray); ok {
+			name := v.Name()
+			idxOpen := strings.Index(name, "[")
+			idxClose := strings.Index(name, "]")
+			if idxOpen > 0 && idxClose > idxOpen {
+				index := name[idxOpen+1 : idxClose]
+				if i, err := strconv.Atoi(index); err == nil && i >= 0 && i < len(cnst.Elements) {
+					value = ":" + cnst.Elements[i].GetValue()
+				} else {
+					// probably a symbol, so lets find it!
+					resolvedIndex := index
+					ok := true
+					for ok {
+						var cnst2 symbol.Symbol
+						cnst2, ok = ws.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(resolvedIndex), SymbolConstant)
+						if ok {
+							resolvedIndex = cnst2.(symbol.Constant).Value
+						}
+					}
+					if i, err := strconv.Atoi(resolvedIndex); err == nil && i >= 0 && i < len(cnst.Elements) {
+						value = ":" + cnst.Elements[i].GetValue()
+					}
+				}
+			}
+			if value == "" {
+				value = ":" + cnst.Value // atleast show preview for constant
+			}
 		} else {
 			// only show value from constants for now
 			_ = value
@@ -88,10 +127,10 @@ func (h *LspHandler) handleInlayHints(req dls.RpcContext, params lsp.InlayHintPa
 
 	for _, v := range parsed.GlobalIdentifiers {
 		if bbox.InBBox(v.definition.Start) || bbox.InBBox(v.definition.End) {
-			found, ok := parsed.FindScopedVariableDeclaration(v.Definition().Start, v.Name())
+			found, ok := parsed.FindScopedVariableDeclaration(v.Definition().Start, getSymbolFromToken(v))
 			if !ok {
 				var symb symbol.Symbol
-				symb, ok = ws.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(v.Name()), SymbolAll)
+				symb, ok = ws.parsedDocuments.LookupGlobalSymbol(strings.ToUpper(getSymbolFromToken(v)), SymbolAll)
 				found = FoundSymbol{symb, FoundGlobal}
 			}
 			if !ok {

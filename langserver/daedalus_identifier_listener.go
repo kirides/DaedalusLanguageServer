@@ -76,9 +76,8 @@ func (l *DaedalusIdentifierListener) onIdentifier(ctx antlr.ParserRuleContext) {
 		return
 	}
 	// only plain tokens for now
-	if strings.ContainsAny(txt, ".[]") || // no arrays or properties
+	if strings.EqualFold(txt, "true") ||
 		// strings.EqualFold(txt, "null") || // people actually use "null" as variable names
-		strings.EqualFold(txt, "true") ||
 		strings.EqualFold(txt, "false") ||
 
 		strings.EqualFold(txt, "hero") ||
@@ -112,8 +111,8 @@ func (l *DaedalusIdentifierListener) EnterArrayIndex(ctx *parser.ArrayIndexConte
 }
 
 func (l *DaedalusIdentifierListener) EnterReferenceValue(ctx *parser.ReferenceValueContext) {
-	refAtom := ctx.Reference().(*parser.ReferenceContext).ReferenceAtom(0).(*parser.ReferenceAtomContext)
-	l.onIdentifier(refAtom.NameNode())
+	refAtom := ctx.Reference()
+	l.onIdentifier(refAtom)
 }
 
 // func (l *DaedalusIdentifierListener) EnterReference(ctx *parser.ReferenceContext) {

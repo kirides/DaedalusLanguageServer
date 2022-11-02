@@ -178,6 +178,20 @@ func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c *parser.ConstArray
 	return result.String()
 }
 
+func (l *DaedalusStatefulListener) arrayElementsFromContext(c *parser.ConstArrayAssignmentContext) []symbol.ArrayElement {
+	result := make([]symbol.ArrayElement, 0, 66)
+	for _, v := range c.AllExpressionBlock() {
+		result = append(result, symbol.NewArrayElement(
+			v.GetText(),
+			symbol.NewDefinition(v.GetStart().GetLine(),
+				v.GetStart().GetColumn(),
+				v.GetStop().GetLine(),
+				v.GetStop().GetColumn(),
+			)))
+	}
+	return result
+}
+
 func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) []symbol.Symbol {
 	result := []symbol.Symbol{}
 	summary := ""
@@ -206,6 +220,7 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 				summary, // documentation
 				l.symbolDefinitionForRuleContext(innerVal.NameNode()),
 				l.maxNOfConstValues(3, innerVal.ConstArrayAssignment().(*parser.ConstArrayAssignmentContext)),
+				l.arrayElementsFromContext(innerVal.ConstArrayAssignment().(*parser.ConstArrayAssignmentContext)),
 			))
 		return nil
 	})
