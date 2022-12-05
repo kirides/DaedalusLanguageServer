@@ -73,8 +73,8 @@ LineComment: '//' ~[\r\n]* -> channel(2);
 fragment NonDigit: GermanCharacter | [a-zA-Z_];
 fragment IdContinue: NonDigit | IdSpecial | Digit;
 fragment IdSpecial: [@^];
-//                             ß     Ä     ä     Ö     ö     Ü     ü
 fragment GermanCharacter:
+	//   ß     Ä     ä     Ö     ö     Ü     ü
 	[\u00DF\u00C4\u00E4\u00D6\u00F6\u00DC\u00FC];
 fragment Digit: [0-9];
 fragment PointFloat: Digit* '.' Digit+ | Digit+ '.';
@@ -143,9 +143,7 @@ varDecl:
 	)*;
 
 metaValue: .+?;
-zParserExtenderMeta:
-nameNode Assign metaValue Semi
-;
+zParserExtenderMeta: nameNode Assign metaValue Semi;
 zParserExtenderMetaBlock:
 	Meta LeftBrace zParserExtenderMeta*? RightBrace Semi;
 constArrayDef:
