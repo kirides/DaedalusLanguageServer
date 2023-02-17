@@ -1,6 +1,6 @@
 module github.com/kirides/DaedalusLanguageServer
 
-go 1.19
+go 1.20
 
 require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20220911224424-aa1f1f12a846
@@ -14,8 +14,8 @@ require (
 )
 
 require (
-	github.com/segmentio/asm v1.2.0 // indirect
-	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
+	github.com/segmentio/asm v1.1.3 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 )
