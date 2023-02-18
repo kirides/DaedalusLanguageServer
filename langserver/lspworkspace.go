@@ -73,9 +73,10 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 			ws.logger.Errorf("Error requesting message %q: %v", id, err)
 		}
 		ws.logger.Debugf("Result: %#v", result)
-		if result.Title == "Gothic 2" {
+		switch result.Title {
+		case "Gothic 2":
 			ws.commandSetupWorkspace(ws, "G2A")
-		} else if result.Title == "Gothic 1" {
+		case "Gothic 1":
 			ws.commandSetupWorkspace(ws, "G1")
 		}
 	}
