@@ -68,7 +68,7 @@ func (m *parseResultsManager) ParseScriptListener(source, content string, listen
 // ParseScript ...
 func (m *parseResultsManager) ParseScript(source, content string, lastModifiedAt time.Time) *ParseResult {
 	m.mtx.Lock()
-	if existing, ok := m.parseResults[source]; ok && existing.lastModifiedAt == lastModifiedAt {
+	if existing, ok := m.parseResults[source]; ok && existing.lastModifiedAt.Equal(lastModifiedAt) {
 		m.mtx.Unlock()
 		return existing
 	}
