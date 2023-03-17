@@ -90,6 +90,14 @@ func (m BufferedDocument) GetIdentifier(position lsp.Position) (partial string, 
 	startOfLine = offset
 	if position.Character > 0 {
 		offset += int(position.Character)
+		subDoc := doc[offset:]
+
+		idx := strings.IndexFunc(subDoc, func(r rune) bool {
+			return !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_')
+		})
+		if idx > 0 {
+			offset += idx
+		}
 	}
 
 	lineContent := doc[startOfLine:offset]
@@ -142,6 +150,8 @@ func (m BufferedDocument) GetParentSymbolReference(position lsp.Position) (paren
 	start := o
 
 	foundDot := false
+	rightPart := lineContent
+	leftPart := lineContent
 	for o >= 0 {
 		token := lineContent[o]
 		r := rune(token)
@@ -150,6 +160,12 @@ func (m BufferedDocument) GetParentSymbolReference(position lsp.Position) (paren
 			continue
 		}
 		if r == '.' {
+			if start != o {
+				rightPart = rightPart[o+1:]
+			} else {
+				rightPart = rightPart[o:]
+			}
+			leftPart = leftPart[:o]
 			foundDot = true
 		}
 		break
@@ -157,23 +173,21 @@ func (m BufferedDocument) GetParentSymbolReference(position lsp.Position) (paren
 	if !foundDot {
 		return "", "", fmt.Errorf("not found")
 	}
-	idxDot := o
-	o--
+
 	foundIdentifier := false
-	for o >= 0 {
-		token := lineContent[o]
-		r := rune(token)
+	actualLeftPart := leftPart
+	for i := len(leftPart) - 1; i >= 0; i-- {
+		r := rune(leftPart[i])
 		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' {
-			o--
 			foundIdentifier = true
+			actualLeftPart = leftPart[i:]
 			continue
 		}
 		break
 	}
 
 	if foundIdentifier {
-		o++
-		return lineContent[o:idxDot], lineContent[idxDot:start], nil
+		return actualLeftPart, rightPart, nil
 	}
 	return "", "", fmt.Errorf("not found")
 }

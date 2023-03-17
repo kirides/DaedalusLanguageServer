@@ -17,7 +17,11 @@ func (h *LspHandler) handleTextDocumentHover(req dls.RpcContext, data lsp.TextDo
 
 	found, err := ws.lookUpSymbol(uriToFilename(data.TextDocument.URI), data.Position)
 	if err != nil {
-		return req.Reply(req.Context(), nil, nil)
+		sym, err := ws.getDotCompletedSymbol(&data)
+		if err != nil {
+			return req.Reply(req.Context(), nil, nil)
+		}
+		found = FoundSymbol{Symbol: sym, Location: FoundGlobal}
 	}
 	h.LogDebug("Found Symbol for Hover: %s", found.Symbol.String())
 
