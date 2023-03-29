@@ -10,7 +10,7 @@ type regularGrammarParser struct {
 	*parser.DaedalusParser
 }
 
-func (rp *regularGrammarParser) NewDaedalusFile() antlr.Tree {
+func (rp *regularGrammarParser) NewDaedalusFile() parser.IDaedalusFileContext {
 	return rp.DaedalusFile()
 }
 
@@ -29,7 +29,7 @@ func newRegularParser() *RegularParser {
 	}
 }
 
-func (rp *RegularParser) Parse(source, content string, listener antlr.ParseTreeListener, errListener antlr.ErrorListener) {
+func (rp *RegularParser) Parse(source, content string, listener antlr.ParseTreeListener, errListener antlr.ErrorListener) parser.IDaedalusFileContext {
 	inputStream := antlr.NewInputStream(content)
 
 	lexer := rp.pooledLexers.Get()
@@ -50,5 +50,7 @@ func (rp *RegularParser) Parse(source, content string, listener antlr.ParseTreeL
 	// Use SLL prediction
 	p.GetInterpreter().SetPredictionMode(antlr.PredictionModeSLL)
 
-	antlr.NewParseTreeWalker().Walk(listener, p.NewDaedalusFile())
+	parsed := p.NewDaedalusFile()
+	antlr.NewParseTreeWalker().Walk(listener, parsed)
+	return parsed
 }

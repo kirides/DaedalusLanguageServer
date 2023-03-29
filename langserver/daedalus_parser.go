@@ -15,11 +15,11 @@ type DaedalusGrammarParser interface {
 	SetInputStream(antlr.TokenStream)
 	GetInterpreter() *antlr.ParserATNSimulator
 
-	NewDaedalusFile() antlr.Tree
+	NewDaedalusFile() parser.IDaedalusFileContext
 }
 
 type Parser interface {
-	Parse(source, content string, listener antlr.ParseTreeListener, errListener antlr.ErrorListener)
+	Parse(source, content string, listener antlr.ParseTreeListener, errListener antlr.ErrorListener) parser.IDaedalusFileContext
 }
 
 type parserPool struct {
@@ -69,25 +69,26 @@ func (m *parseResultsManager) ParseAndValidateScript(source, content string) *Pa
 }
 
 // ParseScriptListener ...
-func (m *parseResultsManager) ParseScriptListener(source, content string, listener parser.DaedalusListener, errListener antlr.ErrorListener) {
-	m.parser.Parse(source, content, listener, errListener)
+func (m *parseResultsManager) ParseScriptListener(source, content string, listener parser.DaedalusListener, errListener antlr.ErrorListener) parser.IDaedalusFileContext {
+	return m.parser.Parse(source, content, listener, errListener)
 }
 
 // ParseScript ...
 func (m *parseResultsManager) ParseScript(source, content string, lastModifiedAt time.Time) *ParseResult {
-	m.mtx.Lock()
+	m.mtx.RLock()
 	if existing, ok := m.parseResults[source]; ok && existing.lastModifiedAt.Equal(lastModifiedAt) {
-		m.mtx.Unlock()
+		m.mtx.RUnlock()
 		return existing
 	}
-	m.mtx.Unlock()
+	m.mtx.RUnlock()
 
 	listener := NewDaedalusStatefulListener(source, m)
 	errListener := &SyntaxErrorListener{}
 
-	m.ParseScriptListener(source, content, listener, errListener)
+	daedalusFile := m.ParseScriptListener(source, content, listener, errListener)
 
 	result := &ParseResult{
+		Ast:             daedalusFile,
 		SyntaxErrors:    errListener.SyntaxErrors,
 		GlobalVariables: listener.Globals.Variables,
 		GlobalConstants: listener.Globals.Constants,
@@ -102,11 +103,10 @@ func (m *parseResultsManager) ParseScript(source, content string, lastModifiedAt
 	return result
 }
 
-// ValidateScript ...
-func (m *parseResultsManager) ValidateScript(source, content string) []SyntaxError {
+func (m *parseResultsManager) ValidateAst(source string, ast parser.IDaedalusFileContext) []SyntaxError {
 	listener := NewDaedalusValidatingListener(source, m)
 	errListener := &SyntaxErrorListener{}
-	m.ParseScriptListener(source, content, listener, errListener)
+	antlr.NewParseTreeWalker().Walk(listener, ast)
 
 	return errListener.SyntaxErrors
 }

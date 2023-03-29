@@ -4,11 +4,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 )
 
 // ParseResult ...
 type ParseResult struct {
+	Ast             parser.IDaedalusFileContext
 	Instances       map[string]symbol.ProtoTypeOrInstance
 	GlobalVariables map[string]symbol.Symbol
 	GlobalConstants map[string]symbol.Symbol

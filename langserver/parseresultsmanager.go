@@ -396,84 +396,6 @@ func (m *parseResultsManager) getConcurrency() int {
 	return numWorkers
 }
 
-func (m *parseResultsManager) validateFiles(ctx context.Context, resolvedPaths []string) map[string][]SyntaxError {
-	results := make(map[string][]SyntaxError)
-
-	chanPaths := make(chan string, len(resolvedPaths))
-	for _, r := range resolvedPaths {
-		chanPaths <- r
-	}
-	close(chanPaths)
-
-	var wg sync.WaitGroup
-
-	numWorkers := m.getConcurrency()
-
-	wg.Add(numWorkers)
-	for i := 0; i < numWorkers; i++ {
-		go func(wg *sync.WaitGroup) {
-			defer wg.Done()
-
-			buf := bufferPool.Get().(*bytes.Buffer)
-			defer bufferPool.Put(buf)
-
-			decoder := m.decoderPool.Get().(*encoding.Decoder)
-			defer m.decoderPool.Put(decoder)
-
-			for r := range chanPaths {
-				if ctx.Err() != nil {
-					return
-				}
-				f, err := os.Open(r)
-				if err != nil {
-					continue
-				}
-				decoder.Reset()
-				translated := decoder.Reader(f)
-				buf.Reset()
-				_, err = buf.ReadFrom(translated)
-				f.Close()
-				if err != nil {
-					continue
-				}
-
-				parsed := m.ValidateScript(r, buf.String())
-				if len(parsed) > 0 {
-					m.mtx.Lock()
-					results[r] = parsed
-					m.mtx.Unlock()
-				}
-			}
-		}(&wg)
-	}
-
-	wg.Wait()
-	return results
-}
-
-func (m *parseResultsManager) validateFile(dPath string) ([]SyntaxError, error) {
-	buf := bufferPool.Get().(*bytes.Buffer)
-	defer bufferPool.Put(buf)
-
-	decoder := m.decoderPool.Get().(*encoding.Decoder)
-	defer m.decoderPool.Put(decoder)
-
-	f, err := os.Open(dPath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	decoder.Reset()
-	translated := decoder.Reader(f)
-	buf.Reset()
-	_, err = buf.ReadFrom(translated)
-	if err != nil {
-		return nil, err
-	}
-	return m.ValidateScript(dPath, buf.String()), nil
-}
-
 func timeOp(op string, logger dls.Logger) func() {
 	start := time.Now()
 	return func() {
@@ -540,6 +462,13 @@ func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) (
 				}
 
 				parsed := m.ParseScript(r, buf.String(), lastMod)
+				// For now, Ast = nil means we already analyzed the file.
+				// keeping the Ast in memory uses a whole bunch of memory.
+				if parsed.Ast != nil {
+					errors := m.ValidateAst(r, parsed.Ast)
+					parsed.Ast = nil
+					parsed.SyntaxErrors = errors
+				}
 
 				m.mtx.Lock()
 				m.parseResults[parsed.Source] = parsed
@@ -550,14 +479,6 @@ func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) (
 	}
 
 	wg.Wait()
-
-	validations := m.validateFiles(ctx, resolvedPaths)
-
-	for _, v := range results {
-		if e, ok := validations[v.Source]; ok {
-			v.SyntaxErrors = append(v.SyntaxErrors, e...)
-		}
-	}
 
 	m.logger.Infof("Done parsing %q: %d scripts.", srcFile, len(results))
 	return results, nil
@@ -589,16 +510,18 @@ func (m *parseResultsManager) ParseFile(dFile string) (*ParseResult, error) {
 	}
 
 	parsed := m.ParseScript(dFile, buf.String(), stat.ModTime())
+	// For now, Ast = nil means we already analyzed the file.
+	// keeping the Ast in memory uses a whole bunch of memory.
+	if parsed.Ast != nil {
+		errors := m.ValidateAst(parsed.Source, parsed.Ast)
+		parsed.Ast = nil
+		parsed.SyntaxErrors = errors
+	}
 
 	m.mtx.Lock()
 	m.parseResults[parsed.Source] = parsed
 	m.mtx.Unlock()
 
-	validations, err := m.validateFile(parsed.Source)
-
-	if err == nil && len(validations) > 0 {
-		parsed.SyntaxErrors = append(parsed.SyntaxErrors, validations...)
-	}
 	return parsed, nil
 }
 
