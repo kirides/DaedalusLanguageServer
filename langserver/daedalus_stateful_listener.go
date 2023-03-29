@@ -112,11 +112,27 @@ func (l *DaedalusStatefulListener) symbolSummaryForContext(ctx antlr.ParserRuleC
 }
 
 func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext) []symbol.Symbol {
-	result := []symbol.Symbol{}
 	summary := ""
 	if p, ok := v.GetParent().(parser.IInlineDefContext); ok {
 		summary = l.symbolSummaryForContext(p)
 	}
+
+	nVars := 0
+	for _, ch := range v.GetChildren() {
+		if _, ok := ch.(*parser.VarValueDeclContext); ok {
+			nVars++
+		} else if innerVal, ok := ch.(*parser.VarDeclContext); ok {
+			for _, ctx := range innerVal.GetChildren() {
+				if _, ok := ctx.(parser.IVarValueDeclContext); ok {
+					nVars++
+				}
+			}
+		} else if _, ok := ch.(*parser.VarArrayDeclContext); ok {
+			nVars++
+		}
+	}
+
+	result := make([]symbol.Symbol, 0, nVars)
 
 	for _, ch := range v.GetChildren() {
 		if val, ok := ch.(*parser.VarValueDeclContext); ok {
@@ -152,7 +168,6 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 				))
 		}
 	}
-
 	return result
 }
 
@@ -196,12 +211,23 @@ func (l *DaedalusStatefulListener) arrayElementsFromContext(c parser.IConstArray
 }
 
 func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) []symbol.Symbol {
-	result := []symbol.Symbol{}
 	summary := ""
 	if p, ok := c.GetParent().(parser.IInlineDefContext); ok {
 		summary = l.symbolSummaryForContext(p)
 	}
 
+	nDefs := 0
+	walkSymbols(c, func(cv *parser.ConstValueDefContext) error {
+		nDefs++
+		return nil
+	})
+
+	walkSymbols(c, func(innerVal *parser.ConstArrayDefContext) error {
+		nDefs++
+		return nil
+	})
+
+	result := make([]symbol.Symbol, 0, nDefs)
 	walkSymbols(c, func(cv *parser.ConstValueDefContext) error {
 		nameNode := cv.NameNode()
 		result = append(result,
@@ -272,11 +298,20 @@ func walkSymbols[T antlr.ParserRuleContext](rule antlr.RuleNode, walkFn func(sym
 }
 
 func (l *DaedalusStatefulListener) getAssignedFields(ctx parser.IStatementBlockContext) []symbol.Constant {
-	cFields := []symbol.Constant{}
-
+	nFields := 0
 	walkSymbols(ctx, func(v *parser.StatementContext) error {
-		if v.Assignment() != nil {
-			v := v.Assignment()
+		assignment := v.Assignment()
+		if assignment != nil {
+			nFields++
+		}
+		return nil
+	})
+
+	cFields := make([]symbol.Constant, 0, nFields)
+	walkSymbols(ctx, func(v *parser.StatementContext) error {
+		assignment := v.Assignment()
+		if assignment != nil {
+			v := assignment
 			ref := v.Reference()
 			txt := ref.GetText()
 

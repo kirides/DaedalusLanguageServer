@@ -13,6 +13,8 @@ import (
 	"go.lsp.dev/uri"
 )
 
+var rxBlockComment = regexp.MustCompile(`(?s)\/\*.*?\*\/`)
+
 func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.ReferenceParams) <-chan lsp.Location {
 	resultCh := make(chan lsp.Location, 1)
 
@@ -62,10 +64,10 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 	}
 
 	go func() {
-		buffer := bytes.Buffer{}
-		rxWord := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(word) + `\b`)
+		buffer := bufferPool.Get().(*bytes.Buffer)
+		defer bufferPool.Put(buffer)
 
-		rxBlockComment := regexp.MustCompile(`(?s)\/\*.*?\*\/`)
+		rxWord := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(word) + `\b`)
 
 		getLineCol := func(buf *bytes.Buffer, start, end int) ([]byte, int, int) {
 			line := 1
@@ -125,7 +127,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 			}
 
 			for _, startEnd := range indices {
-				segment, line, col := getLineCol(&buffer, startEnd[0], startEnd[1])
+				segment, line, col := getLineCol(buffer, startEnd[0], startEnd[1])
 				if line > bbox.End.Line {
 					return
 				}
@@ -139,7 +141,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 					continue
 				}
 
-				if isCommentOrString(&buffer, blockComments, segment, col, startEnd) {
+				if isCommentOrString(buffer, blockComments, segment, col, startEnd) {
 					continue
 				}
 
@@ -168,7 +170,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 				} else {
 					lastMod = time.Now()
 				}
-				err := h.parsedDocuments.LoadFileBuffer(req, k, &buffer)
+				err := h.parsedDocuments.LoadFileBuffer(req, k, buffer)
 				if err != nil {
 					continue
 				}
@@ -182,7 +184,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 
 				var parsed *ParseResult
 				for _, startEnd := range indices {
-					segment, line, col := getLineCol(&buffer, startEnd[0], startEnd[1])
+					segment, line, col := getLineCol(buffer, startEnd[0], startEnd[1])
 
 					if k == doc {
 						if wordDefIndex.Line == line && wordDefIndex.Column == col {
@@ -191,7 +193,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 						}
 					}
 
-					if isCommentOrString(&buffer, blockComments, segment, col, startEnd) {
+					if isCommentOrString(buffer, blockComments, segment, col, startEnd) {
 						continue
 					}
 

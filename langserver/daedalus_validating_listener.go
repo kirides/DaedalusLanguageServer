@@ -73,7 +73,7 @@ func (l *DaedalusValidatingListener) EnterFuncCall(ctx *parser.FuncCallContext) 
 	nameNode := ctx.NameNode()
 	funcName := nameNode.GetText()
 	funcName = strings.ToUpper(funcName)
-	sym := l.lookupSymbol(strings.ToUpper(funcName), SymbolFunction)
+	sym := l.lookupSymbol(funcName, SymbolFunction)
 
 	if sym == nil {
 		return

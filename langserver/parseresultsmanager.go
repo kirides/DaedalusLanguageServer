@@ -474,12 +474,26 @@ func (m *parseResultsManager) validateFile(dPath string) ([]SyntaxError, error) 
 	return m.ValidateScript(dPath, buf.String()), nil
 }
 
+func timeOp(op string, logger dls.Logger) func() {
+	start := time.Now()
+	return func() {
+		end := time.Now()
+		diff := end.Sub(start)
+		if diff > time.Second*5 {
+			logger.Infof("%s took %.2fs", op, diff.Seconds())
+		} else {
+			logger.Infof("%s took %dms", op, diff.Milliseconds())
+		}
+	}
+}
+
 func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) ([]*ParseResult, error) {
 	resolvedPaths, err := m.resolveSrcPaths(srcFile, filepath.Dir(srcFile))
 	if err != nil {
 		return nil, err
 	}
 	m.logger.Infof("Parsing %q. This might take a while.", srcFile)
+	defer timeOp(fmt.Sprintf("Parsing %q", srcFile), m.logger)()
 
 	results := make([]*ParseResult, 0, len(resolvedPaths))
 

@@ -31,12 +31,20 @@ func newParserPool(newFn func() DaedalusGrammarParser) *parserPool {
 		inner: sync.Pool{New: func() interface{} { return newFn() }},
 	}
 }
-func (p *parserPool) Get() DaedalusGrammarParser {
-	return p.inner.Get().(DaedalusGrammarParser)
+func (p *parserPool) Get() DaedalusGrammarParser  { return p.inner.Get().(DaedalusGrammarParser) }
+func (p *parserPool) Put(v DaedalusGrammarParser) { p.inner.Put(v) }
+
+type lexerPool struct {
+	inner sync.Pool
 }
-func (p *parserPool) Put(v DaedalusGrammarParser) {
-	p.inner.Put(v)
+
+func newLexerPool(newFn func() *parser.DaedalusLexer) *lexerPool {
+	return &lexerPool{
+		inner: sync.Pool{New: func() interface{} { return newFn() }},
+	}
 }
+func (p *lexerPool) Get() *parser.DaedalusLexer  { return p.inner.Get().(*parser.DaedalusLexer) }
+func (p *lexerPool) Put(v *parser.DaedalusLexer) { p.inner.Put(v) }
 
 // ParseAndValidateScript ...
 func (m *parseResultsManager) ParseAndValidateScript(source, content string) *ParseResult {
