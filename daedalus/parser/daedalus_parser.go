@@ -1,4 +1,4 @@
-// Code generated from java-escape by ANTLR 4.11.1. DO NOT EDIT.
+// Code generated from Daedalus.g4 by ANTLR 4.12.0. DO NOT EDIT.
 
 package parser // Daedalus
 
@@ -309,7 +309,7 @@ func NewDaedalusParser(input antlr.TokenStream) *DaedalusParser {
 	this.RuleNames = staticData.ruleNames
 	this.LiteralNames = staticData.literalNames
 	this.SymbolicNames = staticData.symbolicNames
-	this.GrammarFileName = "java-escape"
+	this.GrammarFileName = "Daedalus.g4"
 
 	return this
 }
@@ -446,6 +446,10 @@ type IDaedalusFileContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	EOF() antlr.TerminalNode
+	MainBlock() IMainBlockContext
+
 	// IsDaedalusFileContext differentiates from other interfaces.
 	IsDaedalusFileContext()
 }
@@ -518,32 +522,16 @@ func (s *DaedalusFileContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) DaedalusFile() (localctx IDaedalusFileContext) {
-	this := p
-	_ = this
-
 	localctx = NewDaedalusFileContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 0, DaedalusParserRULE_daedalusFile)
 	var _la int
 
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(115)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&193605632) != 0 {
@@ -556,9 +544,23 @@ func (p *DaedalusParser) DaedalusFile() (localctx IDaedalusFileContext) {
 	{
 		p.SetState(117)
 		p.Match(DaedalusParserEOF)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IBlockDefContext is an interface to support dynamic dispatch.
@@ -567,6 +569,14 @@ type IBlockDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Semi() antlr.TerminalNode
+	FunctionDef() IFunctionDefContext
+	ClassDef() IClassDefContext
+	PrototypeDef() IPrototypeDefContext
+	InstanceDef() IInstanceDefContext
+	NamespaceDef() INamespaceDefContext
 
 	// IsBlockDefContext differentiates from other interfaces.
 	IsBlockDefContext()
@@ -704,31 +714,14 @@ func (s *BlockDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) BlockDef() (localctx IBlockDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewBlockDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 2, DaedalusParserRULE_blockDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(124)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case DaedalusParserFunc:
@@ -762,14 +755,29 @@ func (p *DaedalusParser) BlockDef() (localctx IBlockDefContext) {
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 	{
 		p.SetState(126)
 		p.Match(DaedalusParserSemi)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IInlineDefContext is an interface to support dynamic dispatch.
@@ -778,6 +786,12 @@ type IInlineDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Semi() antlr.TerminalNode
+	ConstDef() IConstDefContext
+	VarDecl() IVarDeclContext
+	InstanceDecl() IInstanceDeclContext
 
 	// IsInlineDefContext differentiates from other interfaces.
 	IsInlineDefContext()
@@ -883,31 +897,14 @@ func (s *InlineDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) InlineDef() (localctx IInlineDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewInlineDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 4, DaedalusParserRULE_inlineDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(131)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case DaedalusParserConst:
@@ -929,14 +926,29 @@ func (p *DaedalusParser) InlineDef() (localctx IInlineDefContext) {
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 	{
 		p.SetState(133)
 		p.Match(DaedalusParserSemi)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFunctionDefContext is an interface to support dynamic dispatch.
@@ -945,6 +957,13 @@ type IFunctionDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Func() antlr.TerminalNode
+	TypeReference() ITypeReferenceContext
+	NameNode() INameNodeContext
+	ParameterList() IParameterListContext
+	StatementBlock() IStatementBlockContext
 
 	// IsFunctionDefContext differentiates from other interfaces.
 	IsFunctionDefContext()
@@ -1066,32 +1085,16 @@ func (s *FunctionDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) FunctionDef() (localctx IFunctionDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewFunctionDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 6, DaedalusParserRULE_functionDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(135)
 		p.Match(DaedalusParserFunc)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(136)
@@ -1110,7 +1113,17 @@ func (p *DaedalusParser) FunctionDef() (localctx IFunctionDefContext) {
 		p.StatementBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IConstDefContext is an interface to support dynamic dispatch.
@@ -1119,6 +1132,14 @@ type IConstDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Const() antlr.TerminalNode
+	TypeReference() ITypeReferenceContext
+	AllConstValueDef() []IConstValueDefContext
+	ConstValueDef(i int) IConstValueDefContext
+	AllConstArrayDef() []IConstArrayDefContext
+	ConstArrayDef(i int) IConstArrayDefContext
 
 	// IsConstDefContext differentiates from other interfaces.
 	IsConstDefContext()
@@ -1274,33 +1295,18 @@ func (s *ConstDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ConstDef() (localctx IConstDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewConstDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 8, DaedalusParserRULE_constDef)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(141)
 		p.Match(DaedalusParserConst)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(142)
@@ -1308,7 +1314,11 @@ func (p *DaedalusParser) ConstDef() (localctx IConstDefContext) {
 	}
 	p.SetState(145)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 3, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 3, p.GetParserRuleContext()) {
 	case 1:
 		{
 			p.SetState(143)
@@ -1321,19 +1331,32 @@ func (p *DaedalusParser) ConstDef() (localctx IConstDefContext) {
 			p.ConstArrayDef()
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 	p.SetState(154)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == DaedalusParserT__0 {
 		{
 			p.SetState(147)
 			p.Match(DaedalusParserT__0)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		p.SetState(150)
 		p.GetErrorHandler().Sync(p)
-		switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 4, p.GetParserRuleContext()) {
+		if p.HasError() {
+			goto errorExit
+		}
+
+		switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 4, p.GetParserRuleContext()) {
 		case 1:
 			{
 				p.SetState(148)
@@ -1346,14 +1369,29 @@ func (p *DaedalusParser) ConstDef() (localctx IConstDefContext) {
 				p.ConstArrayDef()
 			}
 
+		case antlr.ATNInvalidAltNumber:
+			goto errorExit
 		}
 
 		p.SetState(156)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IClassDefContext is an interface to support dynamic dispatch.
@@ -1362,6 +1400,16 @@ type IClassDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Class() antlr.TerminalNode
+	NameNode() INameNodeContext
+	LeftBrace() antlr.TerminalNode
+	RightBrace() antlr.TerminalNode
+	AllVarDecl() []IVarDeclContext
+	VarDecl(i int) IVarDeclContext
+	AllSemi() []antlr.TerminalNode
+	Semi(i int) antlr.TerminalNode
 
 	// IsClassDefContext differentiates from other interfaces.
 	IsClassDefContext()
@@ -1492,34 +1540,18 @@ func (s *ClassDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ClassDef() (localctx IClassDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewClassDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 10, DaedalusParserRULE_classDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(157)
 		p.Match(DaedalusParserClass)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(158)
@@ -1528,11 +1560,20 @@ func (p *DaedalusParser) ClassDef() (localctx IClassDefContext) {
 	{
 		p.SetState(159)
 		p.Match(DaedalusParserLeftBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	p.SetState(165)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 6, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 6, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1+1 {
 			{
@@ -1542,19 +1583,43 @@ func (p *DaedalusParser) ClassDef() (localctx IClassDefContext) {
 			{
 				p.SetState(161)
 				p.Match(DaedalusParserSemi)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 
 		}
 		p.SetState(167)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 6, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 6, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(168)
 		p.Match(DaedalusParserRightBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IPrototypeDefContext is an interface to support dynamic dispatch.
@@ -1563,6 +1628,14 @@ type IPrototypeDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Prototype() antlr.TerminalNode
+	NameNode() INameNodeContext
+	LeftParen() antlr.TerminalNode
+	ParentReference() IParentReferenceContext
+	RightParen() antlr.TerminalNode
+	StatementBlock() IStatementBlockContext
 
 	// IsPrototypeDefContext differentiates from other interfaces.
 	IsPrototypeDefContext()
@@ -1676,32 +1749,16 @@ func (s *PrototypeDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) PrototypeDef() (localctx IPrototypeDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewPrototypeDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 12, DaedalusParserRULE_prototypeDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(170)
 		p.Match(DaedalusParserPrototype)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(171)
@@ -1710,6 +1767,10 @@ func (p *DaedalusParser) PrototypeDef() (localctx IPrototypeDefContext) {
 	{
 		p.SetState(172)
 		p.Match(DaedalusParserLeftParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(173)
@@ -1718,13 +1779,27 @@ func (p *DaedalusParser) PrototypeDef() (localctx IPrototypeDefContext) {
 	{
 		p.SetState(174)
 		p.Match(DaedalusParserRightParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(175)
 		p.StatementBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IInstanceDefContext is an interface to support dynamic dispatch.
@@ -1733,6 +1808,14 @@ type IInstanceDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Instance() antlr.TerminalNode
+	NameNode() INameNodeContext
+	LeftParen() antlr.TerminalNode
+	ParentReference() IParentReferenceContext
+	RightParen() antlr.TerminalNode
+	StatementBlock() IStatementBlockContext
 
 	// IsInstanceDefContext differentiates from other interfaces.
 	IsInstanceDefContext()
@@ -1846,32 +1929,16 @@ func (s *InstanceDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) InstanceDef() (localctx IInstanceDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewInstanceDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 14, DaedalusParserRULE_instanceDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(177)
 		p.Match(DaedalusParserInstance)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(178)
@@ -1880,6 +1947,10 @@ func (p *DaedalusParser) InstanceDef() (localctx IInstanceDefContext) {
 	{
 		p.SetState(179)
 		p.Match(DaedalusParserLeftParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(180)
@@ -1888,13 +1959,27 @@ func (p *DaedalusParser) InstanceDef() (localctx IInstanceDefContext) {
 	{
 		p.SetState(181)
 		p.Match(DaedalusParserRightParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(182)
 		p.StatementBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IInstanceDeclContext is an interface to support dynamic dispatch.
@@ -1903,6 +1988,14 @@ type IInstanceDeclContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Instance() antlr.TerminalNode
+	AllNameNode() []INameNodeContext
+	NameNode(i int) INameNodeContext
+	LeftParen() antlr.TerminalNode
+	ParentReference() IParentReferenceContext
+	RightParen() antlr.TerminalNode
 
 	// IsInstanceDeclContext differentiates from other interfaces.
 	IsInstanceDeclContext()
@@ -2025,34 +2118,18 @@ func (s *InstanceDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) InstanceDecl() (localctx IInstanceDeclContext) {
-	this := p
-	_ = this
-
 	localctx = NewInstanceDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 16, DaedalusParserRULE_instanceDecl)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(184)
 		p.Match(DaedalusParserInstance)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(185)
@@ -2060,13 +2137,22 @@ func (p *DaedalusParser) InstanceDecl() (localctx IInstanceDeclContext) {
 	}
 	p.SetState(190)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 7, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 7, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1+1 {
 			{
 				p.SetState(186)
 				p.Match(DaedalusParserT__0)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 			{
 				p.SetState(187)
@@ -2076,11 +2162,21 @@ func (p *DaedalusParser) InstanceDecl() (localctx IInstanceDeclContext) {
 		}
 		p.SetState(192)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 7, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 7, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(193)
 		p.Match(DaedalusParserLeftParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(194)
@@ -2089,9 +2185,23 @@ func (p *DaedalusParser) InstanceDecl() (localctx IInstanceDeclContext) {
 	{
 		p.SetState(195)
 		p.Match(DaedalusParserRightParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // INamespaceDefContext is an interface to support dynamic dispatch.
@@ -2100,6 +2210,14 @@ type INamespaceDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Namespace() antlr.TerminalNode
+	NameNode() INameNodeContext
+	LeftBrace() antlr.TerminalNode
+	RightBrace() antlr.TerminalNode
+	AllContentBlock() []IContentBlockContext
+	ContentBlock(i int) IContentBlockContext
 
 	// IsNamespaceDefContext differentiates from other interfaces.
 	IsNamespaceDefContext()
@@ -2222,34 +2340,18 @@ func (s *NamespaceDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) NamespaceDef() (localctx INamespaceDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewNamespaceDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 18, DaedalusParserRULE_namespaceDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(197)
 		p.Match(DaedalusParserNamespace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(198)
@@ -2258,11 +2360,20 @@ func (p *DaedalusParser) NamespaceDef() (localctx INamespaceDefContext) {
 	{
 		p.SetState(199)
 		p.Match(DaedalusParserLeftBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	p.SetState(203)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 8, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 8, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1+1 {
 			{
@@ -2273,14 +2384,34 @@ func (p *DaedalusParser) NamespaceDef() (localctx INamespaceDefContext) {
 		}
 		p.SetState(205)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 8, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 8, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(206)
 		p.Match(DaedalusParserRightBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IMainBlockContext is an interface to support dynamic dispatch.
@@ -2289,6 +2420,11 @@ type IMainBlockContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	ZParserExtenderMetaBlock() IZParserExtenderMetaBlockContext
+	AllContentBlock() []IContentBlockContext
+	ContentBlock(i int) IContentBlockContext
 
 	// IsMainBlockContext differentiates from other interfaces.
 	IsMainBlockContext()
@@ -2399,32 +2535,16 @@ func (s *MainBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) MainBlock() (localctx IMainBlockContext) {
-	this := p
-	_ = this
-
 	localctx = NewMainBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 20, DaedalusParserRULE_mainBlock)
 	var _la int
 
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(209)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == DaedalusParserMeta {
@@ -2436,9 +2556,12 @@ func (p *DaedalusParser) MainBlock() (localctx IMainBlockContext) {
 	}
 	p.SetState(212)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
-	for ok := true; ok; ok = (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&59387904) != 0 {
+	for ok := true; ok; ok = ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&59387904) != 0) {
 		{
 			p.SetState(211)
 			p.ContentBlock()
@@ -2446,10 +2569,23 @@ func (p *DaedalusParser) MainBlock() (localctx IMainBlockContext) {
 
 		p.SetState(214)
 		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
 		_la = p.GetTokenStream().LA(1)
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IContentBlockContext is an interface to support dynamic dispatch.
@@ -2458,6 +2594,10 @@ type IContentBlockContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	BlockDef() IBlockDefContext
+	InlineDef() IInlineDefContext
 
 	// IsContentBlockContext differentiates from other interfaces.
 	IsContentBlockContext()
@@ -2543,32 +2683,16 @@ func (s *ContentBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ContentBlock() (localctx IContentBlockContext) {
-	this := p
-	_ = this
-
 	localctx = NewContentBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 22, DaedalusParserRULE_contentBlock)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(218)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 11, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 11, p.GetParserRuleContext()) {
 	case 1:
 		{
 			p.SetState(216)
@@ -2581,9 +2705,21 @@ func (p *DaedalusParser) ContentBlock() (localctx IContentBlockContext) {
 			p.InlineDef()
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IVarDeclContext is an interface to support dynamic dispatch.
@@ -2592,6 +2728,16 @@ type IVarDeclContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Var() antlr.TerminalNode
+	TypeReference() ITypeReferenceContext
+	AllVarValueDecl() []IVarValueDeclContext
+	VarValueDecl(i int) IVarValueDeclContext
+	AllVarArrayDecl() []IVarArrayDeclContext
+	VarArrayDecl(i int) IVarArrayDeclContext
+	AllVarDecl() []IVarDeclContext
+	VarDecl(i int) IVarDeclContext
 
 	// IsVarDeclContext differentiates from other interfaces.
 	IsVarDeclContext()
@@ -2788,34 +2934,18 @@ func (s *VarDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) VarDecl() (localctx IVarDeclContext) {
-	this := p
-	_ = this
-
 	localctx = NewVarDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 24, DaedalusParserRULE_varDecl)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(220)
 		p.Match(DaedalusParserVar)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(221)
@@ -2823,7 +2953,11 @@ func (p *DaedalusParser) VarDecl() (localctx IVarDeclContext) {
 	}
 	p.SetState(224)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 12, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 12, p.GetParserRuleContext()) {
 	case 1:
 		{
 			p.SetState(222)
@@ -2836,20 +2970,35 @@ func (p *DaedalusParser) VarDecl() (localctx IVarDeclContext) {
 			p.VarArrayDecl()
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 	p.SetState(234)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 14, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 14, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1 {
 			{
 				p.SetState(226)
 				p.Match(DaedalusParserT__0)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 			p.SetState(230)
 			p.GetErrorHandler().Sync(p)
-			switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 13, p.GetParserRuleContext()) {
+			if p.HasError() {
+				goto errorExit
+			}
+
+			switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 13, p.GetParserRuleContext()) {
 			case 1:
 				{
 					p.SetState(227)
@@ -2868,15 +3017,33 @@ func (p *DaedalusParser) VarDecl() (localctx IVarDeclContext) {
 					p.VarArrayDecl()
 				}
 
+			case antlr.ATNInvalidAltNumber:
+				goto errorExit
 			}
 
 		}
 		p.SetState(236)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 14, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 14, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IMetaValueContext is an interface to support dynamic dispatch.
@@ -2885,7 +3052,6 @@ type IMetaValueContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsMetaValueContext differentiates from other interfaces.
 	IsMetaValueContext()
 }
@@ -2937,33 +3103,16 @@ func (s *MetaValueContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) MetaValue() (localctx IMetaValueContext) {
-	this := p
-	_ = this
-
 	localctx = NewMetaValueContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 26, DaedalusParserRULE_metaValue)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(238)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_alt = 1 + 1
 	for ok := true; ok; ok = _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 		switch _alt {
@@ -2972,15 +3121,29 @@ func (p *DaedalusParser) MetaValue() (localctx IMetaValueContext) {
 			p.MatchWildcard()
 
 		default:
-			panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+			p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+			goto errorExit
 		}
 
 		p.SetState(240)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 15, p.GetParserRuleContext())
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 15, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IZParserExtenderMetaContext is an interface to support dynamic dispatch.
@@ -2989,6 +3152,12 @@ type IZParserExtenderMetaContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	NameNode() INameNodeContext
+	Assign() antlr.TerminalNode
+	MetaValue() IMetaValueContext
+	Semi() antlr.TerminalNode
 
 	// IsZParserExtenderMetaContext differentiates from other interfaces.
 	IsZParserExtenderMetaContext()
@@ -3082,28 +3251,8 @@ func (s *ZParserExtenderMetaContext) ExitRule(listener antlr.ParseTreeListener) 
 }
 
 func (p *DaedalusParser) ZParserExtenderMeta() (localctx IZParserExtenderMetaContext) {
-	this := p
-	_ = this
-
 	localctx = NewZParserExtenderMetaContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 28, DaedalusParserRULE_zParserExtenderMeta)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(242)
@@ -3112,6 +3261,10 @@ func (p *DaedalusParser) ZParserExtenderMeta() (localctx IZParserExtenderMetaCon
 	{
 		p.SetState(243)
 		p.Match(DaedalusParserAssign)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(244)
@@ -3120,9 +3273,23 @@ func (p *DaedalusParser) ZParserExtenderMeta() (localctx IZParserExtenderMetaCon
 	{
 		p.SetState(245)
 		p.Match(DaedalusParserSemi)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IZParserExtenderMetaBlockContext is an interface to support dynamic dispatch.
@@ -3131,6 +3298,14 @@ type IZParserExtenderMetaBlockContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Meta() antlr.TerminalNode
+	LeftBrace() antlr.TerminalNode
+	RightBrace() antlr.TerminalNode
+	Semi() antlr.TerminalNode
+	AllZParserExtenderMeta() []IZParserExtenderMetaContext
+	ZParserExtenderMeta(i int) IZParserExtenderMetaContext
 
 	// IsZParserExtenderMetaBlockContext differentiates from other interfaces.
 	IsZParserExtenderMetaBlockContext()
@@ -3241,43 +3416,36 @@ func (s *ZParserExtenderMetaBlockContext) ExitRule(listener antlr.ParseTreeListe
 }
 
 func (p *DaedalusParser) ZParserExtenderMetaBlock() (localctx IZParserExtenderMetaBlockContext) {
-	this := p
-	_ = this
-
 	localctx = NewZParserExtenderMetaBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 30, DaedalusParserRULE_zParserExtenderMetaBlock)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(247)
 		p.Match(DaedalusParserMeta)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(248)
 		p.Match(DaedalusParserLeftBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	p.SetState(252)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 16, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 16, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1+1 {
 			{
@@ -3288,18 +3456,42 @@ func (p *DaedalusParser) ZParserExtenderMetaBlock() (localctx IZParserExtenderMe
 		}
 		p.SetState(254)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 16, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 16, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(255)
 		p.Match(DaedalusParserRightBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(256)
 		p.Match(DaedalusParserSemi)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IConstArrayDefContext is an interface to support dynamic dispatch.
@@ -3308,6 +3500,13 @@ type IConstArrayDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	NameNode() INameNodeContext
+	LeftBracket() antlr.TerminalNode
+	ArraySize() IArraySizeContext
+	RightBracket() antlr.TerminalNode
+	ConstArrayAssignment() IConstArrayAssignmentContext
 
 	// IsConstArrayDefContext differentiates from other interfaces.
 	IsConstArrayDefContext()
@@ -3417,28 +3616,8 @@ func (s *ConstArrayDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ConstArrayDef() (localctx IConstArrayDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewConstArrayDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 32, DaedalusParserRULE_constArrayDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(258)
@@ -3447,6 +3626,10 @@ func (p *DaedalusParser) ConstArrayDef() (localctx IConstArrayDefContext) {
 	{
 		p.SetState(259)
 		p.Match(DaedalusParserLeftBracket)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(260)
@@ -3455,13 +3638,27 @@ func (p *DaedalusParser) ConstArrayDef() (localctx IConstArrayDefContext) {
 	{
 		p.SetState(261)
 		p.Match(DaedalusParserRightBracket)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(262)
 		p.ConstArrayAssignment()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IConstArrayAssignmentContext is an interface to support dynamic dispatch.
@@ -3470,6 +3667,13 @@ type IConstArrayAssignmentContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Assign() antlr.TerminalNode
+	LeftBrace() antlr.TerminalNode
+	RightBrace() antlr.TerminalNode
+	AllExpressionBlock() []IExpressionBlockContext
+	ExpressionBlock(i int) IExpressionBlockContext
 
 	// IsConstArrayAssignmentContext differentiates from other interfaces.
 	IsConstArrayAssignmentContext()
@@ -3576,38 +3780,26 @@ func (s *ConstArrayAssignmentContext) ExitRule(listener antlr.ParseTreeListener)
 }
 
 func (p *DaedalusParser) ConstArrayAssignment() (localctx IConstArrayAssignmentContext) {
-	this := p
-	_ = this
-
 	localctx = NewConstArrayAssignmentContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 34, DaedalusParserRULE_constArrayAssignment)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(264)
 		p.Match(DaedalusParserAssign)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(265)
 		p.Match(DaedalusParserLeftBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
 	{
@@ -3616,13 +3808,22 @@ func (p *DaedalusParser) ConstArrayAssignment() (localctx IConstArrayAssignmentC
 	}
 	p.SetState(271)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 17, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 17, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1+1 {
 			{
 				p.SetState(267)
 				p.Match(DaedalusParserT__0)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
 			{
 				p.SetState(268)
@@ -3632,15 +3833,35 @@ func (p *DaedalusParser) ConstArrayAssignment() (localctx IConstArrayAssignmentC
 		}
 		p.SetState(273)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 17, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 17, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 
 	{
 		p.SetState(274)
 		p.Match(DaedalusParserRightBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IConstValueDefContext is an interface to support dynamic dispatch.
@@ -3649,6 +3870,10 @@ type IConstValueDefContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	NameNode() INameNodeContext
+	ConstValueAssignment() IConstValueAssignmentContext
 
 	// IsConstValueDefContext differentiates from other interfaces.
 	IsConstValueDefContext()
@@ -3734,28 +3959,8 @@ func (s *ConstValueDefContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ConstValueDef() (localctx IConstValueDefContext) {
-	this := p
-	_ = this
-
 	localctx = NewConstValueDefContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 36, DaedalusParserRULE_constValueDef)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(276)
@@ -3766,7 +3971,17 @@ func (p *DaedalusParser) ConstValueDef() (localctx IConstValueDefContext) {
 		p.ConstValueAssignment()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IConstValueAssignmentContext is an interface to support dynamic dispatch.
@@ -3775,6 +3990,10 @@ type IConstValueAssignmentContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Assign() antlr.TerminalNode
+	ExpressionBlock() IExpressionBlockContext
 
 	// IsConstValueAssignmentContext differentiates from other interfaces.
 	IsConstValueAssignmentContext()
@@ -3848,39 +4067,33 @@ func (s *ConstValueAssignmentContext) ExitRule(listener antlr.ParseTreeListener)
 }
 
 func (p *DaedalusParser) ConstValueAssignment() (localctx IConstValueAssignmentContext) {
-	this := p
-	_ = this
-
 	localctx = NewConstValueAssignmentContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 38, DaedalusParserRULE_constValueAssignment)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(279)
 		p.Match(DaedalusParserAssign)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(280)
 		p.ExpressionBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IVarArrayDeclContext is an interface to support dynamic dispatch.
@@ -3889,6 +4102,12 @@ type IVarArrayDeclContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	NameNode() INameNodeContext
+	LeftBracket() antlr.TerminalNode
+	ArraySize() IArraySizeContext
+	RightBracket() antlr.TerminalNode
 
 	// IsVarArrayDeclContext differentiates from other interfaces.
 	IsVarArrayDeclContext()
@@ -3982,28 +4201,8 @@ func (s *VarArrayDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) VarArrayDecl() (localctx IVarArrayDeclContext) {
-	this := p
-	_ = this
-
 	localctx = NewVarArrayDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 40, DaedalusParserRULE_varArrayDecl)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(282)
@@ -4012,6 +4211,10 @@ func (p *DaedalusParser) VarArrayDecl() (localctx IVarArrayDeclContext) {
 	{
 		p.SetState(283)
 		p.Match(DaedalusParserLeftBracket)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(284)
@@ -4020,9 +4223,23 @@ func (p *DaedalusParser) VarArrayDecl() (localctx IVarArrayDeclContext) {
 	{
 		p.SetState(285)
 		p.Match(DaedalusParserRightBracket)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IVarValueDeclContext is an interface to support dynamic dispatch.
@@ -4031,6 +4248,9 @@ type IVarValueDeclContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	NameNode() INameNodeContext
 
 	// IsVarValueDeclContext differentiates from other interfaces.
 	IsVarValueDeclContext()
@@ -4100,35 +4320,25 @@ func (s *VarValueDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) VarValueDecl() (localctx IVarValueDeclContext) {
-	this := p
-	_ = this
-
 	localctx = NewVarValueDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 42, DaedalusParserRULE_varValueDecl)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(287)
 		p.NameNode()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IParameterListContext is an interface to support dynamic dispatch.
@@ -4137,6 +4347,12 @@ type IParameterListContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	LeftParen() antlr.TerminalNode
+	RightParen() antlr.TerminalNode
+	AllParameterDecl() []IParameterDeclContext
+	ParameterDecl(i int) IParameterDeclContext
 
 	// IsParameterListContext differentiates from other interfaces.
 	IsParameterListContext()
@@ -4239,28 +4455,9 @@ func (s *ParameterListContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ParameterList() (localctx IParameterListContext) {
-	this := p
-	_ = this
-
 	localctx = NewParameterListContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 44, DaedalusParserRULE_parameterList)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	var _alt int
 
@@ -4268,9 +4465,16 @@ func (p *DaedalusParser) ParameterList() (localctx IParameterListContext) {
 	{
 		p.SetState(289)
 		p.Match(DaedalusParserLeftParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	p.SetState(298)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == DaedalusParserVar {
@@ -4280,13 +4484,22 @@ func (p *DaedalusParser) ParameterList() (localctx IParameterListContext) {
 		}
 		p.SetState(295)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 18, p.GetParserRuleContext())
-
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 18, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 		for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 			if _alt == 1+1 {
 				{
 					p.SetState(291)
 					p.Match(DaedalusParserT__0)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 				{
 					p.SetState(292)
@@ -4296,16 +4509,36 @@ func (p *DaedalusParser) ParameterList() (localctx IParameterListContext) {
 			}
 			p.SetState(297)
 			p.GetErrorHandler().Sync(p)
-			_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 18, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
+			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 18, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
 		}
 
 	}
 	{
 		p.SetState(300)
 		p.Match(DaedalusParserRightParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IParameterDeclContext is an interface to support dynamic dispatch.
@@ -4314,6 +4547,14 @@ type IParameterDeclContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Var() antlr.TerminalNode
+	TypeReference() ITypeReferenceContext
+	NameNode() INameNodeContext
+	LeftBracket() antlr.TerminalNode
+	ArraySize() IArraySizeContext
+	RightBracket() antlr.TerminalNode
 
 	// IsParameterDeclContext differentiates from other interfaces.
 	IsParameterDeclContext()
@@ -4427,33 +4668,18 @@ func (s *ParameterDeclContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ParameterDecl() (localctx IParameterDeclContext) {
-	this := p
-	_ = this
-
 	localctx = NewParameterDeclContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 46, DaedalusParserRULE_parameterDecl)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(302)
 		p.Match(DaedalusParserVar)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(303)
@@ -4465,12 +4691,19 @@ func (p *DaedalusParser) ParameterDecl() (localctx IParameterDeclContext) {
 	}
 	p.SetState(309)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == DaedalusParserLeftBracket {
 		{
 			p.SetState(305)
 			p.Match(DaedalusParserLeftBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(306)
@@ -4479,11 +4712,25 @@ func (p *DaedalusParser) ParameterDecl() (localctx IParameterDeclContext) {
 		{
 			p.SetState(307)
 			p.Match(DaedalusParserRightBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IStatementBlockContext is an interface to support dynamic dispatch.
@@ -4492,6 +4739,16 @@ type IStatementBlockContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	LeftBrace() antlr.TerminalNode
+	RightBrace() antlr.TerminalNode
+	AllStatement() []IStatementContext
+	Statement(i int) IStatementContext
+	AllSemi() []antlr.TerminalNode
+	Semi(i int) antlr.TerminalNode
+	AllIfBlockStatement() []IIfBlockStatementContext
+	IfBlockStatement(i int) IIfBlockStatementContext
 
 	// IsStatementBlockContext differentiates from other interfaces.
 	IsStatementBlockContext()
@@ -4643,28 +4900,9 @@ func (s *StatementBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) StatementBlock() (localctx IStatementBlockContext) {
-	this := p
-	_ = this
-
 	localctx = NewStatementBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 48, DaedalusParserRULE_statementBlock)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	var _alt int
 
@@ -4672,15 +4910,27 @@ func (p *DaedalusParser) StatementBlock() (localctx IStatementBlockContext) {
 	{
 		p.SetState(311)
 		p.Match(DaedalusParserLeftBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	p.SetState(321)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 23, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 23, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1+1 {
 			p.SetState(319)
 			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
 
 			switch p.GetTokenStream().LA(1) {
 			case DaedalusParserIntegerLiteral, DaedalusParserFloatLiteral, DaedalusParserStringLiteral, DaedalusParserConst, DaedalusParserVar, DaedalusParserInt, DaedalusParserFunc, DaedalusParserStringKeyword, DaedalusParserClass, DaedalusParserVoid, DaedalusParserReturn, DaedalusParserFloat, DaedalusParserPrototype, DaedalusParserInstance, DaedalusParserNamespace, DaedalusParserNull, DaedalusParserMeta, DaedalusParserLeftParen, DaedalusParserPlus, DaedalusParserMinus, DaedalusParserTilde, DaedalusParserNot, DaedalusParserIdentifier:
@@ -4691,6 +4941,10 @@ func (p *DaedalusParser) StatementBlock() (localctx IStatementBlockContext) {
 				{
 					p.SetState(313)
 					p.Match(DaedalusParserSemi)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 
 			case DaedalusParserIf:
@@ -4700,31 +4954,59 @@ func (p *DaedalusParser) StatementBlock() (localctx IStatementBlockContext) {
 				}
 				p.SetState(317)
 				p.GetErrorHandler().Sync(p)
+				if p.HasError() {
+					goto errorExit
+				}
 				_la = p.GetTokenStream().LA(1)
 
 				if _la == DaedalusParserSemi {
 					{
 						p.SetState(316)
 						p.Match(DaedalusParserSemi)
+						if p.HasError() {
+							// Recognition error - abort rule
+							goto errorExit
+						}
 					}
 
 				}
 
 			default:
-				panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+				p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+				goto errorExit
 			}
 
 		}
 		p.SetState(323)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 23, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 23, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(324)
 		p.Match(DaedalusParserRightBrace)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IStatementContext is an interface to support dynamic dispatch.
@@ -4733,6 +5015,13 @@ type IStatementContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Assignment() IAssignmentContext
+	ReturnStatement() IReturnStatementContext
+	ConstDef() IConstDefContext
+	VarDecl() IVarDeclContext
+	Expression() IExpressionContext
 
 	// IsStatementContext differentiates from other interfaces.
 	IsStatementContext()
@@ -4866,31 +5155,15 @@ func (s *StatementContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) Statement() (localctx IStatementContext) {
-	this := p
-	_ = this
-
 	localctx = NewStatementContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 50, DaedalusParserRULE_statement)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(331)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 24, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 24, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
@@ -4926,9 +5199,21 @@ func (p *DaedalusParser) Statement() (localctx IStatementContext) {
 			p.expression(0)
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFuncCallContext is an interface to support dynamic dispatch.
@@ -4937,6 +5222,13 @@ type IFuncCallContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	NameNode() INameNodeContext
+	LeftParen() antlr.TerminalNode
+	RightParen() antlr.TerminalNode
+	AllFuncArgExpression() []IFuncArgExpressionContext
+	FuncArgExpression(i int) IFuncArgExpressionContext
 
 	// IsFuncCallContext differentiates from other interfaces.
 	IsFuncCallContext()
@@ -5055,28 +5347,9 @@ func (s *FuncCallContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) FuncCall() (localctx IFuncCallContext) {
-	this := p
-	_ = this
-
 	localctx = NewFuncCallContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 52, DaedalusParserRULE_funcCall)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	var _alt int
 
@@ -5088,9 +5361,16 @@ func (p *DaedalusParser) FuncCall() (localctx IFuncCallContext) {
 	{
 		p.SetState(334)
 		p.Match(DaedalusParserLeftParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	p.SetState(343)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&36042816326905344) != 0 {
@@ -5100,13 +5380,22 @@ func (p *DaedalusParser) FuncCall() (localctx IFuncCallContext) {
 		}
 		p.SetState(340)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 25, p.GetParserRuleContext())
-
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 25, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 		for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 			if _alt == 1+1 {
 				{
 					p.SetState(336)
 					p.Match(DaedalusParserT__0)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
 				}
 				{
 					p.SetState(337)
@@ -5116,16 +5405,36 @@ func (p *DaedalusParser) FuncCall() (localctx IFuncCallContext) {
 			}
 			p.SetState(342)
 			p.GetErrorHandler().Sync(p)
-			_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 25, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
+			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 25, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
 		}
 
 	}
 	{
 		p.SetState(345)
 		p.Match(DaedalusParserRightParen)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IAssignmentContext is an interface to support dynamic dispatch.
@@ -5134,6 +5443,11 @@ type IAssignmentContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Reference() IReferenceContext
+	AssignmentOperator() IAssignmentOperatorContext
+	ExpressionBlock() IExpressionBlockContext
 
 	// IsAssignmentContext differentiates from other interfaces.
 	IsAssignmentContext()
@@ -5235,28 +5549,8 @@ func (s *AssignmentContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) Assignment() (localctx IAssignmentContext) {
-	this := p
-	_ = this
-
 	localctx = NewAssignmentContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 54, DaedalusParserRULE_assignment)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(347)
@@ -5271,7 +5565,17 @@ func (p *DaedalusParser) Assignment() (localctx IAssignmentContext) {
 		p.ExpressionBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IIfConditionContext is an interface to support dynamic dispatch.
@@ -5280,6 +5584,9 @@ type IIfConditionContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	ExpressionBlock() IExpressionBlockContext
 
 	// IsIfConditionContext differentiates from other interfaces.
 	IsIfConditionContext()
@@ -5349,35 +5656,25 @@ func (s *IfConditionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) IfCondition() (localctx IIfConditionContext) {
-	this := p
-	_ = this
-
 	localctx = NewIfConditionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 56, DaedalusParserRULE_ifCondition)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(351)
 		p.ExpressionBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IElseBlockContext is an interface to support dynamic dispatch.
@@ -5386,6 +5683,10 @@ type IElseBlockContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Else() antlr.TerminalNode
+	StatementBlock() IStatementBlockContext
 
 	// IsElseBlockContext differentiates from other interfaces.
 	IsElseBlockContext()
@@ -5459,39 +5760,33 @@ func (s *ElseBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ElseBlock() (localctx IElseBlockContext) {
-	this := p
-	_ = this
-
 	localctx = NewElseBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 58, DaedalusParserRULE_elseBlock)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(353)
 		p.Match(DaedalusParserElse)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(354)
 		p.StatementBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IElseIfBlockContext is an interface to support dynamic dispatch.
@@ -5500,6 +5795,12 @@ type IElseIfBlockContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Else() antlr.TerminalNode
+	If() antlr.TerminalNode
+	IfCondition() IIfConditionContext
+	StatementBlock() IStatementBlockContext
 
 	// IsElseIfBlockContext differentiates from other interfaces.
 	IsElseIfBlockContext()
@@ -5593,36 +5894,24 @@ func (s *ElseIfBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ElseIfBlock() (localctx IElseIfBlockContext) {
-	this := p
-	_ = this
-
 	localctx = NewElseIfBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 60, DaedalusParserRULE_elseIfBlock)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(356)
 		p.Match(DaedalusParserElse)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(357)
 		p.Match(DaedalusParserIf)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(358)
@@ -5633,7 +5922,17 @@ func (p *DaedalusParser) ElseIfBlock() (localctx IElseIfBlockContext) {
 		p.StatementBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IIfBlockContext is an interface to support dynamic dispatch.
@@ -5642,6 +5941,11 @@ type IIfBlockContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	If() antlr.TerminalNode
+	IfCondition() IIfConditionContext
+	StatementBlock() IStatementBlockContext
 
 	// IsIfBlockContext differentiates from other interfaces.
 	IsIfBlockContext()
@@ -5731,32 +6035,16 @@ func (s *IfBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) IfBlock() (localctx IIfBlockContext) {
-	this := p
-	_ = this
-
 	localctx = NewIfBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 62, DaedalusParserRULE_ifBlock)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(361)
 		p.Match(DaedalusParserIf)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	{
 		p.SetState(362)
@@ -5767,7 +6055,17 @@ func (p *DaedalusParser) IfBlock() (localctx IIfBlockContext) {
 		p.StatementBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IIfBlockStatementContext is an interface to support dynamic dispatch.
@@ -5776,6 +6074,12 @@ type IIfBlockStatementContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	IfBlock() IIfBlockContext
+	AllElseIfBlock() []IElseIfBlockContext
+	ElseIfBlock(i int) IElseIfBlockContext
+	ElseBlock() IElseBlockContext
 
 	// IsIfBlockStatementContext differentiates from other interfaces.
 	IsIfBlockStatementContext()
@@ -5902,28 +6206,9 @@ func (s *IfBlockStatementContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) IfBlockStatement() (localctx IIfBlockStatementContext) {
-	this := p
-	_ = this
-
 	localctx = NewIfBlockStatementContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 64, DaedalusParserRULE_ifBlockStatement)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	var _alt int
 
@@ -5934,8 +6219,13 @@ func (p *DaedalusParser) IfBlockStatement() (localctx IIfBlockStatementContext) 
 	}
 	p.SetState(369)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 27, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 27, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 1 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1+1 {
 			{
@@ -5946,10 +6236,19 @@ func (p *DaedalusParser) IfBlockStatement() (localctx IIfBlockStatementContext) 
 		}
 		p.SetState(371)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 27, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 27, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 	p.SetState(373)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == DaedalusParserElse {
@@ -5960,7 +6259,17 @@ func (p *DaedalusParser) IfBlockStatement() (localctx IIfBlockStatementContext) 
 
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IReturnStatementContext is an interface to support dynamic dispatch.
@@ -5969,6 +6278,10 @@ type IReturnStatementContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Return() antlr.TerminalNode
+	ExpressionBlock() IExpressionBlockContext
 
 	// IsReturnStatementContext differentiates from other interfaces.
 	IsReturnStatementContext()
@@ -6042,36 +6355,24 @@ func (s *ReturnStatementContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ReturnStatement() (localctx IReturnStatementContext) {
-	this := p
-	_ = this
-
 	localctx = NewReturnStatementContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 66, DaedalusParserRULE_returnStatement)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(375)
 		p.Match(DaedalusParserReturn)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 	p.SetState(377)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 	_la = p.GetTokenStream().LA(1)
 
 	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&36042816326905344) != 0 {
@@ -6082,7 +6383,17 @@ func (p *DaedalusParser) ReturnStatement() (localctx IReturnStatementContext) {
 
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IFuncArgExpressionContext is an interface to support dynamic dispatch.
@@ -6091,6 +6402,9 @@ type IFuncArgExpressionContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	ExpressionBlock() IExpressionBlockContext
 
 	// IsFuncArgExpressionContext differentiates from other interfaces.
 	IsFuncArgExpressionContext()
@@ -6160,35 +6474,25 @@ func (s *FuncArgExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) FuncArgExpression() (localctx IFuncArgExpressionContext) {
-	this := p
-	_ = this
-
 	localctx = NewFuncArgExpressionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 68, DaedalusParserRULE_funcArgExpression)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(379)
 		p.ExpressionBlock()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IExpressionBlockContext is an interface to support dynamic dispatch.
@@ -6197,6 +6501,9 @@ type IExpressionBlockContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Expression() IExpressionContext
 
 	// IsExpressionBlockContext differentiates from other interfaces.
 	IsExpressionBlockContext()
@@ -6266,35 +6573,25 @@ func (s *ExpressionBlockContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ExpressionBlock() (localctx IExpressionBlockContext) {
-	this := p
-	_ = this
-
 	localctx = NewExpressionBlockContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 70, DaedalusParserRULE_expressionBlock)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(381)
 		p.expression(0)
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IExpressionContext is an interface to support dynamic dispatch.
@@ -6303,7 +6600,6 @@ type IExpressionContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsExpressionContext differentiates from other interfaces.
 	IsExpressionContext()
 }
@@ -7297,38 +7593,22 @@ func (p *DaedalusParser) Expression() (localctx IExpressionContext) {
 }
 
 func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
-	this := p
-	_ = this
-
 	var _parentctx antlr.ParserRuleContext = p.GetParserRuleContext()
+
 	_parentState := p.GetState()
 	localctx = NewExpressionContext(p, p.GetParserRuleContext(), _parentState)
 	var _prevctx IExpressionContext = localctx
 	var _ antlr.ParserRuleContext = _prevctx // TODO: To prevent unused variable warning.
 	_startState := 72
 	p.EnterRecursionRule(localctx, 72, DaedalusParserRULE_expression, _p)
-
-	defer func() {
-		p.UnrollRecursionContexts(_parentctx)
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	p.SetState(392)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case DaedalusParserLeftParen:
@@ -7339,6 +7619,10 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(384)
 			p.Match(DaedalusParserLeftParen)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(385)
@@ -7347,6 +7631,10 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 		{
 			p.SetState(386)
 			p.Match(DaedalusParserRightParen)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case DaedalusParserPlus, DaedalusParserMinus, DaedalusParserTilde, DaedalusParserNot:
@@ -7372,13 +7660,19 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 	p.GetParserRuleContext().SetStop(p.GetTokenStream().LT(-1))
 	p.SetState(432)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 32, p.GetParserRuleContext())
-
+	if p.HasError() {
+		goto errorExit
+	}
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 32, p.GetParserRuleContext())
+	if p.HasError() {
+		goto errorExit
+	}
 	for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1 {
 			if p.GetParseListeners() != nil {
@@ -7387,14 +7681,19 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 			_prevctx = localctx
 			p.SetState(430)
 			p.GetErrorHandler().Sync(p)
-			switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 31, p.GetParserRuleContext()) {
+			if p.HasError() {
+				goto errorExit
+			}
+
+			switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 31, p.GetParserRuleContext()) {
 			case 1:
 				localctx = NewMultExpressionContext(p, NewExpressionContext(p, _parentctx, _parentState))
 				p.PushNewRecursionContext(localctx, _startState, DaedalusParserRULE_expression)
 				p.SetState(394)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 10)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 10)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 10)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(395)
@@ -7411,7 +7710,8 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(398)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 9)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 9)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 9)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(399)
@@ -7428,7 +7728,8 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(402)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 8)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 8)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(403)
@@ -7445,7 +7746,8 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(406)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 7)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 7)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 7)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(407)
@@ -7462,7 +7764,8 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(410)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 6)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 6)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 6)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(411)
@@ -7479,7 +7782,8 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(414)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 5)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 5)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 5)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(415)
@@ -7496,7 +7800,8 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(418)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 4)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 4)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 4)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(419)
@@ -7513,7 +7818,8 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(422)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 3)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 3)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 3)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(423)
@@ -7530,7 +7836,8 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 				p.SetState(426)
 
 				if !(p.Precpred(p.GetParserRuleContext(), 2)) {
-					panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 2)", ""))
+					p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 2)", ""))
+					goto errorExit
 				}
 				{
 					p.SetState(427)
@@ -7541,15 +7848,33 @@ func (p *DaedalusParser) expression(_p int) (localctx IExpressionContext) {
 					p.expression(3)
 				}
 
+			case antlr.ATNInvalidAltNumber:
+				goto errorExit
 			}
 
 		}
 		p.SetState(434)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 32, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 32, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.UnrollRecursionContexts(_parentctx)
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IArrayIndexContext is an interface to support dynamic dispatch.
@@ -7558,6 +7883,10 @@ type IArrayIndexContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	IntegerLiteral() antlr.TerminalNode
+	ReferenceAtom() IReferenceAtomContext
 
 	// IsArrayIndexContext differentiates from other interfaces.
 	IsArrayIndexContext()
@@ -7631,30 +7960,13 @@ func (s *ArrayIndexContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ArrayIndex() (localctx IArrayIndexContext) {
-	this := p
-	_ = this
-
 	localctx = NewArrayIndexContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 74, DaedalusParserRULE_arrayIndex)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(437)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case DaedalusParserIntegerLiteral:
@@ -7662,6 +7974,10 @@ func (p *DaedalusParser) ArrayIndex() (localctx IArrayIndexContext) {
 		{
 			p.SetState(435)
 			p.Match(DaedalusParserIntegerLiteral)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case DaedalusParserVar, DaedalusParserInt, DaedalusParserFunc, DaedalusParserStringKeyword, DaedalusParserClass, DaedalusParserVoid, DaedalusParserFloat, DaedalusParserPrototype, DaedalusParserInstance, DaedalusParserNamespace, DaedalusParserNull, DaedalusParserMeta, DaedalusParserIdentifier:
@@ -7672,10 +7988,21 @@ func (p *DaedalusParser) ArrayIndex() (localctx IArrayIndexContext) {
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IArraySizeContext is an interface to support dynamic dispatch.
@@ -7684,6 +8011,10 @@ type IArraySizeContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	IntegerLiteral() antlr.TerminalNode
+	ReferenceAtom() IReferenceAtomContext
 
 	// IsArraySizeContext differentiates from other interfaces.
 	IsArraySizeContext()
@@ -7757,30 +8088,13 @@ func (s *ArraySizeContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ArraySize() (localctx IArraySizeContext) {
-	this := p
-	_ = this
-
 	localctx = NewArraySizeContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 76, DaedalusParserRULE_arraySize)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(441)
 	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
 
 	switch p.GetTokenStream().LA(1) {
 	case DaedalusParserIntegerLiteral:
@@ -7788,6 +8102,10 @@ func (p *DaedalusParser) ArraySize() (localctx IArraySizeContext) {
 		{
 			p.SetState(439)
 			p.Match(DaedalusParserIntegerLiteral)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case DaedalusParserVar, DaedalusParserInt, DaedalusParserFunc, DaedalusParserStringKeyword, DaedalusParserClass, DaedalusParserVoid, DaedalusParserFloat, DaedalusParserPrototype, DaedalusParserInstance, DaedalusParserNamespace, DaedalusParserNull, DaedalusParserMeta, DaedalusParserIdentifier:
@@ -7798,10 +8116,21 @@ func (p *DaedalusParser) ArraySize() (localctx IArraySizeContext) {
 		}
 
 	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IValueContext is an interface to support dynamic dispatch.
@@ -7810,7 +8139,6 @@ type IValueContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsValueContext differentiates from other interfaces.
 	IsValueContext()
 }
@@ -8083,37 +8411,25 @@ func (s *ReferenceValueContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) Value() (localctx IValueContext) {
-	this := p
-	_ = this
-
 	localctx = NewValueContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 78, DaedalusParserRULE_value)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.SetState(449)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 35, p.GetParserRuleContext()) {
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 35, p.GetParserRuleContext()) {
 	case 1:
 		localctx = NewIntegerLiteralValueContext(p, localctx)
 		p.EnterOuterAlt(localctx, 1)
 		{
 			p.SetState(443)
 			p.Match(DaedalusParserIntegerLiteral)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 2:
@@ -8122,6 +8438,10 @@ func (p *DaedalusParser) Value() (localctx IValueContext) {
 		{
 			p.SetState(444)
 			p.Match(DaedalusParserFloatLiteral)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 3:
@@ -8130,6 +8450,10 @@ func (p *DaedalusParser) Value() (localctx IValueContext) {
 		{
 			p.SetState(445)
 			p.Match(DaedalusParserStringLiteral)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 4:
@@ -8138,6 +8462,10 @@ func (p *DaedalusParser) Value() (localctx IValueContext) {
 		{
 			p.SetState(446)
 			p.Match(DaedalusParserNull)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
 	case 5:
@@ -8156,9 +8484,21 @@ func (p *DaedalusParser) Value() (localctx IValueContext) {
 			p.Reference()
 		}
 
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IReferenceAtomContext is an interface to support dynamic dispatch.
@@ -8167,6 +8507,12 @@ type IReferenceAtomContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	NameNode() INameNodeContext
+	LeftBracket() antlr.TerminalNode
+	ArrayIndex() IArrayIndexContext
+	RightBracket() antlr.TerminalNode
 
 	// IsReferenceAtomContext differentiates from other interfaces.
 	IsReferenceAtomContext()
@@ -8260,28 +8606,8 @@ func (s *ReferenceAtomContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ReferenceAtom() (localctx IReferenceAtomContext) {
-	this := p
-	_ = this
-
 	localctx = NewReferenceAtomContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 80, DaedalusParserRULE_referenceAtom)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(451)
@@ -8290,10 +8616,14 @@ func (p *DaedalusParser) ReferenceAtom() (localctx IReferenceAtomContext) {
 	p.SetState(456)
 	p.GetErrorHandler().Sync(p)
 
-	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 36, p.GetParserRuleContext()) == 1 {
+	if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 36, p.GetParserRuleContext()) == 1 {
 		{
 			p.SetState(452)
 			p.Match(DaedalusParserLeftBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(453)
@@ -8302,11 +8632,27 @@ func (p *DaedalusParser) ReferenceAtom() (localctx IReferenceAtomContext) {
 		{
 			p.SetState(454)
 			p.Match(DaedalusParserRightBracket)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 
+	} else if p.HasError() { // JIM
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IReferenceContext is an interface to support dynamic dispatch.
@@ -8315,6 +8661,11 @@ type IReferenceContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	AllReferenceAtom() []IReferenceAtomContext
+	ReferenceAtom(i int) IReferenceAtomContext
+	Dot() antlr.TerminalNode
 
 	// IsReferenceContext differentiates from other interfaces.
 	IsReferenceContext()
@@ -8413,28 +8764,8 @@ func (s *ReferenceContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) Reference() (localctx IReferenceContext) {
-	this := p
-	_ = this
-
 	localctx = NewReferenceContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 82, DaedalusParserRULE_reference)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(458)
@@ -8443,19 +8774,35 @@ func (p *DaedalusParser) Reference() (localctx IReferenceContext) {
 	p.SetState(461)
 	p.GetErrorHandler().Sync(p)
 
-	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 37, p.GetParserRuleContext()) == 1 {
+	if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 37, p.GetParserRuleContext()) == 1 {
 		{
 			p.SetState(459)
 			p.Match(DaedalusParserDot)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
 		}
 		{
 			p.SetState(460)
 			p.ReferenceAtom()
 		}
 
+	} else if p.HasError() { // JIM
+		goto errorExit
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ITypeReferenceContext is an interface to support dynamic dispatch.
@@ -8464,6 +8811,15 @@ type ITypeReferenceContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Identifier() antlr.TerminalNode
+	Void() antlr.TerminalNode
+	Int() antlr.TerminalNode
+	Float() antlr.TerminalNode
+	StringKeyword() antlr.TerminalNode
+	Func() antlr.TerminalNode
+	Instance() antlr.TerminalNode
 
 	// IsTypeReferenceContext differentiates from other interfaces.
 	IsTypeReferenceContext()
@@ -8545,28 +8901,9 @@ func (s *TypeReferenceContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) TypeReference() (localctx ITypeReferenceContext) {
-	this := p
-	_ = this
-
 	localctx = NewTypeReferenceContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 84, DaedalusParserRULE_typeReference)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -8581,7 +8918,17 @@ func (p *DaedalusParser) TypeReference() (localctx ITypeReferenceContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IAnyIdentifierContext is an interface to support dynamic dispatch.
@@ -8590,6 +8937,21 @@ type IAnyIdentifierContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Void() antlr.TerminalNode
+	Var() antlr.TerminalNode
+	Int() antlr.TerminalNode
+	Float() antlr.TerminalNode
+	StringKeyword() antlr.TerminalNode
+	Func() antlr.TerminalNode
+	Instance() antlr.TerminalNode
+	Class() antlr.TerminalNode
+	Prototype() antlr.TerminalNode
+	Null() antlr.TerminalNode
+	Meta() antlr.TerminalNode
+	Namespace() antlr.TerminalNode
+	Identifier() antlr.TerminalNode
 
 	// IsAnyIdentifierContext differentiates from other interfaces.
 	IsAnyIdentifierContext()
@@ -8695,28 +9057,9 @@ func (s *AnyIdentifierContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) AnyIdentifier() (localctx IAnyIdentifierContext) {
-	this := p
-	_ = this
-
 	localctx = NewAnyIdentifierContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 86, DaedalusParserRULE_anyIdentifier)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -8731,7 +9074,17 @@ func (p *DaedalusParser) AnyIdentifier() (localctx IAnyIdentifierContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // INameNodeContext is an interface to support dynamic dispatch.
@@ -8740,6 +9093,9 @@ type INameNodeContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	AnyIdentifier() IAnyIdentifierContext
 
 	// IsNameNodeContext differentiates from other interfaces.
 	IsNameNodeContext()
@@ -8809,35 +9165,25 @@ func (s *NameNodeContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) NameNode() (localctx INameNodeContext) {
-	this := p
-	_ = this
-
 	localctx = NewNameNodeContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 88, DaedalusParserRULE_nameNode)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(467)
 		p.AnyIdentifier()
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IParentReferenceContext is an interface to support dynamic dispatch.
@@ -8846,6 +9192,9 @@ type IParentReferenceContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Identifier() antlr.TerminalNode
 
 	// IsParentReferenceContext differentiates from other interfaces.
 	IsParentReferenceContext()
@@ -8903,35 +9252,29 @@ func (s *ParentReferenceContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) ParentReference() (localctx IParentReferenceContext) {
-	this := p
-	_ = this
-
 	localctx = NewParentReferenceContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 90, DaedalusParserRULE_parentReference)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(469)
 		p.Match(DaedalusParserIdentifier)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IAssignmentOperatorContext is an interface to support dynamic dispatch.
@@ -8940,6 +9283,15 @@ type IAssignmentOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Assign() antlr.TerminalNode
+	StarAssign() antlr.TerminalNode
+	DivAssign() antlr.TerminalNode
+	PlusAssign() antlr.TerminalNode
+	MinusAssign() antlr.TerminalNode
+	AndAssign() antlr.TerminalNode
+	OrAssign() antlr.TerminalNode
 
 	// IsAssignmentOperatorContext differentiates from other interfaces.
 	IsAssignmentOperatorContext()
@@ -9021,28 +9373,9 @@ func (s *AssignmentOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) AssignmentOperator() (localctx IAssignmentOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewAssignmentOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 92, DaedalusParserRULE_assignmentOperator)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -9057,7 +9390,17 @@ func (p *DaedalusParser) AssignmentOperator() (localctx IAssignmentOperatorConte
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IUnaryOperatorContext is an interface to support dynamic dispatch.
@@ -9066,6 +9409,12 @@ type IUnaryOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Plus() antlr.TerminalNode
+	Tilde() antlr.TerminalNode
+	Minus() antlr.TerminalNode
+	Not() antlr.TerminalNode
 
 	// IsUnaryOperatorContext differentiates from other interfaces.
 	IsUnaryOperatorContext()
@@ -9135,28 +9484,9 @@ func (s *UnaryOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) UnaryOperator() (localctx IUnaryOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewUnaryOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 94, DaedalusParserRULE_unaryOperator)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -9171,7 +9501,17 @@ func (p *DaedalusParser) UnaryOperator() (localctx IUnaryOperatorContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IAddOperatorContext is an interface to support dynamic dispatch.
@@ -9180,6 +9520,10 @@ type IAddOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Plus() antlr.TerminalNode
+	Minus() antlr.TerminalNode
 
 	// IsAddOperatorContext differentiates from other interfaces.
 	IsAddOperatorContext()
@@ -9241,28 +9585,9 @@ func (s *AddOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) AddOperator() (localctx IAddOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewAddOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 96, DaedalusParserRULE_addOperator)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -9277,7 +9602,17 @@ func (p *DaedalusParser) AddOperator() (localctx IAddOperatorContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IBitMoveOperatorContext is an interface to support dynamic dispatch.
@@ -9286,7 +9621,6 @@ type IBitMoveOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsBitMoveOperatorContext differentiates from other interfaces.
 	IsBitMoveOperatorContext()
 }
@@ -9338,28 +9672,9 @@ func (s *BitMoveOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) BitMoveOperator() (localctx IBitMoveOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewBitMoveOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 98, DaedalusParserRULE_bitMoveOperator)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -9374,7 +9689,17 @@ func (p *DaedalusParser) BitMoveOperator() (localctx IBitMoveOperatorContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ICompOperatorContext is an interface to support dynamic dispatch.
@@ -9383,6 +9708,10 @@ type ICompOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Less() antlr.TerminalNode
+	Greater() antlr.TerminalNode
 
 	// IsCompOperatorContext differentiates from other interfaces.
 	IsCompOperatorContext()
@@ -9444,28 +9773,9 @@ func (s *CompOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) CompOperator() (localctx ICompOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewCompOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 100, DaedalusParserRULE_compOperator)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -9480,7 +9790,17 @@ func (p *DaedalusParser) CompOperator() (localctx ICompOperatorContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IEqOperatorContext is an interface to support dynamic dispatch.
@@ -9489,7 +9809,6 @@ type IEqOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsEqOperatorContext differentiates from other interfaces.
 	IsEqOperatorContext()
 }
@@ -9541,28 +9860,9 @@ func (s *EqOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) EqOperator() (localctx IEqOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewEqOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 102, DaedalusParserRULE_eqOperator)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -9577,7 +9877,17 @@ func (p *DaedalusParser) EqOperator() (localctx IEqOperatorContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IMultOperatorContext is an interface to support dynamic dispatch.
@@ -9586,6 +9896,10 @@ type IMultOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Star() antlr.TerminalNode
+	Div() antlr.TerminalNode
 
 	// IsMultOperatorContext differentiates from other interfaces.
 	IsMultOperatorContext()
@@ -9647,28 +9961,9 @@ func (s *MultOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) MultOperator() (localctx IMultOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewMultOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 104, DaedalusParserRULE_multOperator)
 	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
 
 	p.EnterOuterAlt(localctx, 1)
 	{
@@ -9683,7 +9978,17 @@ func (p *DaedalusParser) MultOperator() (localctx IMultOperatorContext) {
 		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IBinAndOperatorContext is an interface to support dynamic dispatch.
@@ -9692,6 +9997,9 @@ type IBinAndOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	BitAnd() antlr.TerminalNode
 
 	// IsBinAndOperatorContext differentiates from other interfaces.
 	IsBinAndOperatorContext()
@@ -9749,35 +10057,29 @@ func (s *BinAndOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) BinAndOperator() (localctx IBinAndOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewBinAndOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 106, DaedalusParserRULE_binAndOperator)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(485)
 		p.Match(DaedalusParserBitAnd)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // IBinOrOperatorContext is an interface to support dynamic dispatch.
@@ -9786,6 +10088,9 @@ type IBinOrOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	BitOr() antlr.TerminalNode
 
 	// IsBinOrOperatorContext differentiates from other interfaces.
 	IsBinOrOperatorContext()
@@ -9843,35 +10148,29 @@ func (s *BinOrOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) BinOrOperator() (localctx IBinOrOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewBinOrOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 108, DaedalusParserRULE_binOrOperator)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(487)
 		p.Match(DaedalusParserBitOr)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ILogAndOperatorContext is an interface to support dynamic dispatch.
@@ -9880,6 +10179,9 @@ type ILogAndOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	And() antlr.TerminalNode
 
 	// IsLogAndOperatorContext differentiates from other interfaces.
 	IsLogAndOperatorContext()
@@ -9937,35 +10239,29 @@ func (s *LogAndOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) LogAndOperator() (localctx ILogAndOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewLogAndOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 110, DaedalusParserRULE_logAndOperator)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(489)
 		p.Match(DaedalusParserAnd)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 // ILogOrOperatorContext is an interface to support dynamic dispatch.
@@ -9974,6 +10270,9 @@ type ILogOrOperatorContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Or() antlr.TerminalNode
 
 	// IsLogOrOperatorContext differentiates from other interfaces.
 	IsLogOrOperatorContext()
@@ -10031,35 +10330,29 @@ func (s *LogOrOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 func (p *DaedalusParser) LogOrOperator() (localctx ILogOrOperatorContext) {
-	this := p
-	_ = this
-
 	localctx = NewLogOrOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 112, DaedalusParserRULE_logOrOperator)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(491)
 		p.Match(DaedalusParserOr)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
 	}
 
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
 	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
 func (p *DaedalusParser) Sempred(localctx antlr.RuleContext, ruleIndex, predIndex int) bool {
@@ -10077,9 +10370,6 @@ func (p *DaedalusParser) Sempred(localctx antlr.RuleContext, ruleIndex, predInde
 }
 
 func (p *DaedalusParser) Expression_Sempred(localctx antlr.RuleContext, predIndex int) bool {
-	this := p
-	_ = this
-
 	switch predIndex {
 	case 0:
 		return p.Precpred(p.GetParserRuleContext(), 10)

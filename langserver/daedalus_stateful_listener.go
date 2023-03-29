@@ -120,32 +120,35 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 
 	for _, ch := range v.GetChildren() {
 		if val, ok := ch.(*parser.VarValueDeclContext); ok {
+			nameNode := val.NameNode()
 			result = append(result,
-				symbol.NewVariable(val.NameNode().GetText(),
+				symbol.NewVariable(nameNode.GetText(),
 					v.TypeReference().GetText(),
 					l.source,
 					summary, // documentation
-					l.symbolDefinitionForRuleContext(val.NameNode()),
+					l.symbolDefinitionForRuleContext(nameNode),
 				))
 		} else if innerVal, ok := ch.(*parser.VarDeclContext); ok {
 			for _, ival := range innerVal.AllVarValueDecl() {
 				val := ival.(*parser.VarValueDeclContext)
+				nameNode := val.NameNode()
 				result = append(result,
-					symbol.NewVariable(val.NameNode().GetText(),
+					symbol.NewVariable(nameNode.GetText(),
 						v.TypeReference().GetText(),
 						l.source,
 						summary, // documentation
-						l.symbolDefinitionForRuleContext(val.NameNode()),
+						l.symbolDefinitionForRuleContext(nameNode),
 					))
 			}
 		} else if innerVal, ok := ch.(*parser.VarArrayDeclContext); ok {
+			nameNode := innerVal.NameNode()
 			result = append(result,
-				symbol.NewArrayVariable(innerVal.NameNode().GetText(),
+				symbol.NewArrayVariable(nameNode.GetText(),
 					v.TypeReference().GetText(),
 					innerVal.ArraySize().GetText(),
 					l.source,
 					summary, // documentation
-					l.symbolDefinitionForRuleContext(innerVal.NameNode()),
+					l.symbolDefinitionForRuleContext(nameNode),
 				))
 		}
 	}
@@ -153,7 +156,7 @@ func (l *DaedalusStatefulListener) variablesFromContext(v *parser.VarDeclContext
 	return result
 }
 
-func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c *parser.ConstArrayAssignmentContext) string {
+func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c parser.IConstArrayAssignmentContext) string {
 	result := &strings.Builder{}
 	result.WriteString("{ ")
 	counter := 0
@@ -165,7 +168,7 @@ func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c *parser.ConstArray
 		if counter > 0 {
 			result.WriteString(", ")
 		}
-		result.WriteString(v.(*parser.ExpressionBlockContext).GetText())
+		result.WriteString(v.GetText())
 		counter++
 		return nil
 	})
@@ -178,7 +181,7 @@ func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c *parser.ConstArray
 	return result.String()
 }
 
-func (l *DaedalusStatefulListener) arrayElementsFromContext(c *parser.ConstArrayAssignmentContext) []symbol.ArrayElement {
+func (l *DaedalusStatefulListener) arrayElementsFromContext(c parser.IConstArrayAssignmentContext) []symbol.ArrayElement {
 	result := make([]symbol.ArrayElement, 0, 66)
 	for _, v := range c.AllExpressionBlock() {
 		result = append(result, symbol.NewArrayElement(
@@ -200,27 +203,30 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 	}
 
 	walkSymbols(c, func(cv *parser.ConstValueDefContext) error {
+		nameNode := cv.NameNode()
 		result = append(result,
-			symbol.NewConstant(cv.NameNode().GetText(),
+			symbol.NewConstant(nameNode.GetText(),
 				c.TypeReference().GetText(),
 				l.source,
 				summary, // documentation
-				l.symbolDefinitionForRuleContext(cv.NameNode()),
-				cv.ConstValueAssignment().(*parser.ConstValueAssignmentContext).ExpressionBlock().GetText(),
+				l.symbolDefinitionForRuleContext(nameNode),
+				cv.ConstValueAssignment().ExpressionBlock().GetText(),
 			))
 		return nil
 	})
 
 	walkSymbols(c, func(innerVal *parser.ConstArrayDefContext) error {
+		nameNode := innerVal.NameNode()
+		constAssignment := innerVal.ConstArrayAssignment()
 		result = append(result,
-			symbol.NewConstantArray(innerVal.NameNode().GetText(),
+			symbol.NewConstantArray(nameNode.GetText(),
 				c.TypeReference().GetText(),
 				innerVal.ArraySize().GetText(),
 				l.source,
 				summary, // documentation
-				l.symbolDefinitionForRuleContext(innerVal.NameNode()),
-				l.maxNOfConstValues(3, innerVal.ConstArrayAssignment().(*parser.ConstArrayAssignmentContext)),
-				l.arrayElementsFromContext(innerVal.ConstArrayAssignment().(*parser.ConstArrayAssignmentContext)),
+				l.symbolDefinitionForRuleContext(nameNode),
+				l.maxNOfConstValues(3, constAssignment),
+				l.arrayElementsFromContext(constAssignment),
 			))
 		return nil
 	})
@@ -270,8 +276,8 @@ func (l *DaedalusStatefulListener) getAssignedFields(ctx parser.IStatementBlockC
 
 	walkSymbols(ctx, func(v *parser.StatementContext) error {
 		if v.Assignment() != nil {
-			v := v.Assignment().(*parser.AssignmentContext)
-			ref := v.Reference().(*parser.ReferenceContext)
+			v := v.Assignment()
+			ref := v.Reference()
 			txt := ref.GetText()
 
 			expr := v.ExpressionBlock().GetText()
@@ -298,36 +304,40 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 		walkSymbols(c, func(v *parser.VarDeclContext) error {
 			for _, ch := range v.GetChildren() {
 				if vv, ok := ch.(*parser.VarValueDeclContext); ok {
+					nameNode := vv.NameNode()
 					cFields = append(cFields,
-						symbol.NewVariable(vv.NameNode().GetText(),
+						symbol.NewVariable(nameNode.GetText(),
 							v.TypeReference().GetText(),
 							l.source,
 							"",
-							l.symbolDefinitionForRuleContext(vv.NameNode())),
+							l.symbolDefinitionForRuleContext(nameNode)),
 					)
 				} else if vv, ok := ch.(*parser.VarArrayDeclContext); ok {
+					nameNode := vv.NameNode()
 					cFields = append(cFields,
-						symbol.NewArrayVariable(vv.NameNode().GetText(),
+						symbol.NewArrayVariable(nameNode.GetText(),
 							v.TypeReference().GetText(),
 							vv.ArraySize().GetText(),
 							l.source,
 							"",
-							l.symbolDefinitionForRuleContext(vv.NameNode())),
+							l.symbolDefinitionForRuleContext(nameNode)),
 					)
 				}
 			}
 			return nil
 		})
-
-		csym := symbol.NewClass(c.NameNode().GetText(),
+		classNameNode := c.NameNode()
+		startNode := c.GetChild(2).(antlr.TerminalNode).GetSymbol()
+		endNode := c.GetChild(c.GetChildCount() - 1).(antlr.TerminalNode).GetSymbol()
+		csym := symbol.NewClass(classNameNode.GetText(),
 			l.source,
 			l.symbolSummaryForContext(c),
-			l.symbolDefinitionForRuleContext(c.NameNode()),
+			l.symbolDefinitionForRuleContext(classNameNode),
 			symbol.NewDefinition(
-				c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetLine(),
-				c.GetChild(2).(antlr.TerminalNode).GetSymbol().GetColumn(),
-				c.GetChild(c.GetChildCount()-1).(antlr.TerminalNode).GetSymbol().GetLine(),
-				c.GetChild(c.GetChildCount()-1).(antlr.TerminalNode).GetSymbol().GetColumn(),
+				startNode.GetLine(),
+				startNode.GetColumn(),
+				endNode.GetLine(),
+				endNode.GetColumn(),
 			),
 			cFields)
 		l.classes = append(l.classes, csym)
@@ -336,23 +346,25 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 
 	for _, ch := range ctx.GetChildren() {
 		if c, ok := ch.(*parser.PrototypeDefContext); ok {
+			cNameNode := c.NameNode()
 			psym := symbol.NewPrototypeOrInstance(
-				c.NameNode().GetText(),
+				cNameNode.GetText(),
 				c.ParentReference().GetText(),
 				l.source,
 				"",
-				l.symbolDefinitionForRuleContext(c.NameNode()),
+				l.symbolDefinitionForRuleContext(cNameNode),
 				l.symbolDefinitionForRuleContext(c.StatementBlock()),
 				false)
 			psym.Fields = l.getAssignedFields(c.StatementBlock())
 			l.prototypes = append(l.prototypes, psym)
 		} else if c, ok := ch.(*parser.InstanceDefContext); ok {
+			cNameNode := c.NameNode()
 			psym := symbol.NewPrototypeOrInstance(
-				c.NameNode().GetText(),
+				cNameNode.GetText(),
 				c.ParentReference().GetText(),
 				l.source,
 				"",
-				l.symbolDefinitionForRuleContext(c.NameNode()),
+				l.symbolDefinitionForRuleContext(cNameNode),
 				l.symbolDefinitionForRuleContext(c.StatementBlock()),
 				true)
 			psym.Fields = l.getAssignedFields(c.StatementBlock())
@@ -379,32 +391,34 @@ func (l *DaedalusStatefulListener) findVarsConstsInStatements(root antlr.Tree) [
 
 // EnterFunctionDef ...
 func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefContext) {
-	if ctx.NameNode() == nil {
+	ctxNameNode := ctx.NameNode()
+	if ctxNameNode == nil {
 		return
 	}
 
-	statements := ctx.StatementBlock().(*parser.StatementBlockContext)
+	statements := ctx.StatementBlock()
 
 	params := []symbol.Variable{}
 	locals := l.findVarsConstsInStatements(statements)
 
 	walkSymbols(ctx.ParameterList(), func(pdef *parser.ParameterDeclContext) error {
-		if pdef.NameNode() == nil {
+		nameNode := pdef.NameNode()
+		if nameNode == nil {
 			return nil
 		}
 		params = append(params,
-			symbol.NewVariable(pdef.NameNode().GetText(),
+			symbol.NewVariable(nameNode.GetText(),
 				pdef.TypeReference().GetText(),
 				l.source,
 				"",
-				l.symbolDefinitionForRuleContext(pdef.NameNode())))
+				l.symbolDefinitionForRuleContext(nameNode)))
 		return nil
 	})
 
-	fnc := symbol.NewFunction(ctx.NameNode().GetText(),
+	fnc := symbol.NewFunction(ctxNameNode.GetText(),
 		l.source,
 		l.symbolSummaryForContext(ctx.GetParent().(*parser.BlockDefContext)),
-		l.symbolDefinitionForRuleContext(ctx.NameNode()),
+		l.symbolDefinitionForRuleContext(ctxNameNode),
 		ctx.TypeReference().GetText(),
 		l.symbolDefinitionForRuleContext(ctx.StatementBlock()),
 		params,
@@ -418,22 +432,22 @@ func (l *DaedalusStatefulListener) EnterFunctionDef(ctx *parser.FunctionDefConte
 // EnterNamespaceDef implements parser.DaedalusListener
 func (l *DaedalusStatefulListener) EnterNamespaceDef(ctx *parser.NamespaceDefContext) {
 	l.copySymbolsToCurrentScope()
-
-	if ctx.NameNode() == nil {
+	ctxNameNode := ctx.NameNode()
+	if ctxNameNode == nil {
 		return
 	}
 
 	parent := l.curentNamespace
 
 	bodyDef := symbol.NewDefinition(
-		ctx.NameNode().GetStop().GetLine(), ctx.GetStop().GetColumn(),
+		ctxNameNode.GetStop().GetLine(), ctx.GetStop().GetColumn(),
 		ctx.GetStop().GetLine(), ctx.GetStop().GetColumn())
 
-	ns := symbol.NewNamespace(ctx.NameNode().GetText(),
+	ns := symbol.NewNamespace(ctxNameNode.GetText(),
 		parent,
 		l.source,
 		l.symbolSummaryForContext(ctx.GetParent().(*parser.BlockDefContext)),
-		l.symbolDefinitionForRuleContext(ctx.NameNode()),
+		l.symbolDefinitionForRuleContext(ctxNameNode),
 		bodyDef,
 	)
 	l.Namespaces[strings.ToUpper(ns.FullName())] = ns
