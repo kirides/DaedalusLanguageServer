@@ -479,7 +479,6 @@ func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) (
 	nextResult.Swap(0)
 	total := int32(len(results))
 
-	m.mtx.Lock()
 	for i := 0; i < numWorkers; i++ {
 		go func(wg *sync.WaitGroup) {
 			defer wg.Done()
@@ -502,7 +501,6 @@ func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) (
 	}
 
 	wg.Wait()
-	m.mtx.Unlock()
 
 	m.logger.Infof("Done parsing %q: %d scripts.", srcFile, len(results))
 	return results, nil
