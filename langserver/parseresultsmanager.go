@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
@@ -462,13 +463,6 @@ func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) (
 				}
 
 				parsed := m.ParseScript(r, buf.String(), lastMod)
-				// For now, Ast = nil means we already analyzed the file.
-				// keeping the Ast in memory uses a whole bunch of memory.
-				if parsed.Ast != nil {
-					errors := m.ValidateAst(r, parsed.Ast)
-					parsed.Ast = nil
-					parsed.SyntaxErrors = errors
-				}
 
 				m.mtx.Lock()
 				m.parseResults[parsed.Source] = parsed
@@ -479,6 +473,36 @@ func (m *parseResultsManager) ParseSource(ctx context.Context, srcFile string) (
 	}
 
 	wg.Wait()
+
+	wg.Add(numWorkers)
+	var nextResult atomic.Int32
+	nextResult.Swap(0)
+	total := int32(len(results))
+
+	m.mtx.Lock()
+	for i := 0; i < numWorkers; i++ {
+		go func(wg *sync.WaitGroup) {
+			defer wg.Done()
+			for {
+				next := nextResult.Add(1)
+				if next > total {
+					return
+				}
+				parsed := results[next-1]
+				ast := parsed.Ast
+				// For now, Ast = nil means we already analyzed the file.
+				// keeping the Ast in memory uses a whole bunch of memory.
+				if ast != nil {
+					errors := m.ValidateAst(parsed.Source, ast)
+					parsed.Ast = nil
+					parsed.SyntaxErrors = errors
+				}
+			}
+		}(&wg)
+	}
+
+	wg.Wait()
+	m.mtx.Unlock()
 
 	m.logger.Infof("Done parsing %q: %d scripts.", srcFile, len(results))
 	return results, nil
