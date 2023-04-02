@@ -92,18 +92,29 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 	// Try to locate a workspace file
 	foundProjectFile := false
 	for _, v := range config.ProjectFiles {
+		if foundProjectFile {
+			break
+		}
+
 		full := v
 		if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
-			if _, err := os.Stat(full); err != nil {
+			if _, err := os.Stat(full); err == nil {
 				ws.logger.Errorf("Error user-define project file %s: %v", full, err)
-				continue
+				foundProjectFile = true
 			}
 		} else {
-			if _, err := findPathAnywhereUpToRoot(wd, v); err != nil {
-				continue
+			_, err := findPathAnywhereUpToRoot(wd, v)
+			if err == nil {
+				foundProjectFile = true
+			} else {
+				for _, knownDir := range []string{"SYSTEM", "CONTENT"} {
+					if _, err := findPathAnywhereUpToRoot(wd, filepath.Join(knownDir, v)); err == nil {
+						foundProjectFile = true
+						break
+					}
+				}
 			}
 		}
-		foundProjectFile = true
 	}
 	if !foundProjectFile {
 		ws.logger.Debugf("No project file found, deferring workspace initialization")
@@ -146,6 +157,15 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 				}
 			} else {
 				full, err = findPathAnywhereUpToRoot(wd, v)
+				if err != nil {
+					for _, knownDir := range []string{"SYSTEM", "CONTENT"} {
+						full, err = findPathAnywhereUpToRoot(wd, filepath.Join(knownDir, v))
+						if err == nil {
+							ws.logger.Infof("Found %s at %s", v, full)
+							break
+						}
+					}
+				}
 			}
 			if err != nil {
 				ws.logger.Debugf("Did not parse %q: %v", v, err)
