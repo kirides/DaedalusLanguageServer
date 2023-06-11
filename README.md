@@ -20,29 +20,31 @@ Minimum configuration needed to run the language server
 
 _somewhere in init.lua or any lua script_
 ```lua
-vim.api.nvim_create_autocmd('LspAttach', {
-  callback = function(args)
-    local client = vim.lsp.get_client_by_id(args.data.client_id)
-    if client.server_capabilities.hoverProvider then
-      vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = args.buf })
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "d",
+    callback = function(ev)
+        local root_dir = vim.fs.dirname(
+            vim.fs.find({ 'Gothic.src', 'Camera.src', 'Menu.src', 'Music.src', 'ParticleFX.src', 'SFX.src', 'VisualFX.src' }, { upward = true })[1]
+        )
+
+        local client = vim.lsp.start({
+          name = 'DLS',
+          cmd = {'C:/.../DaedalusLanguageServer.exe'},
+          root_dir = root_dir,
+          -- configure language server specific options
+          settings = {
+            daedalusLanguageServer = {
+              loglevel = 'debug',
+              inlayHints = { constants = true },
+              numParserThreads = 16,
+              fileEncoding = 'Windows-1252',
+              srcFileEncoding ='Windows-1252',
+            },
+          },
+        })
+
+        vim.lsp.buf_attach_client(0, client)
     end
-	if client.server_capabilities.signatureHelpProvider then
-	  vim.keymap.set('i', '<c-s>', vim.lsp.buf.signature_help, { buffer = args.buf })
-	end
-  end,
-})
-
-
-local client_id = vim.lsp.start({
-	name = 'DLS',
-	cmd = {'C:/languageserver/DaedalusLanguageServer.exe'},
-})
-
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = { 'd' },
-  callback = function(args)
-    vim.lsp.buf_attach_client(0, client_id)
-  end,
 })
 
 
