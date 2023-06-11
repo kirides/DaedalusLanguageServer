@@ -1,4 +1,4 @@
-// Code generated from Daedalus.g4 by ANTLR 4.12.0. DO NOT EDIT.
+// Code generated from Daedalus.g4 by ANTLR 4.13.0. DO NOT EDIT.
 
 package parser // Daedalus
 
@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 // Suppress unused import errors
@@ -19,27 +19,27 @@ type DaedalusParser struct {
 	*antlr.BaseParser
 }
 
-var daedalusParserStaticData struct {
+var DaedalusParserStaticData struct {
 	once                   sync.Once
 	serializedATN          []int32
-	literalNames           []string
-	symbolicNames          []string
-	ruleNames              []string
-	predictionContextCache *antlr.PredictionContextCache
+	LiteralNames           []string
+	SymbolicNames          []string
+	RuleNames              []string
+	PredictionContextCache *antlr.PredictionContextCache
 	atn                    *antlr.ATN
 	decisionToDFA          []*antlr.DFA
 }
 
 func daedalusParserInit() {
-	staticData := &daedalusParserStaticData
-	staticData.literalNames = []string{
+	staticData := &DaedalusParserStaticData
+	staticData.LiteralNames = []string{
 		"", "','", "'<<'", "'>>'", "'<='", "'>='", "'=='", "'!='", "'%'", "",
 		"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
 		"", "'('", "')'", "'['", "']'", "'{'", "'}'", "'&'", "'&&'", "'|'",
 		"'||'", "'+'", "'-'", "'/'", "'*'", "'~'", "'!'", "'='", "'<'", "'>'",
 		"'+='", "'-='", "'*='", "'/='", "'&='", "'|='", "'.'", "';'",
 	}
-	staticData.symbolicNames = []string{
+	staticData.SymbolicNames = []string{
 		"", "", "", "", "", "", "", "", "", "IntegerLiteral", "FloatLiteral",
 		"StringLiteral", "Const", "Var", "If", "Int", "Else", "Func", "StringKeyword",
 		"Class", "Void", "Return", "Float", "Prototype", "Instance", "Namespace",
@@ -49,7 +49,7 @@ func daedalusParserInit() {
 		"MinusAssign", "StarAssign", "DivAssign", "AndAssign", "OrAssign", "Dot",
 		"Semi", "Identifier", "Whitespace", "Newline", "BlockComment", "LineComment",
 	}
-	staticData.ruleNames = []string{
+	staticData.RuleNames = []string{
 		"daedalusFile", "blockDef", "inlineDef", "functionDef", "constDef",
 		"classDef", "prototypeDef", "instanceDef", "instanceDecl", "namespaceDef",
 		"mainBlock", "contentBlock", "varDecl", "metaValue", "zParserExtenderMeta",
@@ -64,7 +64,7 @@ func daedalusParserInit() {
 		"multOperator", "binAndOperator", "binOrOperator", "logAndOperator",
 		"logOrOperator",
 	}
-	staticData.predictionContextCache = antlr.NewPredictionContextCache()
+	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
 		4, 1, 59, 494, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
@@ -295,7 +295,7 @@ func daedalusParserInit() {
 // NewDaedalusParser(). You can call this function if you wish to initialize the static state ahead
 // of time.
 func DaedalusParserInit() {
-	staticData := &daedalusParserStaticData
+	staticData := &DaedalusParserStaticData
 	staticData.once.Do(daedalusParserInit)
 }
 
@@ -304,11 +304,11 @@ func NewDaedalusParser(input antlr.TokenStream) *DaedalusParser {
 	DaedalusParserInit()
 	this := new(DaedalusParser)
 	this.BaseParser = antlr.NewBaseParser(input)
-	staticData := &daedalusParserStaticData
-	this.Interpreter = antlr.NewParserATNSimulator(this, staticData.atn, staticData.decisionToDFA, staticData.predictionContextCache)
-	this.RuleNames = staticData.ruleNames
-	this.LiteralNames = staticData.literalNames
-	this.SymbolicNames = staticData.symbolicNames
+	staticData := &DaedalusParserStaticData
+	this.Interpreter = antlr.NewParserATNSimulator(this, staticData.atn, staticData.decisionToDFA, staticData.PredictionContextCache)
+	this.RuleNames = staticData.RuleNames
+	this.LiteralNames = staticData.LiteralNames
+	this.SymbolicNames = staticData.SymbolicNames
 	this.GrammarFileName = "Daedalus.g4"
 
 	return this
@@ -455,15 +455,20 @@ type IDaedalusFileContext interface {
 }
 
 type DaedalusFileContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyDaedalusFileContext() *DaedalusFileContext {
 	var p = new(DaedalusFileContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_daedalusFile
 	return p
+}
+
+func InitEmptyDaedalusFileContext(p *DaedalusFileContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_daedalusFile
 }
 
 func (*DaedalusFileContext) IsDaedalusFileContext() {}
@@ -471,7 +476,7 @@ func (*DaedalusFileContext) IsDaedalusFileContext() {}
 func NewDaedalusFileContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *DaedalusFileContext {
 	var p = new(DaedalusFileContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_daedalusFile
@@ -583,15 +588,20 @@ type IBlockDefContext interface {
 }
 
 type BlockDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyBlockDefContext() *BlockDefContext {
 	var p = new(BlockDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_blockDef
 	return p
+}
+
+func InitEmptyBlockDefContext(p *BlockDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_blockDef
 }
 
 func (*BlockDefContext) IsBlockDefContext() {}
@@ -599,7 +609,7 @@ func (*BlockDefContext) IsBlockDefContext() {}
 func NewBlockDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *BlockDefContext {
 	var p = new(BlockDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_blockDef
@@ -798,15 +808,20 @@ type IInlineDefContext interface {
 }
 
 type InlineDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyInlineDefContext() *InlineDefContext {
 	var p = new(InlineDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_inlineDef
 	return p
+}
+
+func InitEmptyInlineDefContext(p *InlineDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_inlineDef
 }
 
 func (*InlineDefContext) IsInlineDefContext() {}
@@ -814,7 +829,7 @@ func (*InlineDefContext) IsInlineDefContext() {}
 func NewInlineDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *InlineDefContext {
 	var p = new(InlineDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_inlineDef
@@ -970,15 +985,20 @@ type IFunctionDefContext interface {
 }
 
 type FunctionDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyFunctionDefContext() *FunctionDefContext {
 	var p = new(FunctionDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_functionDef
 	return p
+}
+
+func InitEmptyFunctionDefContext(p *FunctionDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_functionDef
 }
 
 func (*FunctionDefContext) IsFunctionDefContext() {}
@@ -986,7 +1006,7 @@ func (*FunctionDefContext) IsFunctionDefContext() {}
 func NewFunctionDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FunctionDefContext {
 	var p = new(FunctionDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_functionDef
@@ -1146,15 +1166,20 @@ type IConstDefContext interface {
 }
 
 type ConstDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyConstDefContext() *ConstDefContext {
 	var p = new(ConstDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_constDef
 	return p
+}
+
+func InitEmptyConstDefContext(p *ConstDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_constDef
 }
 
 func (*ConstDefContext) IsConstDefContext() {}
@@ -1162,7 +1187,7 @@ func (*ConstDefContext) IsConstDefContext() {}
 func NewConstDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ConstDefContext {
 	var p = new(ConstDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_constDef
@@ -1416,15 +1441,20 @@ type IClassDefContext interface {
 }
 
 type ClassDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyClassDefContext() *ClassDefContext {
 	var p = new(ClassDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_classDef
 	return p
+}
+
+func InitEmptyClassDefContext(p *ClassDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_classDef
 }
 
 func (*ClassDefContext) IsClassDefContext() {}
@@ -1432,7 +1462,7 @@ func (*ClassDefContext) IsClassDefContext() {}
 func NewClassDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ClassDefContext {
 	var p = new(ClassDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_classDef
@@ -1642,15 +1672,20 @@ type IPrototypeDefContext interface {
 }
 
 type PrototypeDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyPrototypeDefContext() *PrototypeDefContext {
 	var p = new(PrototypeDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_prototypeDef
 	return p
+}
+
+func InitEmptyPrototypeDefContext(p *PrototypeDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_prototypeDef
 }
 
 func (*PrototypeDefContext) IsPrototypeDefContext() {}
@@ -1658,7 +1693,7 @@ func (*PrototypeDefContext) IsPrototypeDefContext() {}
 func NewPrototypeDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *PrototypeDefContext {
 	var p = new(PrototypeDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_prototypeDef
@@ -1822,15 +1857,20 @@ type IInstanceDefContext interface {
 }
 
 type InstanceDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyInstanceDefContext() *InstanceDefContext {
 	var p = new(InstanceDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_instanceDef
 	return p
+}
+
+func InitEmptyInstanceDefContext(p *InstanceDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_instanceDef
 }
 
 func (*InstanceDefContext) IsInstanceDefContext() {}
@@ -1838,7 +1878,7 @@ func (*InstanceDefContext) IsInstanceDefContext() {}
 func NewInstanceDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *InstanceDefContext {
 	var p = new(InstanceDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_instanceDef
@@ -2002,15 +2042,20 @@ type IInstanceDeclContext interface {
 }
 
 type InstanceDeclContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyInstanceDeclContext() *InstanceDeclContext {
 	var p = new(InstanceDeclContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_instanceDecl
 	return p
+}
+
+func InitEmptyInstanceDeclContext(p *InstanceDeclContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_instanceDecl
 }
 
 func (*InstanceDeclContext) IsInstanceDeclContext() {}
@@ -2018,7 +2063,7 @@ func (*InstanceDeclContext) IsInstanceDeclContext() {}
 func NewInstanceDeclContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *InstanceDeclContext {
 	var p = new(InstanceDeclContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_instanceDecl
@@ -2224,15 +2269,20 @@ type INamespaceDefContext interface {
 }
 
 type NamespaceDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyNamespaceDefContext() *NamespaceDefContext {
 	var p = new(NamespaceDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_namespaceDef
 	return p
+}
+
+func InitEmptyNamespaceDefContext(p *NamespaceDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_namespaceDef
 }
 
 func (*NamespaceDefContext) IsNamespaceDefContext() {}
@@ -2240,7 +2290,7 @@ func (*NamespaceDefContext) IsNamespaceDefContext() {}
 func NewNamespaceDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *NamespaceDefContext {
 	var p = new(NamespaceDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_namespaceDef
@@ -2431,15 +2481,20 @@ type IMainBlockContext interface {
 }
 
 type MainBlockContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyMainBlockContext() *MainBlockContext {
 	var p = new(MainBlockContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_mainBlock
 	return p
+}
+
+func InitEmptyMainBlockContext(p *MainBlockContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_mainBlock
 }
 
 func (*MainBlockContext) IsMainBlockContext() {}
@@ -2447,7 +2502,7 @@ func (*MainBlockContext) IsMainBlockContext() {}
 func NewMainBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *MainBlockContext {
 	var p = new(MainBlockContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_mainBlock
@@ -2604,15 +2659,20 @@ type IContentBlockContext interface {
 }
 
 type ContentBlockContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyContentBlockContext() *ContentBlockContext {
 	var p = new(ContentBlockContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_contentBlock
 	return p
+}
+
+func InitEmptyContentBlockContext(p *ContentBlockContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_contentBlock
 }
 
 func (*ContentBlockContext) IsContentBlockContext() {}
@@ -2620,7 +2680,7 @@ func (*ContentBlockContext) IsContentBlockContext() {}
 func NewContentBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ContentBlockContext {
 	var p = new(ContentBlockContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_contentBlock
@@ -2744,15 +2804,20 @@ type IVarDeclContext interface {
 }
 
 type VarDeclContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyVarDeclContext() *VarDeclContext {
 	var p = new(VarDeclContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_varDecl
 	return p
+}
+
+func InitEmptyVarDeclContext(p *VarDeclContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_varDecl
 }
 
 func (*VarDeclContext) IsVarDeclContext() {}
@@ -2760,7 +2825,7 @@ func (*VarDeclContext) IsVarDeclContext() {}
 func NewVarDeclContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *VarDeclContext {
 	var p = new(VarDeclContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_varDecl
@@ -3057,15 +3122,20 @@ type IMetaValueContext interface {
 }
 
 type MetaValueContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyMetaValueContext() *MetaValueContext {
 	var p = new(MetaValueContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_metaValue
 	return p
+}
+
+func InitEmptyMetaValueContext(p *MetaValueContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_metaValue
 }
 
 func (*MetaValueContext) IsMetaValueContext() {}
@@ -3073,7 +3143,7 @@ func (*MetaValueContext) IsMetaValueContext() {}
 func NewMetaValueContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *MetaValueContext {
 	var p = new(MetaValueContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_metaValue
@@ -3164,15 +3234,20 @@ type IZParserExtenderMetaContext interface {
 }
 
 type ZParserExtenderMetaContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyZParserExtenderMetaContext() *ZParserExtenderMetaContext {
 	var p = new(ZParserExtenderMetaContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_zParserExtenderMeta
 	return p
+}
+
+func InitEmptyZParserExtenderMetaContext(p *ZParserExtenderMetaContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_zParserExtenderMeta
 }
 
 func (*ZParserExtenderMetaContext) IsZParserExtenderMetaContext() {}
@@ -3180,7 +3255,7 @@ func (*ZParserExtenderMetaContext) IsZParserExtenderMetaContext() {}
 func NewZParserExtenderMetaContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ZParserExtenderMetaContext {
 	var p = new(ZParserExtenderMetaContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_zParserExtenderMeta
@@ -3312,15 +3387,20 @@ type IZParserExtenderMetaBlockContext interface {
 }
 
 type ZParserExtenderMetaBlockContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyZParserExtenderMetaBlockContext() *ZParserExtenderMetaBlockContext {
 	var p = new(ZParserExtenderMetaBlockContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_zParserExtenderMetaBlock
 	return p
+}
+
+func InitEmptyZParserExtenderMetaBlockContext(p *ZParserExtenderMetaBlockContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_zParserExtenderMetaBlock
 }
 
 func (*ZParserExtenderMetaBlockContext) IsZParserExtenderMetaBlockContext() {}
@@ -3328,7 +3408,7 @@ func (*ZParserExtenderMetaBlockContext) IsZParserExtenderMetaBlockContext() {}
 func NewZParserExtenderMetaBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ZParserExtenderMetaBlockContext {
 	var p = new(ZParserExtenderMetaBlockContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_zParserExtenderMetaBlock
@@ -3513,15 +3593,20 @@ type IConstArrayDefContext interface {
 }
 
 type ConstArrayDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyConstArrayDefContext() *ConstArrayDefContext {
 	var p = new(ConstArrayDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_constArrayDef
 	return p
+}
+
+func InitEmptyConstArrayDefContext(p *ConstArrayDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_constArrayDef
 }
 
 func (*ConstArrayDefContext) IsConstArrayDefContext() {}
@@ -3529,7 +3614,7 @@ func (*ConstArrayDefContext) IsConstArrayDefContext() {}
 func NewConstArrayDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ConstArrayDefContext {
 	var p = new(ConstArrayDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_constArrayDef
@@ -3680,15 +3765,20 @@ type IConstArrayAssignmentContext interface {
 }
 
 type ConstArrayAssignmentContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyConstArrayAssignmentContext() *ConstArrayAssignmentContext {
 	var p = new(ConstArrayAssignmentContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_constArrayAssignment
 	return p
+}
+
+func InitEmptyConstArrayAssignmentContext(p *ConstArrayAssignmentContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_constArrayAssignment
 }
 
 func (*ConstArrayAssignmentContext) IsConstArrayAssignmentContext() {}
@@ -3696,7 +3786,7 @@ func (*ConstArrayAssignmentContext) IsConstArrayAssignmentContext() {}
 func NewConstArrayAssignmentContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ConstArrayAssignmentContext {
 	var p = new(ConstArrayAssignmentContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_constArrayAssignment
@@ -3880,15 +3970,20 @@ type IConstValueDefContext interface {
 }
 
 type ConstValueDefContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyConstValueDefContext() *ConstValueDefContext {
 	var p = new(ConstValueDefContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_constValueDef
 	return p
+}
+
+func InitEmptyConstValueDefContext(p *ConstValueDefContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_constValueDef
 }
 
 func (*ConstValueDefContext) IsConstValueDefContext() {}
@@ -3896,7 +3991,7 @@ func (*ConstValueDefContext) IsConstValueDefContext() {}
 func NewConstValueDefContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ConstValueDefContext {
 	var p = new(ConstValueDefContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_constValueDef
@@ -4000,15 +4095,20 @@ type IConstValueAssignmentContext interface {
 }
 
 type ConstValueAssignmentContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyConstValueAssignmentContext() *ConstValueAssignmentContext {
 	var p = new(ConstValueAssignmentContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_constValueAssignment
 	return p
+}
+
+func InitEmptyConstValueAssignmentContext(p *ConstValueAssignmentContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_constValueAssignment
 }
 
 func (*ConstValueAssignmentContext) IsConstValueAssignmentContext() {}
@@ -4016,7 +4116,7 @@ func (*ConstValueAssignmentContext) IsConstValueAssignmentContext() {}
 func NewConstValueAssignmentContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ConstValueAssignmentContext {
 	var p = new(ConstValueAssignmentContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_constValueAssignment
@@ -4114,15 +4214,20 @@ type IVarArrayDeclContext interface {
 }
 
 type VarArrayDeclContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyVarArrayDeclContext() *VarArrayDeclContext {
 	var p = new(VarArrayDeclContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_varArrayDecl
 	return p
+}
+
+func InitEmptyVarArrayDeclContext(p *VarArrayDeclContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_varArrayDecl
 }
 
 func (*VarArrayDeclContext) IsVarArrayDeclContext() {}
@@ -4130,7 +4235,7 @@ func (*VarArrayDeclContext) IsVarArrayDeclContext() {}
 func NewVarArrayDeclContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *VarArrayDeclContext {
 	var p = new(VarArrayDeclContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_varArrayDecl
@@ -4257,15 +4362,20 @@ type IVarValueDeclContext interface {
 }
 
 type VarValueDeclContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyVarValueDeclContext() *VarValueDeclContext {
 	var p = new(VarValueDeclContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_varValueDecl
 	return p
+}
+
+func InitEmptyVarValueDeclContext(p *VarValueDeclContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_varValueDecl
 }
 
 func (*VarValueDeclContext) IsVarValueDeclContext() {}
@@ -4273,7 +4383,7 @@ func (*VarValueDeclContext) IsVarValueDeclContext() {}
 func NewVarValueDeclContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *VarValueDeclContext {
 	var p = new(VarValueDeclContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_varValueDecl
@@ -4359,15 +4469,20 @@ type IParameterListContext interface {
 }
 
 type ParameterListContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyParameterListContext() *ParameterListContext {
 	var p = new(ParameterListContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_parameterList
 	return p
+}
+
+func InitEmptyParameterListContext(p *ParameterListContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_parameterList
 }
 
 func (*ParameterListContext) IsParameterListContext() {}
@@ -4375,7 +4490,7 @@ func (*ParameterListContext) IsParameterListContext() {}
 func NewParameterListContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ParameterListContext {
 	var p = new(ParameterListContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_parameterList
@@ -4561,15 +4676,20 @@ type IParameterDeclContext interface {
 }
 
 type ParameterDeclContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyParameterDeclContext() *ParameterDeclContext {
 	var p = new(ParameterDeclContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_parameterDecl
 	return p
+}
+
+func InitEmptyParameterDeclContext(p *ParameterDeclContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_parameterDecl
 }
 
 func (*ParameterDeclContext) IsParameterDeclContext() {}
@@ -4577,7 +4697,7 @@ func (*ParameterDeclContext) IsParameterDeclContext() {}
 func NewParameterDeclContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ParameterDeclContext {
 	var p = new(ParameterDeclContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_parameterDecl
@@ -4755,15 +4875,20 @@ type IStatementBlockContext interface {
 }
 
 type StatementBlockContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyStatementBlockContext() *StatementBlockContext {
 	var p = new(StatementBlockContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_statementBlock
 	return p
+}
+
+func InitEmptyStatementBlockContext(p *StatementBlockContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_statementBlock
 }
 
 func (*StatementBlockContext) IsStatementBlockContext() {}
@@ -4771,7 +4896,7 @@ func (*StatementBlockContext) IsStatementBlockContext() {}
 func NewStatementBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *StatementBlockContext {
 	var p = new(StatementBlockContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_statementBlock
@@ -5028,15 +5153,20 @@ type IStatementContext interface {
 }
 
 type StatementContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyStatementContext() *StatementContext {
 	var p = new(StatementContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_statement
 	return p
+}
+
+func InitEmptyStatementContext(p *StatementContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_statement
 }
 
 func (*StatementContext) IsStatementContext() {}
@@ -5044,7 +5174,7 @@ func (*StatementContext) IsStatementContext() {}
 func NewStatementContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *StatementContext {
 	var p = new(StatementContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_statement
@@ -5235,15 +5365,20 @@ type IFuncCallContext interface {
 }
 
 type FuncCallContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyFuncCallContext() *FuncCallContext {
 	var p = new(FuncCallContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_funcCall
 	return p
+}
+
+func InitEmptyFuncCallContext(p *FuncCallContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_funcCall
 }
 
 func (*FuncCallContext) IsFuncCallContext() {}
@@ -5251,7 +5386,7 @@ func (*FuncCallContext) IsFuncCallContext() {}
 func NewFuncCallContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FuncCallContext {
 	var p = new(FuncCallContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_funcCall
@@ -5454,15 +5589,20 @@ type IAssignmentContext interface {
 }
 
 type AssignmentContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyAssignmentContext() *AssignmentContext {
 	var p = new(AssignmentContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_assignment
 	return p
+}
+
+func InitEmptyAssignmentContext(p *AssignmentContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_assignment
 }
 
 func (*AssignmentContext) IsAssignmentContext() {}
@@ -5470,7 +5610,7 @@ func (*AssignmentContext) IsAssignmentContext() {}
 func NewAssignmentContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *AssignmentContext {
 	var p = new(AssignmentContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_assignment
@@ -5593,15 +5733,20 @@ type IIfConditionContext interface {
 }
 
 type IfConditionContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyIfConditionContext() *IfConditionContext {
 	var p = new(IfConditionContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_ifCondition
 	return p
+}
+
+func InitEmptyIfConditionContext(p *IfConditionContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_ifCondition
 }
 
 func (*IfConditionContext) IsIfConditionContext() {}
@@ -5609,7 +5754,7 @@ func (*IfConditionContext) IsIfConditionContext() {}
 func NewIfConditionContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *IfConditionContext {
 	var p = new(IfConditionContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_ifCondition
@@ -5693,15 +5838,20 @@ type IElseBlockContext interface {
 }
 
 type ElseBlockContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyElseBlockContext() *ElseBlockContext {
 	var p = new(ElseBlockContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_elseBlock
 	return p
+}
+
+func InitEmptyElseBlockContext(p *ElseBlockContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_elseBlock
 }
 
 func (*ElseBlockContext) IsElseBlockContext() {}
@@ -5709,7 +5859,7 @@ func (*ElseBlockContext) IsElseBlockContext() {}
 func NewElseBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ElseBlockContext {
 	var p = new(ElseBlockContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_elseBlock
@@ -5807,15 +5957,20 @@ type IElseIfBlockContext interface {
 }
 
 type ElseIfBlockContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyElseIfBlockContext() *ElseIfBlockContext {
 	var p = new(ElseIfBlockContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_elseIfBlock
 	return p
+}
+
+func InitEmptyElseIfBlockContext(p *ElseIfBlockContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_elseIfBlock
 }
 
 func (*ElseIfBlockContext) IsElseIfBlockContext() {}
@@ -5823,7 +5978,7 @@ func (*ElseIfBlockContext) IsElseIfBlockContext() {}
 func NewElseIfBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ElseIfBlockContext {
 	var p = new(ElseIfBlockContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_elseIfBlock
@@ -5952,15 +6107,20 @@ type IIfBlockContext interface {
 }
 
 type IfBlockContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyIfBlockContext() *IfBlockContext {
 	var p = new(IfBlockContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_ifBlock
 	return p
+}
+
+func InitEmptyIfBlockContext(p *IfBlockContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_ifBlock
 }
 
 func (*IfBlockContext) IsIfBlockContext() {}
@@ -5968,7 +6128,7 @@ func (*IfBlockContext) IsIfBlockContext() {}
 func NewIfBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *IfBlockContext {
 	var p = new(IfBlockContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_ifBlock
@@ -6086,15 +6246,20 @@ type IIfBlockStatementContext interface {
 }
 
 type IfBlockStatementContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyIfBlockStatementContext() *IfBlockStatementContext {
 	var p = new(IfBlockStatementContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_ifBlockStatement
 	return p
+}
+
+func InitEmptyIfBlockStatementContext(p *IfBlockStatementContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_ifBlockStatement
 }
 
 func (*IfBlockStatementContext) IsIfBlockStatementContext() {}
@@ -6102,7 +6267,7 @@ func (*IfBlockStatementContext) IsIfBlockStatementContext() {}
 func NewIfBlockStatementContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *IfBlockStatementContext {
 	var p = new(IfBlockStatementContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_ifBlockStatement
@@ -6288,15 +6453,20 @@ type IReturnStatementContext interface {
 }
 
 type ReturnStatementContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyReturnStatementContext() *ReturnStatementContext {
 	var p = new(ReturnStatementContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_returnStatement
 	return p
+}
+
+func InitEmptyReturnStatementContext(p *ReturnStatementContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_returnStatement
 }
 
 func (*ReturnStatementContext) IsReturnStatementContext() {}
@@ -6304,7 +6474,7 @@ func (*ReturnStatementContext) IsReturnStatementContext() {}
 func NewReturnStatementContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ReturnStatementContext {
 	var p = new(ReturnStatementContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_returnStatement
@@ -6411,15 +6581,20 @@ type IFuncArgExpressionContext interface {
 }
 
 type FuncArgExpressionContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyFuncArgExpressionContext() *FuncArgExpressionContext {
 	var p = new(FuncArgExpressionContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_funcArgExpression
 	return p
+}
+
+func InitEmptyFuncArgExpressionContext(p *FuncArgExpressionContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_funcArgExpression
 }
 
 func (*FuncArgExpressionContext) IsFuncArgExpressionContext() {}
@@ -6427,7 +6602,7 @@ func (*FuncArgExpressionContext) IsFuncArgExpressionContext() {}
 func NewFuncArgExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FuncArgExpressionContext {
 	var p = new(FuncArgExpressionContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_funcArgExpression
@@ -6510,15 +6685,20 @@ type IExpressionBlockContext interface {
 }
 
 type ExpressionBlockContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyExpressionBlockContext() *ExpressionBlockContext {
 	var p = new(ExpressionBlockContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_expressionBlock
 	return p
+}
+
+func InitEmptyExpressionBlockContext(p *ExpressionBlockContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_expressionBlock
 }
 
 func (*ExpressionBlockContext) IsExpressionBlockContext() {}
@@ -6526,7 +6706,7 @@ func (*ExpressionBlockContext) IsExpressionBlockContext() {}
 func NewExpressionBlockContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ExpressionBlockContext {
 	var p = new(ExpressionBlockContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_expressionBlock
@@ -6605,15 +6785,20 @@ type IExpressionContext interface {
 }
 
 type ExpressionContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyExpressionContext() *ExpressionContext {
 	var p = new(ExpressionContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_expression
 	return p
+}
+
+func InitEmptyExpressionContext(p *ExpressionContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_expression
 }
 
 func (*ExpressionContext) IsExpressionContext() {}
@@ -6621,7 +6806,7 @@ func (*ExpressionContext) IsExpressionContext() {}
 func NewExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ExpressionContext {
 	var p = new(ExpressionContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_expression
@@ -6631,8 +6816,8 @@ func NewExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext, i
 
 func (s *ExpressionContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ExpressionContext) CopyFrom(ctx *ExpressionContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ExpressionContext) CopyAll(ctx *ExpressionContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ExpressionContext) GetRuleContext() antlr.RuleContext {
@@ -6644,15 +6829,15 @@ func (s *ExpressionContext) ToStringTree(ruleNames []string, recog antlr.Recogni
 }
 
 type BitMoveExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewBitMoveExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *BitMoveExpressionContext {
 	var p = new(BitMoveExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -6731,15 +6916,15 @@ func (s *BitMoveExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type EqExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewEqExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *EqExpressionContext {
 	var p = new(EqExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -6818,15 +7003,15 @@ func (s *EqExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type ValExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewValExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ValExpressionContext {
 	var p = new(ValExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -6864,15 +7049,15 @@ func (s *ValExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type AddExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewAddExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *AddExpressionContext {
 	var p = new(AddExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -6951,15 +7136,15 @@ func (s *AddExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type CompExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewCompExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *CompExpressionContext {
 	var p = new(CompExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -7038,15 +7223,15 @@ func (s *CompExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type LogOrExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewLogOrExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *LogOrExpressionContext {
 	var p = new(LogOrExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -7125,15 +7310,15 @@ func (s *LogOrExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type BinAndExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewBinAndExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *BinAndExpressionContext {
 	var p = new(BinAndExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -7212,15 +7397,15 @@ func (s *BinAndExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type BinOrExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewBinOrExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *BinOrExpressionContext {
 	var p = new(BinOrExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -7299,15 +7484,15 @@ func (s *BinOrExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type MultExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewMultExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *MultExpressionContext {
 	var p = new(MultExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -7386,15 +7571,15 @@ func (s *MultExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type BracketExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewBracketExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *BracketExpressionContext {
 	var p = new(BracketExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -7440,15 +7625,15 @@ func (s *BracketExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type UnaryOperationContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewUnaryOperationContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *UnaryOperationContext {
 	var p = new(UnaryOperationContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -7502,15 +7687,15 @@ func (s *UnaryOperationContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type LogAndExpressionContext struct {
-	*ExpressionContext
+	ExpressionContext
 }
 
 func NewLogAndExpressionContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *LogAndExpressionContext {
 	var p = new(LogAndExpressionContext)
 
-	p.ExpressionContext = NewEmptyExpressionContext()
+	InitEmptyExpressionContext(&p.ExpressionContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ExpressionContext))
+	p.CopyAll(ctx.(*ExpressionContext))
 
 	return p
 }
@@ -7893,15 +8078,20 @@ type IArrayIndexContext interface {
 }
 
 type ArrayIndexContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyArrayIndexContext() *ArrayIndexContext {
 	var p = new(ArrayIndexContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_arrayIndex
 	return p
+}
+
+func InitEmptyArrayIndexContext(p *ArrayIndexContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_arrayIndex
 }
 
 func (*ArrayIndexContext) IsArrayIndexContext() {}
@@ -7909,7 +8099,7 @@ func (*ArrayIndexContext) IsArrayIndexContext() {}
 func NewArrayIndexContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ArrayIndexContext {
 	var p = new(ArrayIndexContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_arrayIndex
@@ -8021,15 +8211,20 @@ type IArraySizeContext interface {
 }
 
 type ArraySizeContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyArraySizeContext() *ArraySizeContext {
 	var p = new(ArraySizeContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_arraySize
 	return p
+}
+
+func InitEmptyArraySizeContext(p *ArraySizeContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_arraySize
 }
 
 func (*ArraySizeContext) IsArraySizeContext() {}
@@ -8037,7 +8232,7 @@ func (*ArraySizeContext) IsArraySizeContext() {}
 func NewArraySizeContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ArraySizeContext {
 	var p = new(ArraySizeContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_arraySize
@@ -8144,15 +8339,20 @@ type IValueContext interface {
 }
 
 type ValueContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyValueContext() *ValueContext {
 	var p = new(ValueContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_value
 	return p
+}
+
+func InitEmptyValueContext(p *ValueContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_value
 }
 
 func (*ValueContext) IsValueContext() {}
@@ -8160,7 +8360,7 @@ func (*ValueContext) IsValueContext() {}
 func NewValueContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ValueContext {
 	var p = new(ValueContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_value
@@ -8170,8 +8370,8 @@ func NewValueContext(parser antlr.Parser, parent antlr.ParserRuleContext, invoki
 
 func (s *ValueContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ValueContext) CopyFrom(ctx *ValueContext) {
-	s.BaseParserRuleContext.CopyFrom(ctx.BaseParserRuleContext)
+func (s *ValueContext) CopyAll(ctx *ValueContext) {
+	s.CopyFrom(&ctx.BaseParserRuleContext)
 }
 
 func (s *ValueContext) GetRuleContext() antlr.RuleContext {
@@ -8183,15 +8383,15 @@ func (s *ValueContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) 
 }
 
 type IntegerLiteralValueContext struct {
-	*ValueContext
+	ValueContext
 }
 
 func NewIntegerLiteralValueContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *IntegerLiteralValueContext {
 	var p = new(IntegerLiteralValueContext)
 
-	p.ValueContext = NewEmptyValueContext()
+	InitEmptyValueContext(&p.ValueContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ValueContext))
+	p.CopyAll(ctx.(*ValueContext))
 
 	return p
 }
@@ -8217,15 +8417,15 @@ func (s *IntegerLiteralValueContext) ExitRule(listener antlr.ParseTreeListener) 
 }
 
 type FloatLiteralValueContext struct {
-	*ValueContext
+	ValueContext
 }
 
 func NewFloatLiteralValueContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *FloatLiteralValueContext {
 	var p = new(FloatLiteralValueContext)
 
-	p.ValueContext = NewEmptyValueContext()
+	InitEmptyValueContext(&p.ValueContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ValueContext))
+	p.CopyAll(ctx.(*ValueContext))
 
 	return p
 }
@@ -8251,15 +8451,15 @@ func (s *FloatLiteralValueContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type StringLiteralValueContext struct {
-	*ValueContext
+	ValueContext
 }
 
 func NewStringLiteralValueContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *StringLiteralValueContext {
 	var p = new(StringLiteralValueContext)
 
-	p.ValueContext = NewEmptyValueContext()
+	InitEmptyValueContext(&p.ValueContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ValueContext))
+	p.CopyAll(ctx.(*ValueContext))
 
 	return p
 }
@@ -8285,15 +8485,15 @@ func (s *StringLiteralValueContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type NullLiteralValueContext struct {
-	*ValueContext
+	ValueContext
 }
 
 func NewNullLiteralValueContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *NullLiteralValueContext {
 	var p = new(NullLiteralValueContext)
 
-	p.ValueContext = NewEmptyValueContext()
+	InitEmptyValueContext(&p.ValueContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ValueContext))
+	p.CopyAll(ctx.(*ValueContext))
 
 	return p
 }
@@ -8319,15 +8519,15 @@ func (s *NullLiteralValueContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type FuncCallValueContext struct {
-	*ValueContext
+	ValueContext
 }
 
 func NewFuncCallValueContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *FuncCallValueContext {
 	var p = new(FuncCallValueContext)
 
-	p.ValueContext = NewEmptyValueContext()
+	InitEmptyValueContext(&p.ValueContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ValueContext))
+	p.CopyAll(ctx.(*ValueContext))
 
 	return p
 }
@@ -8365,15 +8565,15 @@ func (s *FuncCallValueContext) ExitRule(listener antlr.ParseTreeListener) {
 }
 
 type ReferenceValueContext struct {
-	*ValueContext
+	ValueContext
 }
 
 func NewReferenceValueContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *ReferenceValueContext {
 	var p = new(ReferenceValueContext)
 
-	p.ValueContext = NewEmptyValueContext()
+	InitEmptyValueContext(&p.ValueContext)
 	p.parser = parser
-	p.CopyFrom(ctx.(*ValueContext))
+	p.CopyAll(ctx.(*ValueContext))
 
 	return p
 }
@@ -8519,15 +8719,20 @@ type IReferenceAtomContext interface {
 }
 
 type ReferenceAtomContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyReferenceAtomContext() *ReferenceAtomContext {
 	var p = new(ReferenceAtomContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_referenceAtom
 	return p
+}
+
+func InitEmptyReferenceAtomContext(p *ReferenceAtomContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_referenceAtom
 }
 
 func (*ReferenceAtomContext) IsReferenceAtomContext() {}
@@ -8535,7 +8740,7 @@ func (*ReferenceAtomContext) IsReferenceAtomContext() {}
 func NewReferenceAtomContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ReferenceAtomContext {
 	var p = new(ReferenceAtomContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_referenceAtom
@@ -8672,15 +8877,20 @@ type IReferenceContext interface {
 }
 
 type ReferenceContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyReferenceContext() *ReferenceContext {
 	var p = new(ReferenceContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_reference
 	return p
+}
+
+func InitEmptyReferenceContext(p *ReferenceContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_reference
 }
 
 func (*ReferenceContext) IsReferenceContext() {}
@@ -8688,7 +8898,7 @@ func (*ReferenceContext) IsReferenceContext() {}
 func NewReferenceContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ReferenceContext {
 	var p = new(ReferenceContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_reference
@@ -8826,15 +9036,20 @@ type ITypeReferenceContext interface {
 }
 
 type TypeReferenceContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyTypeReferenceContext() *TypeReferenceContext {
 	var p = new(TypeReferenceContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_typeReference
 	return p
+}
+
+func InitEmptyTypeReferenceContext(p *TypeReferenceContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_typeReference
 }
 
 func (*TypeReferenceContext) IsTypeReferenceContext() {}
@@ -8842,7 +9057,7 @@ func (*TypeReferenceContext) IsTypeReferenceContext() {}
 func NewTypeReferenceContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *TypeReferenceContext {
 	var p = new(TypeReferenceContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_typeReference
@@ -8958,15 +9173,20 @@ type IAnyIdentifierContext interface {
 }
 
 type AnyIdentifierContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyAnyIdentifierContext() *AnyIdentifierContext {
 	var p = new(AnyIdentifierContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_anyIdentifier
 	return p
+}
+
+func InitEmptyAnyIdentifierContext(p *AnyIdentifierContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_anyIdentifier
 }
 
 func (*AnyIdentifierContext) IsAnyIdentifierContext() {}
@@ -8974,7 +9194,7 @@ func (*AnyIdentifierContext) IsAnyIdentifierContext() {}
 func NewAnyIdentifierContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *AnyIdentifierContext {
 	var p = new(AnyIdentifierContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_anyIdentifier
@@ -9102,15 +9322,20 @@ type INameNodeContext interface {
 }
 
 type NameNodeContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyNameNodeContext() *NameNodeContext {
 	var p = new(NameNodeContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_nameNode
 	return p
+}
+
+func InitEmptyNameNodeContext(p *NameNodeContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_nameNode
 }
 
 func (*NameNodeContext) IsNameNodeContext() {}
@@ -9118,7 +9343,7 @@ func (*NameNodeContext) IsNameNodeContext() {}
 func NewNameNodeContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *NameNodeContext {
 	var p = new(NameNodeContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_nameNode
@@ -9201,15 +9426,20 @@ type IParentReferenceContext interface {
 }
 
 type ParentReferenceContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyParentReferenceContext() *ParentReferenceContext {
 	var p = new(ParentReferenceContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_parentReference
 	return p
+}
+
+func InitEmptyParentReferenceContext(p *ParentReferenceContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_parentReference
 }
 
 func (*ParentReferenceContext) IsParentReferenceContext() {}
@@ -9217,7 +9447,7 @@ func (*ParentReferenceContext) IsParentReferenceContext() {}
 func NewParentReferenceContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ParentReferenceContext {
 	var p = new(ParentReferenceContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_parentReference
@@ -9298,15 +9528,20 @@ type IAssignmentOperatorContext interface {
 }
 
 type AssignmentOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyAssignmentOperatorContext() *AssignmentOperatorContext {
 	var p = new(AssignmentOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_assignmentOperator
 	return p
+}
+
+func InitEmptyAssignmentOperatorContext(p *AssignmentOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_assignmentOperator
 }
 
 func (*AssignmentOperatorContext) IsAssignmentOperatorContext() {}
@@ -9314,7 +9549,7 @@ func (*AssignmentOperatorContext) IsAssignmentOperatorContext() {}
 func NewAssignmentOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *AssignmentOperatorContext {
 	var p = new(AssignmentOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_assignmentOperator
@@ -9421,15 +9656,20 @@ type IUnaryOperatorContext interface {
 }
 
 type UnaryOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyUnaryOperatorContext() *UnaryOperatorContext {
 	var p = new(UnaryOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_unaryOperator
 	return p
+}
+
+func InitEmptyUnaryOperatorContext(p *UnaryOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_unaryOperator
 }
 
 func (*UnaryOperatorContext) IsUnaryOperatorContext() {}
@@ -9437,7 +9677,7 @@ func (*UnaryOperatorContext) IsUnaryOperatorContext() {}
 func NewUnaryOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *UnaryOperatorContext {
 	var p = new(UnaryOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_unaryOperator
@@ -9530,15 +9770,20 @@ type IAddOperatorContext interface {
 }
 
 type AddOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyAddOperatorContext() *AddOperatorContext {
 	var p = new(AddOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_addOperator
 	return p
+}
+
+func InitEmptyAddOperatorContext(p *AddOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_addOperator
 }
 
 func (*AddOperatorContext) IsAddOperatorContext() {}
@@ -9546,7 +9791,7 @@ func (*AddOperatorContext) IsAddOperatorContext() {}
 func NewAddOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *AddOperatorContext {
 	var p = new(AddOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_addOperator
@@ -9626,15 +9871,20 @@ type IBitMoveOperatorContext interface {
 }
 
 type BitMoveOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyBitMoveOperatorContext() *BitMoveOperatorContext {
 	var p = new(BitMoveOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_bitMoveOperator
 	return p
+}
+
+func InitEmptyBitMoveOperatorContext(p *BitMoveOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_bitMoveOperator
 }
 
 func (*BitMoveOperatorContext) IsBitMoveOperatorContext() {}
@@ -9642,7 +9892,7 @@ func (*BitMoveOperatorContext) IsBitMoveOperatorContext() {}
 func NewBitMoveOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *BitMoveOperatorContext {
 	var p = new(BitMoveOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_bitMoveOperator
@@ -9718,15 +9968,20 @@ type ICompOperatorContext interface {
 }
 
 type CompOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyCompOperatorContext() *CompOperatorContext {
 	var p = new(CompOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_compOperator
 	return p
+}
+
+func InitEmptyCompOperatorContext(p *CompOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_compOperator
 }
 
 func (*CompOperatorContext) IsCompOperatorContext() {}
@@ -9734,7 +9989,7 @@ func (*CompOperatorContext) IsCompOperatorContext() {}
 func NewCompOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *CompOperatorContext {
 	var p = new(CompOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_compOperator
@@ -9814,15 +10069,20 @@ type IEqOperatorContext interface {
 }
 
 type EqOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyEqOperatorContext() *EqOperatorContext {
 	var p = new(EqOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_eqOperator
 	return p
+}
+
+func InitEmptyEqOperatorContext(p *EqOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_eqOperator
 }
 
 func (*EqOperatorContext) IsEqOperatorContext() {}
@@ -9830,7 +10090,7 @@ func (*EqOperatorContext) IsEqOperatorContext() {}
 func NewEqOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *EqOperatorContext {
 	var p = new(EqOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_eqOperator
@@ -9906,15 +10166,20 @@ type IMultOperatorContext interface {
 }
 
 type MultOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyMultOperatorContext() *MultOperatorContext {
 	var p = new(MultOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_multOperator
 	return p
+}
+
+func InitEmptyMultOperatorContext(p *MultOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_multOperator
 }
 
 func (*MultOperatorContext) IsMultOperatorContext() {}
@@ -9922,7 +10187,7 @@ func (*MultOperatorContext) IsMultOperatorContext() {}
 func NewMultOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *MultOperatorContext {
 	var p = new(MultOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_multOperator
@@ -10006,15 +10271,20 @@ type IBinAndOperatorContext interface {
 }
 
 type BinAndOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyBinAndOperatorContext() *BinAndOperatorContext {
 	var p = new(BinAndOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_binAndOperator
 	return p
+}
+
+func InitEmptyBinAndOperatorContext(p *BinAndOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_binAndOperator
 }
 
 func (*BinAndOperatorContext) IsBinAndOperatorContext() {}
@@ -10022,7 +10292,7 @@ func (*BinAndOperatorContext) IsBinAndOperatorContext() {}
 func NewBinAndOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *BinAndOperatorContext {
 	var p = new(BinAndOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_binAndOperator
@@ -10097,15 +10367,20 @@ type IBinOrOperatorContext interface {
 }
 
 type BinOrOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyBinOrOperatorContext() *BinOrOperatorContext {
 	var p = new(BinOrOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_binOrOperator
 	return p
+}
+
+func InitEmptyBinOrOperatorContext(p *BinOrOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_binOrOperator
 }
 
 func (*BinOrOperatorContext) IsBinOrOperatorContext() {}
@@ -10113,7 +10388,7 @@ func (*BinOrOperatorContext) IsBinOrOperatorContext() {}
 func NewBinOrOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *BinOrOperatorContext {
 	var p = new(BinOrOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_binOrOperator
@@ -10188,15 +10463,20 @@ type ILogAndOperatorContext interface {
 }
 
 type LogAndOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyLogAndOperatorContext() *LogAndOperatorContext {
 	var p = new(LogAndOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_logAndOperator
 	return p
+}
+
+func InitEmptyLogAndOperatorContext(p *LogAndOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_logAndOperator
 }
 
 func (*LogAndOperatorContext) IsLogAndOperatorContext() {}
@@ -10204,7 +10484,7 @@ func (*LogAndOperatorContext) IsLogAndOperatorContext() {}
 func NewLogAndOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *LogAndOperatorContext {
 	var p = new(LogAndOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_logAndOperator
@@ -10279,15 +10559,20 @@ type ILogOrOperatorContext interface {
 }
 
 type LogOrOperatorContext struct {
-	*antlr.BaseParserRuleContext
+	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
 func NewEmptyLogOrOperatorContext() *LogOrOperatorContext {
 	var p = new(LogOrOperatorContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
 	p.RuleIndex = DaedalusParserRULE_logOrOperator
 	return p
+}
+
+func InitEmptyLogOrOperatorContext(p *LogOrOperatorContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = DaedalusParserRULE_logOrOperator
 }
 
 func (*LogOrOperatorContext) IsLogOrOperatorContext() {}
@@ -10295,7 +10580,7 @@ func (*LogOrOperatorContext) IsLogOrOperatorContext() {}
 func NewLogOrOperatorContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *LogOrOperatorContext {
 	var p = new(LogOrOperatorContext)
 
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
 	p.RuleIndex = DaedalusParserRULE_logOrOperator

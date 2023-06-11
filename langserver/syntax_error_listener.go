@@ -1,6 +1,6 @@
 package langserver
 
-import "github.com/antlr/antlr4/runtime/Go/antlr/v4"
+import "github.com/antlr4-go/antlr/v4"
 
 // SyntaxErrorListener ...
 type SyntaxErrorListener struct {

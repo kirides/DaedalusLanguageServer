@@ -8,7 +8,7 @@ import (
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	"golang.org/x/exp/slices"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 // DaedalusValidatingListener ...

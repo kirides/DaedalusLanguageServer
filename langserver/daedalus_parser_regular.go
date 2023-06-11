@@ -3,7 +3,7 @@ package langserver
 import (
 	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 type regularGrammarParser struct {
