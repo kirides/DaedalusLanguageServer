@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/segmentio/encoding/json"
+	"github.com/goccy/go-json"
 
 	"go.lsp.dev/jsonrpc2"
 )

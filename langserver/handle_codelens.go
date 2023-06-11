@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/segmentio/encoding/json"
+	"github.com/goccy/go-json"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"

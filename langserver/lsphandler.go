@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/goccy/go-json"
 	"github.com/google/uuid"
-	"github.com/segmentio/encoding/json"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"

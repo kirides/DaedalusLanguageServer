@@ -13,7 +13,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/segmentio/encoding/json"
+	"github.com/goccy/go-json"
 
 	"github.com/kirides/DaedalusLanguageServer/langserver"
 
