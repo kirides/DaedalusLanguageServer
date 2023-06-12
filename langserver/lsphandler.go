@@ -92,6 +92,7 @@ func (h *LspHandler) handleWorkspaceExecuteCommand(req dls.RpcContext, params ls
 func (h *LspHandler) onInitialized() {
 	h.handlers.Register(lsp.MethodTextDocumentCompletion, dls.MakeHandler(h.handleTextDocumentCompletion))
 	h.handlers.Register(lsp.MethodTextDocumentDefinition, dls.MakeHandler(h.handleTextDocumentDefinition))
+	h.handlers.Register(lsp.MethodTextDocumentTypeDefinition, dls.MakeHandler(h.handleTextDocumentTypeDefinition))
 	h.handlers.Register(lsp.MethodTextDocumentHover, dls.MakeHandler(h.handleTextDocumentHover))
 	h.handlers.Register(lsp.MethodTextDocumentSignatureHelp, dls.MakeHandler(h.handleTextDocumentSignatureHelp))
 	h.handlers.Register(lsp.MethodTextDocumentImplementation, dls.MakeHandler(h.handleTextDocumentImplementation))
@@ -238,8 +239,9 @@ func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonr
 				CompletionProvider: lsp.CompletionOptions{
 					TriggerCharacters: []string{"."},
 				},
-				DefinitionProvider: true,
-				HoverProvider:      true,
+				DefinitionProvider:     true,
+				TypeDefinitionProvider: true,
+				HoverProvider:          true,
 				SignatureHelpProvider: lsp.SignatureHelpOptions{
 					TriggerCharacters: []string{"(", ","},
 				},
