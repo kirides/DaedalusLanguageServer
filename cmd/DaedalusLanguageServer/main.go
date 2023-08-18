@@ -13,11 +13,11 @@ import (
 	"sync"
 	"syscall"
 
+	"log/slog"
+
 	"github.com/goccy/go-json"
 
 	"github.com/kirides/DaedalusLanguageServer/langserver"
-
-	"go.uber.org/zap"
 
 	_ "net/http/pprof"
 
@@ -36,7 +36,7 @@ func BV(s []debug.BuildSetting, key string) string {
 	return ""
 }
 
-func logBuildInfo(log *zap.SugaredLogger) {
+func logBuildInfo(log *slog.Logger) {
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
 		return
@@ -54,25 +54,21 @@ func logBuildInfo(log *zap.SugaredLogger) {
 		return ""
 	}
 
-	log.Infof("Running %q built with %s at %s", BV("vcs.revision"), bi.GoVersion, BV("vcs.time"))
+	log.Info("Running", "revision", BV("vcs.revision"), "go_version", bi.GoVersion, "built_at", BV("vcs.time"))
 }
 
 func main() {
 	pprofPort := flag.Int("pprof", -1, "enables pprof on the specified port")
-	logLevel := zap.LevelFlag("loglevel", zap.InfoLevel, "debug/info/warn/error")
+	logLevel := &slog.LevelVar{}
+	flag.TextVar(logLevel, "loglevel", logLevel, "debug/info/warn/error")
 	flag.Parse()
 
-	logCfg := zap.NewDevelopmentConfig()
-	logCfg.Level = zap.NewAtomicLevelAt(*logLevel)
-	logger, err := logCfg.Build()
+	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: logLevel,
+	})
+	logger := slog.New(handler)
 
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
-	log := logger.Sugar()
-
-	logBuildInfo(log)
+	logBuildInfo(logger)
 
 	pprofServer := &pprofServer{}
 	defer pprofServer.Stop()
@@ -84,28 +80,28 @@ func main() {
 	defer stop()
 
 	conn := connectLanguageServer(&rwc{os.Stdin, os.Stdout})
-	lspHandler := langserver.NewLspHandler(conn, log)
+	lspHandler := langserver.NewLspHandler(conn, newDlsSlog(logger.Handler()))
 
 	lspHandler.OnConfigChanged(func(config langserver.LspConfig) {
 		level := strings.ToLower(config.LogLevel)
 		switch {
 		case strings.HasPrefix(level, "d"):
-			logCfg.Level.SetLevel(zap.DebugLevel)
+			logLevel.Set(slog.LevelDebug)
 		case strings.HasPrefix(level, "w"):
-			logCfg.Level.SetLevel(zap.WarnLevel)
+			logLevel.Set(slog.LevelWarn)
 		case strings.HasPrefix(level, "e"):
-			logCfg.Level.SetLevel(zap.ErrorLevel)
+			logLevel.Set(slog.LevelError)
 		case strings.HasPrefix(level, "i"):
-			logCfg.Level.SetLevel(zap.InfoLevel)
+			logLevel.Set(slog.LevelInfo)
 		default:
-			logCfg.Level.SetLevel(zap.InfoLevel)
+			logLevel.Set(slog.LevelInfo)
 		}
 	})
 
 	lspHandler.OnConfigChanged(func(config langserver.LspConfig) {
 		if *pprofPort <= 0 {
 			// only when not set by args
-			log.Infof("Updating pprof address to %s", config.PprofAddr)
+			logger.Info("Updating pprof address", "addr", config.PprofAddr)
 			pprofServer.ChangeAddr(config.PprofAddr)
 		}
 	})
@@ -133,10 +129,10 @@ func main() {
 					} `json:"request"`
 				}
 				if err := json.Unmarshal(req.Params(), &idPayload); err != nil {
-					log.Warnf("invalid request, missing \"id\"")
+					logger.Warn("invalid request, missing \"id\"")
 					return
 				}
-				log.Debugf("cancelling request %s", idPayload.Request.ID)
+				logger.Debug("cancelling request", "request_id", idPayload.Request.ID)
 				cancelRequest(idPayload.Request.ID)
 				return
 			}
@@ -145,7 +141,7 @@ func main() {
 				id := r.ID()
 				idVal, err := (&id).MarshalJSON()
 				if err != nil {
-					log.Warnf("invalid call, missing \"id\". err %v", err)
+					logger.Warn("invalid call, missing \"id\".", "err", err)
 					return
 				}
 				cancelId = strings.Trim(string(idVal), "\"")
@@ -156,9 +152,9 @@ func main() {
 			err := lspHandler.Handle(ctx, reply, req)
 			if err != nil {
 				if errors.Is(err, langserver.ErrUnhandled) {
-					log.Debugw(err.Error(), "method", req.Method(), "request", string(req.Params()))
+					logger.Debug(err.Error(), "method", req.Method(), "request", string(req.Params()))
 				} else {
-					log.Errorf("%s: %v", req.Method(), err)
+					logger.Error("Error", "method", req.Method(), "err", err)
 				}
 			} else {
 				runningRequests.Delete(cancelId)
