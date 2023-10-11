@@ -12,6 +12,12 @@ When there is a `_externals\externals.src` it will try to parse it and all refer
 
 This externals should be provided from Union plugins such as zParserExtender.
 
+## Aknowledgements
+
+### Gothic Classic - Nintendo Switch
+
+https://github.com/kirides/DaedalusLanguageServer/assets/13602143/91162090-0b7f-4bbd-a461-4e6f9b1f6078
+
 
 ## neovim configuration
 
