@@ -2,12 +2,15 @@ package langserver
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/kirides/DaedalusLanguageServer/protocol"
+	"golang.org/x/exp/slices"
 	"golang.org/x/text/encoding/charmap"
 )
 
@@ -95,5 +98,62 @@ func BenchmarkGothicSrc(b *testing.B) {
 		if err != nil {
 			b.Error(err)
 		}
+	}
+}
+
+func TestParseSemanticForGlobals(t *testing.T) {
+	script := `var int CurrentLevel;
+const int ADDONWORLD_ZEN = 4;
+
+func void FuncName() {
+	CurrentLevel = ADDONWORLD_ZEN;
+};`
+
+	data := []struct {
+		expected string
+	}{
+		{expected: "ADDONWORLD_ZEN"},
+		{expected: "CurrentLevel"},
+	}
+	m := newParseResultsManager(nopLogger{})
+	result, _ := m.ParseSemanticsContentDataTypesRange(context.Background(), "C:\\temp", script, protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 999, Character: 999}}, DataAll)
+
+	for _, v := range data {
+		t.Run(fmt.Sprintf("Expect %q", v.expected), func(t *testing.T) {
+			if !slices.ContainsFunc(result.GlobalIdentifiers, func(i Identifier) bool {
+				return i.Name() == v.expected
+			}) {
+				t.Fail()
+			}
+		})
+	}
+}
+
+func TestParseSemanticForLocals(t *testing.T) {
+	script := `
+func void FuncName() {
+	var int CurrentLevel;
+	const int ADDONWORLD_ZEN = 4;
+
+	CurrentLevel = ADDONWORLD_ZEN;
+};`
+
+	data := []struct {
+		expected string
+	}{
+		{expected: "ADDONWORLD_ZEN"},
+		{expected: "CurrentLevel"},
+	}
+	m := newParseResultsManager(nopLogger{})
+	result, _ := m.ParseSemanticsContentDataTypesRange(context.Background(), "C:\\temp", script, protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 999, Character: 999}}, DataAll)
+
+	for _, v := range data {
+		t.Run(fmt.Sprintf("Expect %q", v.expected), func(t *testing.T) {
+			if !slices.ContainsFunc(result.GlobalIdentifiers, func(i Identifier) bool {
+				return i.Name() == v.expected
+			}) {
+				t.Fail()
+			}
+		})
 	}
 }

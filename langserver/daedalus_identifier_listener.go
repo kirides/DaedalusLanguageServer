@@ -101,6 +101,11 @@ func (l *DaedalusIdentifierListener) onIdentifier(ctx antlr.ParserRuleContext) {
 	})
 }
 
+func (l *DaedalusIdentifierListener) EnterAssignment(ctx *parser.AssignmentContext) {
+	refAtom := ctx.Reference()
+	l.onIdentifier(refAtom)
+}
+
 func (l *DaedalusIdentifierListener) EnterArrayIndex(ctx *parser.ArrayIndexContext) {
 	refAtom := ctx.ReferenceAtom()
 	if refAtom == nil {
