@@ -97,19 +97,18 @@ func (h *semanticTokensHandler) getSemanticTokens(r *SemanticParseResult, area *
 	}
 	syms := make([]item, 0, r.CountSymbols())
 
-	onIdentifier := func(id *Identifier, isLocal bool) (t, m uint32, rok bool) {
+	onIdentifier := func(id *Identifier) (t, m uint32, rok bool) {
 		var identified symbol.Symbol
 		isParam := false
-		if isLocal {
-			r.WalkScopedVariables(id.Definition().Start, func(t symbol.Symbol, isp bool) bool {
-				if strings.EqualFold(t.Name(), id.Name()) {
-					identified = t
-					isParam = isp
-					return false
-				}
-				return true
-			})
-		}
+
+		r.WalkScopedVariables(id.Definition().Start, func(t symbol.Symbol, isp bool) bool {
+			if strings.EqualFold(t.Name(), id.Name()) {
+				identified = t
+				isParam = isp
+				return false
+			}
+			return true
+		})
 
 		if identified != nil {
 			if !isParam {
@@ -154,7 +153,7 @@ func (h *semanticTokensHandler) getSemanticTokens(r *SemanticParseResult, area *
 
 		switch s := s.(type) {
 		case Identifier:
-			t, m, ok := onIdentifier(&s, false)
+			t, m, ok := onIdentifier(&s)
 			if ok {
 				itm.t, itm.m = t, m
 				syms = append(syms, itm)
@@ -209,7 +208,7 @@ func (h *semanticTokensHandler) getSemanticTokens(r *SemanticParseResult, area *
 					}
 				}
 				for _, id := range s.Identifiers {
-					t, m, ok := onIdentifier(&id, true)
+					t, m, ok := onIdentifier(&id)
 					if ok {
 						syms = append(syms, item{
 							token: id,
