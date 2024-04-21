@@ -10,6 +10,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  BINARY_NAME: DaedalusLanguageServer
+
 jobs:
   
   build:
@@ -42,30 +45,45 @@ jobs:
         echo "GOARCH=${{ matrix.arch }}" >> $GITHUB_ENV
         echo "GOOS=${{ matrix.os }}" >> $GITHUB_ENV
 
-    - name: Build Windows
+    - name: Adjust naming for Windows
       if: matrix.os == 'windows'
       run: |
-        export RELEASE_FILE=DaedalusLanguageServer.$GOARCH.exe
-        echo "RELEASE_FILE=$RELEASE_FILE" >> $GITHUB_ENV
-        go build -v -o $RELEASE_FILE -ldflags "-s -w" ./cmd/DaedalusLanguageServer/
+        export BINARY_NAME=$BINARY_NAME.exe
+        echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
 
-    - name: Build linux
-      if: matrix.os != 'windows'
-      run: |
-        export RELEASE_FILE=DaedalusLanguageServer.$GOOS.$GOARCH
-        echo "RELEASE_FILE=$RELEASE_FILE" >> $GITHUB_ENV
-        go build -v -o $RELEASE_FILE -ldflags '-extldflags "-static" -s -w' ./cmd/DaedalusLanguageServer/
+    - name: Build
+      run: go build -v -o $BINARY_NAME -ldflags '-extldflags "-static" -s -w' ./cmd/DaedalusLanguageServer/
 
     - name: Calculate distribution hash
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        sha256sum "$RELEASE_FILE" > "$RELEASE_FILE.sha256"
-        cat "$RELEASE_FILE.sha256"
+        sha256sum "$BINARY_NAME" > "$BINARY_NAME.sha256"
+        cat "$BINARY_NAME.sha256"
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.os }}-${{matrix.arch}}
         path: |
-          ${{ env.RELEASE_FILE }}
-          ${{ env.RELEASE_FILE }}.sha256
+          ${{ env.BINARY_NAME }}
+          ${{ env.BINARY_NAME }}.sha256
+
+    - name: Create Zip
+      run: zip -D ${{ matrix.os }}_${{ matrix.arch }}.zip "$BINARY_NAME" "${{ env.BINARY_NAME }}.sha256"
+
+    - name: Create github release
+      run: |
+        gh release create $RELEASE_VERSION --generate-notes
+        exit 0
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+    - name: Upload zip to release
+      run: |
+        gh release upload $RELEASE_VERSION "${{ matrix.os }}_${{ matrix.arch }}.zip"
+        gh release edit $RELEASE_VERSION --draft=false --prerelease=true
+        exit 0
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
