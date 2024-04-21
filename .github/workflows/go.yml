@@ -80,7 +80,7 @@ jobs:
     - name: Upload zip to release
       run: |
         gh release upload $RELEASE_VERSION "${{ matrix.os }}_${{ matrix.arch }}.zip"
-        gh release edit $RELEASE_VERSION --draft=false --prerelease=true
+        gh release edit $RELEASE_VERSION --draft=false --prerelease=false
         exit 0
       if: startsWith(github.ref, 'refs/tags/')
       env:
