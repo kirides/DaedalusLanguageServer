@@ -72,9 +72,7 @@ jobs:
       run: zip -D ${{ matrix.os }}_${{ matrix.arch }}.zip "$BINARY_NAME" "${{ env.BINARY_NAME }}.sha256"
 
     - name: Create github release
-      run: |
-        gh release create $RELEASE_VERSION --generate-notes
-        exit 0
+      run: gh release create $RELEASE_VERSION --generate-notes || exit 0
       if: startsWith(github.ref, 'refs/tags/')
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
