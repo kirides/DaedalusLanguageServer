@@ -84,14 +84,17 @@ func main() {
 
 	lspHandler.OnConfigChanged(func(config langserver.LspConfig) {
 		level := strings.ToLower(config.LogLevel)
-		switch {
-		case strings.HasPrefix(level, "d"):
+		if len(level) < 1 {
+			return
+		}
+		switch level[0] {
+		case 'd':
 			logLevel.Set(slog.LevelDebug)
-		case strings.HasPrefix(level, "w"):
+		case 'w':
 			logLevel.Set(slog.LevelWarn)
-		case strings.HasPrefix(level, "e"):
+		case 'e':
 			logLevel.Set(slog.LevelError)
-		case strings.HasPrefix(level, "i"):
+		case 'i':
 			logLevel.Set(slog.LevelInfo)
 		default:
 			logLevel.Set(slog.LevelInfo)
