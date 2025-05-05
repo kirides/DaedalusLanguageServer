@@ -21,7 +21,7 @@ func TestJavadocParam(t *testing.T) {
 
 	jd := javadoc.MarkdownSimple(s)
 
-	if !strings.Contains(jd, "- **p** - *decides things*") {
+	if !strings.Contains(jd, "- `p` - *decides things*") {
 		t.Fatalf("expected markdown property content, actual: %s", jd)
 	}
 }
@@ -48,7 +48,7 @@ func TestJavadocParamWithParser(t *testing.T) {
 
 	jd := javadoc.MarkdownSimple(fn)
 
-	if !strings.Contains(jd, "- **amount** - *the amount*") {
+	if !strings.Contains(jd, "- `amount` - *the amount*") {
 		t.Fatalf("expected markdown property content, actual: %s", jd)
 	}
 }

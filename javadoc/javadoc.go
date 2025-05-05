@@ -9,12 +9,14 @@ import (
 )
 
 var (
+	javadocGlobal = []byte("@global")
 	javadocParam  = []byte("@param")
 	javadocReturn = []byte("@return")
 )
 
 type javadoc struct {
 	Summary    string
+	Globals    string
 	Parameters string
 	Return     string
 }
@@ -28,10 +30,26 @@ func appendMarkdownEscaped(sb *strings.Builder, text string) {
 	}
 }
 
+func formatGlobal(sb *strings.Builder, line string) {
+	name, desc, ok := strings.Cut(line, " ")
+	if ok {
+		name = strings.TrimSpace(name)
+		sb.WriteString("- `")
+		sb.WriteString(name)
+		sb.WriteString("` - ")
+		appendMarkdownEscaped(sb, desc)
+		sb.WriteString("   \n")
+	} else {
+		appendMarkdownEscaped(sb, line)
+		sb.WriteString("   \n")
+	}
+
+}
+
 func formatParams(sb *strings.Builder, param, desc string) {
-	sb.WriteString("- **")
+	sb.WriteString("- `")
 	appendMarkdownEscaped(sb, param)
-	sb.WriteString("** - *")
+	sb.WriteString("` - *")
 
 	const (
 		PREFIX_INST = "{"
@@ -109,6 +127,7 @@ func parseJavadocMdEscaped(sym symbol.Symbol) javadoc {
 	}
 
 	summary := strings.Builder{}
+	globals := strings.Builder{}
 	params := strings.Builder{}
 	returns := strings.Builder{}
 
@@ -131,12 +150,19 @@ func parseJavadocMdEscaped(sym symbol.Symbol) javadoc {
 					break
 				}
 			}
+		} else if bytes.HasPrefix(line, javadocGlobal) {
+			line = bytes.TrimSpace(bytes.TrimPrefix(line, javadocGlobal))
+			formatGlobal(&globals, string(line))
 		} else {
 			appendMarkdownEscaped(&summary, string(line))
 			summary.WriteString("  \n")
 		}
 	}
 	r.Summary = strings.TrimSpace(summary.String())
+	if r.Globals != "" {
+		globals.WriteString("\n")
+	}
+	r.Globals = strings.TrimSpace(globals.String())
 	r.Parameters = strings.TrimSpace(params.String())
 	r.Return = strings.TrimSpace(returns.String())
 	return r
@@ -153,7 +179,15 @@ func Markdown(doc javadoc) string {
 	sb.WriteString(doc.Summary)
 	sb.WriteString("\n")
 	sb.WriteString("\n")
-	sb.WriteString(doc.Parameters)
+	if doc.Globals != "" {
+		sb.WriteString("### Globals\n")
+		sb.WriteString(doc.Globals)
+		sb.WriteString("\n")
+	}
+	if doc.Parameters != "" {
+		sb.WriteString("### Parameters\n")
+		sb.WriteString(doc.Parameters)
+	}
 	if doc.Return != "" {
 		sb.WriteString("\n\n*returns ")
 		sb.WriteString(doc.Return)
