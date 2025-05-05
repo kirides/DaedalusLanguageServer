@@ -47,9 +47,9 @@ func formatGlobal(sb *strings.Builder, line string) {
 }
 
 func formatParams(sb *strings.Builder, param, desc string) {
-	sb.WriteString("- **")
+	sb.WriteString("- `")
 	appendMarkdownEscaped(sb, param)
-	sb.WriteString("** - *")
+	sb.WriteString("` - *")
 
 	const (
 		PREFIX_INST = "{"
