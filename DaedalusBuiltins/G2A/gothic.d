@@ -1903,7 +1903,7 @@ func void TA_RemoveOverlay(var C_NPC npc) {};
 ///
 /// @param room name of the room as defined in the portal
 /// @param guild guild ID
-func void AssignRoomToGuild(var string room, var int guild) {};
+func void Wld_AssignRoomToGuild(var string room, var int guild) {};
 
 /// Assigns a room to a specific NPC
 ///
