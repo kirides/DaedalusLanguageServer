@@ -1,0 +1,97 @@
+package langserver
+
+import (
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/antlr4-go/antlr/v4"
+	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
+	"golang.org/x/text/encoding/charmap"
+)
+
+type benchScript struct{ name, content string }
+
+func loadBenchScripts(tb testing.TB) (scripts []benchScript, total int) {
+	tb.Helper()
+	err := filepath.WalkDir("testdata", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(strings.ToLower(path), ".d") {
+			return err
+		}
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		body, _ := charmap.Windows1252.NewDecoder().Bytes(raw)
+		scripts = append(scripts, benchScript{path, string(body)})
+		total += len(body)
+		return nil
+	})
+	if err != nil || len(scripts) == 0 {
+		tb.Fatalf("no bench scripts: %v", err)
+	}
+	return scripts, total
+}
+
+// BenchmarkLex measures tokenization only.
+func BenchmarkLex(b *testing.B) {
+	scripts, total := loadBenchScripts(b)
+	lexer := parser.NewDaedalusLexer(nil)
+	b.SetBytes(int64(total))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, s := range scripts {
+			lexer.SetInputStream(antlr.NewInputStream(s.content))
+			for t := lexer.NextToken(); t.GetTokenType() != antlr.TokenEOF; t = lexer.NextToken() {
+			}
+		}
+	}
+}
+
+// BenchmarkParseTree measures lex + parse (no listeners).
+func BenchmarkParseTree(b *testing.B) {
+	scripts, total := loadBenchScripts(b)
+	p := newRegularParser()
+	b.SetBytes(int64(total))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, s := range scripts {
+			p.Parse(s.name, s.content, &parser.BaseDaedalusListener{}, &SyntaxErrorListener{})
+		}
+	}
+}
+
+// BenchmarkParseScripts measures the full ParseScript path (parser + stateful listener).
+func BenchmarkParseScripts(b *testing.B) {
+	scripts, total := loadBenchScripts(b)
+	m := newParseResultsManager(nopLogger{})
+	b.SetBytes(int64(total))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, s := range scripts {
+			m.ParseScript(s.name, s.content, time.Now())
+		}
+	}
+}
+
+// BenchmarkParseScriptsParallel measures how well parsing scales across goroutines.
+func BenchmarkParseScriptsParallel(b *testing.B) {
+	scripts, total := loadBenchScripts(b)
+	m := newParseResultsManager(nopLogger{})
+	b.SetBytes(int64(total))
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			for _, s := range scripts {
+				m.ParseScript(s.name, s.content, time.Now())
+			}
+		}
+	})
+}

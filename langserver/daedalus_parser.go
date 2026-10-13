@@ -38,13 +38,13 @@ type lexerPool struct {
 	inner sync.Pool
 }
 
-func newLexerPool(newFn func() *parser.DaedalusLexer) *lexerPool {
+func newLexerPool(newFn func() *fastLexer) *lexerPool {
 	return &lexerPool{
 		inner: sync.Pool{New: func() interface{} { return newFn() }},
 	}
 }
-func (p *lexerPool) Get() *parser.DaedalusLexer  { return p.inner.Get().(*parser.DaedalusLexer) }
-func (p *lexerPool) Put(v *parser.DaedalusLexer) { p.inner.Put(v) }
+func (p *lexerPool) Get() *fastLexer  { return p.inner.Get().(*fastLexer) }
+func (p *lexerPool) Put(v *fastLexer) { p.inner.Put(v) }
 
 // ParseAndValidateScript ...
 func (m *parseResultsManager) ParseAndValidateScript(source, content string) *ParseResult {

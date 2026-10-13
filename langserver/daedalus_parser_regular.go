@@ -25,7 +25,7 @@ type RegularParser struct {
 func newRegularParser() *RegularParser {
 	return &RegularParser{
 		pooledParsers: newParserPool(func() DaedalusGrammarParser { return &regularGrammarParser{parser.NewDaedalusParser(nil)} }),
-		pooledLexers:  newLexerPool(func() *parser.DaedalusLexer { return parser.NewDaedalusLexer(nil) }),
+		pooledLexers:  newLexerPool(newFastLexer),
 	}
 }
 
@@ -35,13 +35,13 @@ func (rp *RegularParser) Parse(source, content string, listener antlr.ParseTreeL
 	lexer := rp.pooledLexers.Get()
 	p := rp.pooledParsers.Get()
 	defer func() {
-		lexer.SetInputStream(nil)
+		lexer.Release()
 		rp.pooledLexers.Put(lexer)
 		p.SetInputStream(nil)
 		rp.pooledParsers.Put(p)
 	}()
-	lexer.SetInputStream(inputStream)
-	tokenStream := antlr.NewCommonTokenStream(lexer, 0)
+	lexer.Reset(content, inputStream)
+	tokenStream := lexer.TokenStream()
 
 	p.SetInputStream(tokenStream)
 
