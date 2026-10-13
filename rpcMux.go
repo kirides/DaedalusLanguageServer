@@ -21,7 +21,7 @@ type RpcMux struct {
 	pathToType map[string]Handler
 }
 
-func (d *RpcMux) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) (bool, error) {
+func (d *RpcMux) Handle(ctx context.Context, reply Replier, req *jsonrpc2.Request) (bool, error) {
 	if handler, ok := d.pathToType[req.Method()]; ok {
 		return true, handler(rpcContext{ctx, reply, req})
 	}

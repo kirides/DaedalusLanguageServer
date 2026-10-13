@@ -9,14 +9,15 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 
 	"log/slog"
 
 	"github.com/goccy/go-json"
 
+	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/langserver"
 
 	_ "net/http/pprof"
@@ -109,62 +110,61 @@ func main() {
 		}
 	})
 
-	runningRequests := &sync.Map{}
-	cancelRequest := func(id string) {
-		v, ok := runningRequests.LoadAndDelete(id)
-		if !ok {
-			return
-		}
-		v.(context.CancelFunc)()
-	}
-	addRequest := func(ctx context.Context, id string) context.Context {
-		ctx, cancel := context.WithCancel(ctx)
-		runningRequests.Store(id, cancel)
-		return ctx
-	}
+	handleRequest := func(ctx context.Context, req *jsonrpc2.Request) (any, error) {
+		// Release the read loop, so requests (and cancellations) are processed concurrently.
+		jsonrpc2.Async(ctx)
 
-	conn.Go(ctx, func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
-		go func() {
-			if req.Method() == "$/cancelRequest" {
-				var idPayload struct {
-					Request struct {
-						ID string `json:"id"`
-					} `json:"request"`
-				}
-				if err := json.Unmarshal(req.Params(), &idPayload); err != nil {
-					logger.Warn("invalid request, missing \"id\"")
-					return
-				}
-				logger.Debug("cancelling request", "request_id", idPayload.Request.ID)
-				cancelRequest(idPayload.Request.ID)
-				return
-			}
-			cancelId := ""
-			if r, ok := req.(*jsonrpc2.Call); ok {
-				id := r.ID()
-				idVal, err := (&id).MarshalJSON()
-				if err != nil {
-					logger.Warn("invalid call, missing \"id\".", "err", err)
-					return
-				}
-				cancelId = strings.Trim(string(idVal), "\"")
+		var rec dls.ReplyRecorder
+		err := lspHandler.Handle(ctx, rec.Reply, req)
+		result, replyErr, replied := rec.Result()
 
-				ctx = addRequest(ctx, cancelId)
-				defer cancelRequest(cancelId)
-			}
-			err := lspHandler.Handle(ctx, reply, req)
-			if err != nil {
-				if errors.Is(err, langserver.ErrUnhandled) {
-					logger.Debug(err.Error(), "method", req.Method(), "request", string(req.Params()))
-				} else {
-					logger.Error("Error", "method", req.Method(), "err", err)
-				}
+		if err != nil {
+			if errors.Is(err, langserver.ErrUnhandled) {
+				logger.Debug(err.Error(), "method", req.Method(), "request", string(req.Params()))
 			} else {
-				runningRequests.Delete(cancelId)
+				logger.Error("Error", "method", req.Method(), "err", err)
 			}
-		}()
+		}
+		if !req.IsCall() {
+			// an error returned for a notification would tear down the connection
+			return nil, nil
+		}
+		if replied {
+			return result, replyErr
+		}
+		if errors.Is(err, langserver.ErrUnhandled) {
+			return nil, fmt.Errorf("%q: %w", req.Method(), jsonrpc2.ErrMethodNotFound)
+		}
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+	cancelHandler, cancelRequest := jsonrpc2.CancelHandler(handleRequest)
 
-		return nil // unhandled
+	conn.Go(ctx, func(ctx context.Context, req *jsonrpc2.Request) (any, error) {
+		if req.Method() == "$/cancelRequest" {
+			var payload struct {
+				ID json.RawMessage `json:"id"`
+			}
+			if err := json.Unmarshal(req.Params(), &payload); err != nil || len(payload.ID) == 0 {
+				logger.Warn("invalid request, missing \"id\"")
+				return nil, nil
+			}
+			var id jsonrpc2.ID
+			if s, err := strconv.Unquote(string(payload.ID)); err == nil {
+				id = jsonrpc2.NewStringID(s)
+			} else if n, err := strconv.ParseInt(string(payload.ID), 10, 64); err == nil {
+				id = jsonrpc2.NewNumberID(n)
+			} else {
+				logger.Warn("invalid request, malformed \"id\"")
+				return nil, nil
+			}
+			logger.Debug("cancelling request", "request_id", id)
+			cancelRequest(id)
+			return nil, nil
+		}
+		return cancelHandler(ctx, req)
 	})
 	<-conn.Done()
 }
@@ -183,7 +183,7 @@ func (rwc *rwc) Close() error {
 
 func connectLanguageServer(rwc io.ReadWriteCloser) jsonrpc2.Conn {
 	bufStream := jsonrpc2.NewStream(rwc)
-	rootConn := jsonrpc2.NewConn(bufStream)
+	rootConn := jsonrpc2.NewConn(bufStream, jsonrpc2.WithCodec(dls.Codec{}))
 	return rootConn
 
 }

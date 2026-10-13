@@ -174,7 +174,7 @@ func (h *LspHandler) removeWorkspaces(ctx context.Context, workspaceURIs ...stri
 }
 
 // Deliver ...
-func (h *LspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, r jsonrpc2.Request) error {
+func (h *LspHandler) Handle(ctx context.Context, reply dls.Replier, r *jsonrpc2.Request) error {
 	h.LogDebug("Requested %q", r.Method())
 
 	// if r.Params() != nil {

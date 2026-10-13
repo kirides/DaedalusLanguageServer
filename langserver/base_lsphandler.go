@@ -17,7 +17,7 @@ type EmptyHandler struct{}
 var errNotImplemented = errors.New("not implemented")
 var ErrUnhandled = errors.New("unhandled")
 
-func (h *EmptyHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
+func (h *EmptyHandler) Handle(ctx context.Context, reply dls.Replier, req *jsonrpc2.Request) error {
 	return errNotImplemented
 }
 
@@ -27,7 +27,7 @@ type baseLspHandler struct {
 	logger dls.Logger
 }
 
-func (h *baseLspHandler) Handle(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
+func (h *baseLspHandler) Handle(ctx context.Context, reply dls.Replier, req *jsonrpc2.Request) error {
 	return fmt.Errorf("%w: %s", ErrUnhandled, req.Method())
 }
 
