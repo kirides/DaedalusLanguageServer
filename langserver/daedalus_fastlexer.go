@@ -105,17 +105,6 @@ func (l *fastLexer) GetCharPositionInLine() int {
 	return 0
 }
 
-const (
-	tokComma   = parser.DaedalusLexerT__0
-	tokShl     = parser.DaedalusLexerT__1
-	tokShr     = parser.DaedalusLexerT__2
-	tokLessEq  = parser.DaedalusLexerT__3
-	tokGrEq    = parser.DaedalusLexerT__4
-	tokEq      = parser.DaedalusLexerT__5
-	tokNotEq   = parser.DaedalusLexerT__6
-	tokPercent = parser.DaedalusLexerT__7
-)
-
 func isDigit(c byte) bool { return c >= '0' && c <= '9' }
 
 func isIdentStartASCII(c byte) bool {
@@ -471,9 +460,9 @@ func (l *fastLexer) tokenize(src string, input antlr.CharStream) bool {
 		case ';':
 			ttype = parser.DaedalusLexerSemi
 		case ',':
-			ttype = tokComma
+			ttype = parser.DaedalusLexerComma
 		case '%':
-			ttype = tokPercent
+			ttype = parser.DaedalusLexerPercent
 		case '~':
 			ttype = parser.DaedalusLexerTilde
 		case '&':
@@ -514,31 +503,31 @@ func (l *fastLexer) tokenize(src string, input antlr.CharStream) bool {
 			}
 		case '!':
 			if peek(src, st.i+1) == '=' {
-				ttype, blen, rlen = tokNotEq, 2, 2
+				ttype, blen, rlen = parser.DaedalusLexerNotEqual, 2, 2
 			} else {
 				ttype = parser.DaedalusLexerNot
 			}
 		case '=':
 			if peek(src, st.i+1) == '=' {
-				ttype, blen, rlen = tokEq, 2, 2
+				ttype, blen, rlen = parser.DaedalusLexerEqual, 2, 2
 			} else {
 				ttype = parser.DaedalusLexerAssign
 			}
 		case '<':
 			switch peek(src, st.i+1) {
 			case '<':
-				ttype, blen, rlen = tokShl, 2, 2
+				ttype, blen, rlen = parser.DaedalusLexerShl, 2, 2
 			case '=':
-				ttype, blen, rlen = tokLessEq, 2, 2
+				ttype, blen, rlen = parser.DaedalusLexerLessEq, 2, 2
 			default:
 				ttype = parser.DaedalusLexerLess
 			}
 		case '>':
 			switch peek(src, st.i+1) {
 			case '>':
-				ttype, blen, rlen = tokShr, 2, 2
+				ttype, blen, rlen = parser.DaedalusLexerShr, 2, 2
 			case '=':
-				ttype, blen, rlen = tokGrEq, 2, 2
+				ttype, blen, rlen = parser.DaedalusLexerGreaterEq, 2, 2
 			default:
 				ttype = parser.DaedalusLexerGreater
 			}

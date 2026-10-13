@@ -1,5 +1,7 @@
 package langserver
 
+//go:generate go run ../cmd/gen-combined-listener
+
 import (
 	"sync"
 	"time"

@@ -176,7 +176,7 @@ func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c parser.IConstArray
 	result.WriteString("{ ")
 	counter := 0
 
-	walkSymbols(c, func(v parser.IExpressionBlockContext) error {
+	walkSymbols(c, func(v parser.IExpressionContext) error {
 		if counter > n {
 			return fmt.Errorf("ok")
 		}
@@ -198,7 +198,7 @@ func (l *DaedalusStatefulListener) maxNOfConstValues(n int, c parser.IConstArray
 
 func (l *DaedalusStatefulListener) arrayElementsFromContext(c parser.IConstArrayAssignmentContext) []symbol.ArrayElement {
 	result := make([]symbol.ArrayElement, 0, 66)
-	for _, v := range c.AllExpressionBlock() {
+	for _, v := range c.AllExpression() {
 		result = append(result, symbol.NewArrayElement(
 			v.GetText(),
 			symbol.NewDefinition(v.GetStart().GetLine(),
@@ -236,7 +236,7 @@ func (l *DaedalusStatefulListener) constsFromContext(c *parser.ConstDefContext) 
 				l.source,
 				summary, // documentation
 				l.symbolDefinitionForRuleContext(nameNode),
-				cv.ConstValueAssignment().ExpressionBlock().GetText(),
+				cv.ConstValueAssignment().Expression().GetText(),
 			))
 		return nil
 	})
@@ -267,19 +267,6 @@ func (l *DaedalusStatefulListener) EnterInlineDef(ctx *parser.InlineDefContext) 
 			l.constants = append(l.constants, l.constsFromContext(c)...)
 		} else if v, ok := ch.(*parser.VarDeclContext); ok {
 			l.variables = append(l.variables, l.variablesFromContext(v)...)
-		} else if c, ok := ch.(*parser.InstanceDeclContext); ok {
-			walkSymbols(c, func(name parser.INameNodeContext) error {
-				psym := symbol.NewPrototypeOrInstance(
-					name.GetText(),
-					c.ParentReference().GetText(),
-					l.source,
-					"",
-					l.symbolDefinitionForRuleContext(name),
-					l.symbolDefinitionForRuleContext(c.ParentReference()),
-					true)
-				l.instances = append(l.instances, psym)
-				return nil
-			})
 		}
 	}
 }
@@ -298,34 +285,24 @@ func walkSymbols[T antlr.ParserRuleContext](rule antlr.RuleNode, walkFn func(sym
 }
 
 func (l *DaedalusStatefulListener) getAssignedFields(ctx parser.IStatementBlockContext) []symbol.Constant {
+	// assignments are expressions, directly contained in the statement block
 	nFields := 0
-	walkSymbols(ctx, func(v *parser.StatementContext) error {
-		assignment := v.Assignment()
-		if assignment != nil {
-			nFields++
-		}
+	walkSymbols(ctx, func(v *parser.AssignmentExpressionContext) error {
+		nFields++
 		return nil
 	})
 
 	cFields := make([]symbol.Constant, 0, nFields)
-	walkSymbols(ctx, func(v *parser.StatementContext) error {
-		assignment := v.Assignment()
-		if assignment != nil {
-			v := assignment
-			ref := v.Reference()
-			txt := ref.GetText()
-
-			expr := v.ExpressionBlock().GetText()
-
-			cFields = append(cFields,
-				symbol.NewConstant(txt,
-					"_",
-					l.source,
-					"",
-					l.symbolDefinitionForRuleContext(ref),
-					expr),
-			)
-		}
+	walkSymbols(ctx, func(v *parser.AssignmentExpressionContext) error {
+		lhs := v.Expression(0)
+		cFields = append(cFields,
+			symbol.NewConstant(lhs.GetText(),
+				"_",
+				l.source,
+				"",
+				l.symbolDefinitionForRuleContext(lhs),
+				v.Expression(1).GetText()),
+		)
 		return nil
 	})
 	return cFields
@@ -393,17 +370,28 @@ func (l *DaedalusStatefulListener) EnterBlockDef(ctx *parser.BlockDefContext) {
 			psym.Fields = l.getAssignedFields(c.StatementBlock())
 			l.prototypes = append(l.prototypes, psym)
 		} else if c, ok := ch.(*parser.InstanceDefContext); ok {
-			cNameNode := c.NameNode()
-			psym := symbol.NewPrototypeOrInstance(
-				cNameNode.GetText(),
-				c.ParentReference().GetText(),
-				l.source,
-				"",
-				l.symbolDefinitionForRuleContext(cNameNode),
-				l.symbolDefinitionForRuleContext(c.StatementBlock()),
-				true)
-			psym.Fields = l.getAssignedFields(c.StatementBlock())
-			l.instances = append(l.instances, psym)
+			// instance A, B (PARENT) { ... } or instance A (PARENT)
+			body := c.StatementBlock()
+			var bodyDef symbol.Definition
+			var fields []symbol.Constant
+			if body != nil {
+				bodyDef = l.symbolDefinitionForRuleContext(body)
+				fields = l.getAssignedFields(body)
+			} else {
+				bodyDef = l.symbolDefinitionForRuleContext(c.ParentReference())
+			}
+			for _, cNameNode := range c.AllNameNode() {
+				psym := symbol.NewPrototypeOrInstance(
+					cNameNode.GetText(),
+					c.ParentReference().GetText(),
+					l.source,
+					"",
+					l.symbolDefinitionForRuleContext(cNameNode),
+					bodyDef,
+					true)
+				psym.Fields = fields
+				l.instances = append(l.instances, psym)
+			}
 		}
 	}
 }
@@ -412,12 +400,14 @@ func (l *DaedalusStatefulListener) findVarsConstsInStatements(root antlr.Tree) [
 	result := []symbol.Symbol{}
 
 	for _, s := range root.GetChildren() {
-		if varDecl, ok := s.(*parser.VarDeclContext); ok {
-			result = append(result, l.variablesFromContext(varDecl)...)
-		} else if constDef, ok := s.(*parser.ConstDefContext); ok {
-			result = append(result, l.constsFromContext(constDef)...)
-		} else if s.GetChildCount() > 0 {
-			result = append(result, l.findVarsConstsInStatements(s)...)
+		switch n := s.(type) {
+		case *parser.VarDeclContext:
+			result = append(result, l.variablesFromContext(n)...)
+		case *parser.ConstDefContext:
+			result = append(result, l.constsFromContext(n)...)
+		case *parser.IfBlockStatementContext, *parser.IfBlockContext, *parser.ElseIfBlockContext, *parser.ElseBlockContext, *parser.StatementBlockContext:
+			// only these can contain declarations, never descend into expressions
+			result = append(result, l.findVarsConstsInStatements(n)...)
 		}
 	}
 

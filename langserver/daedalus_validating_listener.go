@@ -52,15 +52,27 @@ func (l *DaedalusValidatingListener) EnterStatementBlock(ctx *parser.StatementBl
 	}
 }
 
-// EnterAnyIdentifier ...
-func (l *DaedalusValidatingListener) EnterAnyIdentifier(ctx *parser.AnyIdentifierContext) {
-	if ctx.Identifier() != nil {
-		id := ctx.Identifier().GetText()
-
-		if len(id) > 0 && (id[0] >= 0x30 && id[0] <= 0x39) {
-			l.report(ctx.GetParser(), ctx, ctx.Identifier().GetSymbol(), D0001NoIdentifierWithStartingDigits)
-		}
+func (l *DaedalusValidatingListener) checkIdentifierStart(p antlr.Parser, ctx antlr.RuleContext, name antlr.Token) {
+	if name == nil || name.GetTokenType() != parser.DaedalusParserIdentifier {
+		return
 	}
+	id := name.GetText()
+	if len(id) > 0 && (id[0] >= 0x30 && id[0] <= 0x39) {
+		l.report(p, ctx, name, D0001NoIdentifierWithStartingDigits)
+	}
+}
+
+// EnterNameNode ...
+func (l *DaedalusValidatingListener) EnterNameNode(ctx *parser.NameNodeContext) {
+	if id := ctx.Identifier(); id != nil {
+		l.checkIdentifierStart(ctx.GetParser(), ctx, id.GetSymbol())
+	}
+}
+
+// EnterReferenceExpression checks the (inlined) names of references.
+func (l *DaedalusValidatingListener) EnterReferenceExpression(ctx *parser.ReferenceExpressionContext) {
+	l.checkIdentifierStart(ctx.GetParser(), ctx, ctx.GetName())
+	l.checkIdentifierStart(ctx.GetParser(), ctx, ctx.GetMember())
 }
 
 func (l *DaedalusValidatingListener) lookupSymbol(name string, symbol SymbolType) symbol.Symbol {
@@ -68,21 +80,21 @@ func (l *DaedalusValidatingListener) lookupSymbol(name string, symbol SymbolType
 	return foundSymbol
 }
 
-// EnterFuncCall ...
-func (l *DaedalusValidatingListener) EnterFuncCall(ctx *parser.FuncCallContext) {
-	nameNode := ctx.NameNode()
-	funcName := nameNode.GetText()
-	funcName = strings.ToUpper(funcName)
-	sym := l.lookupSymbol(funcName, SymbolFunction)
+// EnterFuncCallExpression ...
+func (l *DaedalusValidatingListener) EnterFuncCallExpression(ctx *parser.FuncCallExpressionContext) {
+	name := ctx.GetName()
+	l.checkIdentifierStart(ctx.GetParser(), ctx, name)
 
+	sym := l.lookupSymbol(strings.ToUpper(name.GetText()), SymbolFunction)
 	if sym == nil {
 		return
 	}
 
-	if len(ctx.AllFuncArgExpression()) < len(sym.(symbol.Function).Parameters) {
-		l.report(ctx.GetParser(), ctx, nameNode.GetStop(), D0004NotEnoughArgumentsSpecified)
-	} else if len(ctx.AllFuncArgExpression()) > len(sym.(symbol.Function).Parameters) {
-		l.report(ctx.GetParser(), ctx, nameNode.GetStop(), D0005TooManyArgumentsSpecified)
+	numArgs := len(ctx.AllExpression())
+	if numArgs < len(sym.(symbol.Function).Parameters) {
+		l.report(ctx.GetParser(), ctx, name, D0004NotEnoughArgumentsSpecified)
+	} else if numArgs > len(sym.(symbol.Function).Parameters) {
+		l.report(ctx.GetParser(), ctx, name, D0005TooManyArgumentsSpecified)
 	}
 }
 

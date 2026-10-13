@@ -1,3 +1,14 @@
+// Daedalus grammar.
+//
+// The language rules follow the original engine (zParser_Lexer.cpp: ParseFile, ParseBlock, Declare*,
+// Parse_Expression), but are kept more lenient where that helps the language server (e.g. a missing
+// ';' after an if-block is reported by the validating listener instead of a syntax error).
+//
+// The tree is kept small on purpose, because parse trees of whole projects are built and walked:
+//  * names inside expressions are plain tokens (no nameNode/anyIdentifier rule contexts)
+//  * operators are token sets labelled `op` (no operator rule contexts)
+//  * there are no single-child wrapper rules (statement, expressionBlock, value, reference, ...)
+//  * loops are greedy (`*`), non-greedy loops need full prediction at every iteration
 grammar Daedalus;
 
 @lexer::members {
@@ -29,6 +40,7 @@ Namespace: N A M E S P A C E;
 Null: N U L L;
 Meta: M E T A;
 
+Comma: ',';
 LeftParen: '(';
 RightParen: ')';
 
@@ -51,6 +63,13 @@ Not: '!';
 Assign: '=';
 Less: '<';
 Greater: '>';
+Shl: '<<';
+Shr: '>>';
+LessEq: '<=';
+GreaterEq: '>=';
+Equal: '==';
+NotEqual: '!=';
+Percent: '%';
 
 PlusAssign: '+=';
 MinusAssign: '-=';
@@ -108,6 +127,7 @@ fragment X: [Xx];
 fragment Y: [Yy];
 fragment Z: [Zz];
 
+
 //parser
 daedalusFile: mainBlock? EOF;
 blockDef:
@@ -118,28 +138,27 @@ blockDef:
 		| instanceDef
 		| namespaceDef
 	) Semi;
-inlineDef: (constDef | varDecl | instanceDecl) Semi;
+inlineDef: (constDef | varDecl) Semi;
 
 functionDef:
 	Func typeReference nameNode parameterList statementBlock;
 constDef:
 	Const typeReference (constValueDef | constArrayDef) (
-		',' (constValueDef | constArrayDef)
+		Comma (constValueDef | constArrayDef)
 	)*;
-classDef: Class nameNode LeftBrace (varDecl Semi)*? RightBrace;
+classDef: Class nameNode LeftBrace (varDecl Semi)* RightBrace;
 prototypeDef:
 	Prototype nameNode LeftParen parentReference RightParen statementBlock;
+// like the engine: multiple names and an optional body
 instanceDef:
-	Instance nameNode LeftParen parentReference RightParen statementBlock;
-instanceDecl:
-	Instance nameNode (',' nameNode)*? LeftParen parentReference RightParen;
+	Instance nameNode (Comma nameNode)* LeftParen parentReference RightParen statementBlock?;
 namespaceDef:
-	Namespace nameNode LeftBrace contentBlock*? RightBrace;
+	Namespace nameNode LeftBrace contentBlock* RightBrace;
 mainBlock: zParserExtenderMetaBlock? contentBlock+;
 contentBlock: (blockDef | inlineDef);
 varDecl:
 	Var typeReference (varValueDecl | varArrayDecl) (
-		',' (varDecl | varValueDecl | varArrayDecl)
+		Comma (varDecl | varValueDecl | varArrayDecl)
 	)*;
 
 metaValue: .+?;
@@ -149,72 +168,65 @@ zParserExtenderMetaBlock:
 constArrayDef:
 	nameNode LeftBracket arraySize RightBracket constArrayAssignment;
 constArrayAssignment:
-	Assign LeftBrace (expressionBlock (',' expressionBlock)*?) RightBrace;
+	Assign LeftBrace expression (Comma expression)* RightBrace;
 
 constValueDef: nameNode constValueAssignment;
-constValueAssignment: Assign expressionBlock;
+constValueAssignment: Assign expression;
 
 varArrayDecl: nameNode LeftBracket arraySize RightBracket;
 varValueDecl: nameNode;
 
 parameterList:
-	LeftParen (parameterDecl (',' parameterDecl)*?)? RightParen;
+	LeftParen (parameterDecl (Comma parameterDecl)*)? RightParen;
 parameterDecl:
 	Var typeReference nameNode (
 		LeftBracket arraySize RightBracket
 	)?;
 statementBlock:
-	LeftBrace ((statement Semi) | ( ifBlockStatement Semi?))*? RightBrace;
-statement:
-	assignment
-	| returnStatement
-	| constDef
-	| varDecl
-	| expression;
-funcCall:
-	nameNode LeftParen (
-		funcArgExpression (',' funcArgExpression)*?
-	)? RightParen;
-assignment: reference assignmentOperator expressionBlock;
-ifCondition: expressionBlock;
+	LeftBrace (
+		(returnStatement | constDef | varDecl | expression) Semi
+		| ifBlockStatement Semi?
+	)* RightBrace;
 elseBlock: Else statementBlock;
-elseIfBlock: Else If ifCondition statementBlock;
-ifBlock: If ifCondition statementBlock;
-ifBlockStatement: ifBlock ( elseIfBlock)*? ( elseBlock)?;
-returnStatement: Return ( expressionBlock)?;
+elseIfBlock: Else If expression statementBlock;
+ifBlock: If expression statementBlock;
+ifBlockStatement: ifBlock elseIfBlock* elseBlock?;
+returnStatement: Return expression?;
 
-funcArgExpression:
-	expressionBlock; // we use that to detect func call args
-expressionBlock:
-	expression; // we use that expression to force parser threat expression as a block
-
+// Precedence (like the engine, highest first):
+// unary, * / %, + -, << >>, < > <= >=, == !=, &, |, &&, ||, assignments
 expression:
-	LeftParen expression RightParen			# bracketExpression
-	| unaryOperator expression				# unaryOperation
-	| expression multOperator expression	# multExpression
-	| expression addOperator expression		# addExpression
-	| expression bitMoveOperator expression	# bitMoveExpression
-	| expression compOperator expression	# compExpression
-	| expression eqOperator expression		# eqExpression
-	| expression binAndOperator expression	# binAndExpression
-	| expression binOrOperator expression	# binOrExpression
-	| expression logAndOperator expression	# logAndExpression
-	| expression logOrOperator expression	# logOrExpression
-	| value									# valExpression;
+	LeftParen expression RightParen								# bracketExpression
+	| op = (Plus | Tilde | Minus | Not) expression				# unaryOperation
+	| expression op = (Star | Div | Percent) expression			# multExpression
+	| expression op = (Plus | Minus) expression					# addExpression
+	| expression op = (Shl | Shr) expression					# bitMoveExpression
+	| expression op = (Less | Greater | LessEq | GreaterEq) expression	# compExpression
+	| expression op = (Equal | NotEqual) expression				# eqExpression
+	| expression op = BitAnd expression							# binAndExpression
+	| expression op = BitOr expression							# binOrExpression
+	| expression op = And expression							# logAndExpression
+	| expression op = Or expression								# logOrExpression
+	| <assoc = right> expression op = (
+		Assign
+		| PlusAssign
+		| MinusAssign
+		| StarAssign
+		| DivAssign
+		| AndAssign
+		| OrAssign
+	) expression												# assignmentExpression
+	| IntegerLiteral											# integerLiteralExpression
+	| FloatLiteral												# floatLiteralExpression
+	| StringLiteral												# stringLiteralExpression
+	| Null														# nullLiteralExpression
+	| name = (Void | Int | Float | StringKeyword | Func | Instance | Class | Prototype | Meta | Namespace | Identifier) LeftParen (expression (Comma expression)*)? RightParen	# funcCallExpression
+	| name = (Void | Int | Float | StringKeyword | Func | Instance | Class | Prototype | Meta | Namespace | Identifier) (LeftBracket arrayIndex RightBracket)? (
+		Dot member = (Void | Int | Float | StringKeyword | Func | Instance | Class | Prototype | Meta | Namespace | Identifier) (LeftBracket arrayIndex RightBracket)?
+	)?															# referenceExpression;
 
-arrayIndex: IntegerLiteral | referenceAtom;
-arraySize: IntegerLiteral | referenceAtom;
-
-value:
-	IntegerLiteral	# integerLiteralValue
-	| FloatLiteral	# floatLiteralValue
-	| StringLiteral	# stringLiteralValue
-	| Null			# nullLiteralValue
-	| funcCall		# funcCallValue
-	| reference		# referenceValue;
-
-referenceAtom: nameNode ( LeftBracket arrayIndex RightBracket)?;
-reference: referenceAtom ( Dot referenceAtom)?;
+arrayIndex: IntegerLiteral | nameNode;
+arraySize: IntegerLiteral | nameNode;
 
 typeReference: (
 		Identifier
@@ -225,7 +237,8 @@ typeReference: (
 		| Func
 		| Instance
 	);
-anyIdentifier: (
+
+nameNode: (
 		Void
 		| Var
 		| Int
@@ -241,27 +254,4 @@ anyIdentifier: (
 		| Identifier
 	);
 
-nameNode: anyIdentifier;
-
 parentReference: Identifier;
-
-assignmentOperator:
-	Assign
-	| StarAssign
-	| DivAssign
-	| PlusAssign
-	| MinusAssign
-	| AndAssign
-	| OrAssign;
-
-unaryOperator: Plus | Tilde | Minus | Not;
-
-addOperator: '+' | '-';
-bitMoveOperator: '<<' | '>>';
-compOperator: '<' | '>' | '<=' | '>=';
-eqOperator: '==' | '!=';
-multOperator: '*' | '/' | '%';
-binAndOperator: '&';
-binOrOperator: '|';
-logAndOperator: '&&';
-logOrOperator: '||';

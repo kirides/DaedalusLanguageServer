@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -94,4 +95,59 @@ func BenchmarkParseScriptsParallel(b *testing.B) {
 			}
 		}
 	})
+}
+
+// loadCorpusScripts loads the scripts of the directories in $DLS_CORPUS (separated by ';'),
+// taking every n-th file so that at most maxBytes are used.
+func loadCorpusScripts(tb testing.TB, maxBytes int) (scripts []benchScript, total int) {
+	tb.Helper()
+	roots := os.Getenv("DLS_CORPUS")
+	if roots == "" {
+		tb.Skip("DLS_CORPUS not set")
+	}
+	var files []string
+	var all int
+	for _, r := range strings.Split(roots, ";") {
+		filepath.WalkDir(r, func(p string, d fs.DirEntry, err error) error {
+			if err == nil && !d.IsDir() && strings.HasSuffix(strings.ToLower(p), ".d") {
+				files = append(files, p)
+				if st, err := d.Info(); err == nil {
+					all += int(st.Size())
+				}
+			}
+			return nil
+		})
+	}
+	sort.Strings(files)
+	step := 1
+	if maxBytes > 0 && all > maxBytes {
+		step = (all + maxBytes - 1) / maxBytes
+	}
+	for i := 0; i < len(files); i += step {
+		raw, err := os.ReadFile(files[i])
+		if err != nil {
+			continue
+		}
+		body, _ := charmap.Windows1252.NewDecoder().Bytes(raw)
+		scripts = append(scripts, benchScript{files[i], string(body)})
+		total += len(body)
+	}
+	return scripts, total
+}
+
+// BenchmarkParseCorpus measures ParseScript on a sample of real scripts ($DLS_CORPUS).
+func BenchmarkParseCorpus(b *testing.B) {
+	scripts, total := loadCorpusScripts(b, 4<<20)
+	m := newParseResultsManager(nopLogger{})
+	for _, s := range scripts { // warm up the prediction caches
+		m.ParseScript(s.name, s.content, time.Now())
+	}
+	b.SetBytes(int64(total))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, s := range scripts {
+			m.ParseScript(s.name, s.content, time.Now())
+		}
+	}
 }

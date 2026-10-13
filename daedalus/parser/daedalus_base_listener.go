@@ -69,12 +69,6 @@ func (s *BaseDaedalusListener) EnterInstanceDef(ctx *InstanceDefContext) {}
 // ExitInstanceDef is called when production instanceDef is exited.
 func (s *BaseDaedalusListener) ExitInstanceDef(ctx *InstanceDefContext) {}
 
-// EnterInstanceDecl is called when production instanceDecl is entered.
-func (s *BaseDaedalusListener) EnterInstanceDecl(ctx *InstanceDeclContext) {}
-
-// ExitInstanceDecl is called when production instanceDecl is exited.
-func (s *BaseDaedalusListener) ExitInstanceDecl(ctx *InstanceDeclContext) {}
-
 // EnterNamespaceDef is called when production namespaceDef is entered.
 func (s *BaseDaedalusListener) EnterNamespaceDef(ctx *NamespaceDefContext) {}
 
@@ -171,30 +165,6 @@ func (s *BaseDaedalusListener) EnterStatementBlock(ctx *StatementBlockContext) {
 // ExitStatementBlock is called when production statementBlock is exited.
 func (s *BaseDaedalusListener) ExitStatementBlock(ctx *StatementBlockContext) {}
 
-// EnterStatement is called when production statement is entered.
-func (s *BaseDaedalusListener) EnterStatement(ctx *StatementContext) {}
-
-// ExitStatement is called when production statement is exited.
-func (s *BaseDaedalusListener) ExitStatement(ctx *StatementContext) {}
-
-// EnterFuncCall is called when production funcCall is entered.
-func (s *BaseDaedalusListener) EnterFuncCall(ctx *FuncCallContext) {}
-
-// ExitFuncCall is called when production funcCall is exited.
-func (s *BaseDaedalusListener) ExitFuncCall(ctx *FuncCallContext) {}
-
-// EnterAssignment is called when production assignment is entered.
-func (s *BaseDaedalusListener) EnterAssignment(ctx *AssignmentContext) {}
-
-// ExitAssignment is called when production assignment is exited.
-func (s *BaseDaedalusListener) ExitAssignment(ctx *AssignmentContext) {}
-
-// EnterIfCondition is called when production ifCondition is entered.
-func (s *BaseDaedalusListener) EnterIfCondition(ctx *IfConditionContext) {}
-
-// ExitIfCondition is called when production ifCondition is exited.
-func (s *BaseDaedalusListener) ExitIfCondition(ctx *IfConditionContext) {}
-
 // EnterElseBlock is called when production elseBlock is entered.
 func (s *BaseDaedalusListener) EnterElseBlock(ctx *ElseBlockContext) {}
 
@@ -225,35 +195,65 @@ func (s *BaseDaedalusListener) EnterReturnStatement(ctx *ReturnStatementContext)
 // ExitReturnStatement is called when production returnStatement is exited.
 func (s *BaseDaedalusListener) ExitReturnStatement(ctx *ReturnStatementContext) {}
 
-// EnterFuncArgExpression is called when production funcArgExpression is entered.
-func (s *BaseDaedalusListener) EnterFuncArgExpression(ctx *FuncArgExpressionContext) {}
-
-// ExitFuncArgExpression is called when production funcArgExpression is exited.
-func (s *BaseDaedalusListener) ExitFuncArgExpression(ctx *FuncArgExpressionContext) {}
-
-// EnterExpressionBlock is called when production expressionBlock is entered.
-func (s *BaseDaedalusListener) EnterExpressionBlock(ctx *ExpressionBlockContext) {}
-
-// ExitExpressionBlock is called when production expressionBlock is exited.
-func (s *BaseDaedalusListener) ExitExpressionBlock(ctx *ExpressionBlockContext) {}
-
 // EnterBitMoveExpression is called when production bitMoveExpression is entered.
 func (s *BaseDaedalusListener) EnterBitMoveExpression(ctx *BitMoveExpressionContext) {}
 
 // ExitBitMoveExpression is called when production bitMoveExpression is exited.
 func (s *BaseDaedalusListener) ExitBitMoveExpression(ctx *BitMoveExpressionContext) {}
 
+// EnterReferenceExpression is called when production referenceExpression is entered.
+func (s *BaseDaedalusListener) EnterReferenceExpression(ctx *ReferenceExpressionContext) {}
+
+// ExitReferenceExpression is called when production referenceExpression is exited.
+func (s *BaseDaedalusListener) ExitReferenceExpression(ctx *ReferenceExpressionContext) {}
+
+// EnterAssignmentExpression is called when production assignmentExpression is entered.
+func (s *BaseDaedalusListener) EnterAssignmentExpression(ctx *AssignmentExpressionContext) {}
+
+// ExitAssignmentExpression is called when production assignmentExpression is exited.
+func (s *BaseDaedalusListener) ExitAssignmentExpression(ctx *AssignmentExpressionContext) {}
+
+// EnterBracketExpression is called when production bracketExpression is entered.
+func (s *BaseDaedalusListener) EnterBracketExpression(ctx *BracketExpressionContext) {}
+
+// ExitBracketExpression is called when production bracketExpression is exited.
+func (s *BaseDaedalusListener) ExitBracketExpression(ctx *BracketExpressionContext) {}
+
+// EnterUnaryOperation is called when production unaryOperation is entered.
+func (s *BaseDaedalusListener) EnterUnaryOperation(ctx *UnaryOperationContext) {}
+
+// ExitUnaryOperation is called when production unaryOperation is exited.
+func (s *BaseDaedalusListener) ExitUnaryOperation(ctx *UnaryOperationContext) {}
+
+// EnterFloatLiteralExpression is called when production floatLiteralExpression is entered.
+func (s *BaseDaedalusListener) EnterFloatLiteralExpression(ctx *FloatLiteralExpressionContext) {}
+
+// ExitFloatLiteralExpression is called when production floatLiteralExpression is exited.
+func (s *BaseDaedalusListener) ExitFloatLiteralExpression(ctx *FloatLiteralExpressionContext) {}
+
+// EnterLogAndExpression is called when production logAndExpression is entered.
+func (s *BaseDaedalusListener) EnterLogAndExpression(ctx *LogAndExpressionContext) {}
+
+// ExitLogAndExpression is called when production logAndExpression is exited.
+func (s *BaseDaedalusListener) ExitLogAndExpression(ctx *LogAndExpressionContext) {}
+
+// EnterFuncCallExpression is called when production funcCallExpression is entered.
+func (s *BaseDaedalusListener) EnterFuncCallExpression(ctx *FuncCallExpressionContext) {}
+
+// ExitFuncCallExpression is called when production funcCallExpression is exited.
+func (s *BaseDaedalusListener) ExitFuncCallExpression(ctx *FuncCallExpressionContext) {}
+
+// EnterStringLiteralExpression is called when production stringLiteralExpression is entered.
+func (s *BaseDaedalusListener) EnterStringLiteralExpression(ctx *StringLiteralExpressionContext) {}
+
+// ExitStringLiteralExpression is called when production stringLiteralExpression is exited.
+func (s *BaseDaedalusListener) ExitStringLiteralExpression(ctx *StringLiteralExpressionContext) {}
+
 // EnterEqExpression is called when production eqExpression is entered.
 func (s *BaseDaedalusListener) EnterEqExpression(ctx *EqExpressionContext) {}
 
 // ExitEqExpression is called when production eqExpression is exited.
 func (s *BaseDaedalusListener) ExitEqExpression(ctx *EqExpressionContext) {}
-
-// EnterValExpression is called when production valExpression is entered.
-func (s *BaseDaedalusListener) EnterValExpression(ctx *ValExpressionContext) {}
-
-// ExitValExpression is called when production valExpression is exited.
-func (s *BaseDaedalusListener) ExitValExpression(ctx *ValExpressionContext) {}
 
 // EnterAddExpression is called when production addExpression is entered.
 func (s *BaseDaedalusListener) EnterAddExpression(ctx *AddExpressionContext) {}
@@ -279,6 +279,12 @@ func (s *BaseDaedalusListener) EnterBinAndExpression(ctx *BinAndExpressionContex
 // ExitBinAndExpression is called when production binAndExpression is exited.
 func (s *BaseDaedalusListener) ExitBinAndExpression(ctx *BinAndExpressionContext) {}
 
+// EnterIntegerLiteralExpression is called when production integerLiteralExpression is entered.
+func (s *BaseDaedalusListener) EnterIntegerLiteralExpression(ctx *IntegerLiteralExpressionContext) {}
+
+// ExitIntegerLiteralExpression is called when production integerLiteralExpression is exited.
+func (s *BaseDaedalusListener) ExitIntegerLiteralExpression(ctx *IntegerLiteralExpressionContext) {}
+
 // EnterBinOrExpression is called when production binOrExpression is entered.
 func (s *BaseDaedalusListener) EnterBinOrExpression(ctx *BinOrExpressionContext) {}
 
@@ -291,23 +297,11 @@ func (s *BaseDaedalusListener) EnterMultExpression(ctx *MultExpressionContext) {
 // ExitMultExpression is called when production multExpression is exited.
 func (s *BaseDaedalusListener) ExitMultExpression(ctx *MultExpressionContext) {}
 
-// EnterBracketExpression is called when production bracketExpression is entered.
-func (s *BaseDaedalusListener) EnterBracketExpression(ctx *BracketExpressionContext) {}
+// EnterNullLiteralExpression is called when production nullLiteralExpression is entered.
+func (s *BaseDaedalusListener) EnterNullLiteralExpression(ctx *NullLiteralExpressionContext) {}
 
-// ExitBracketExpression is called when production bracketExpression is exited.
-func (s *BaseDaedalusListener) ExitBracketExpression(ctx *BracketExpressionContext) {}
-
-// EnterUnaryOperation is called when production unaryOperation is entered.
-func (s *BaseDaedalusListener) EnterUnaryOperation(ctx *UnaryOperationContext) {}
-
-// ExitUnaryOperation is called when production unaryOperation is exited.
-func (s *BaseDaedalusListener) ExitUnaryOperation(ctx *UnaryOperationContext) {}
-
-// EnterLogAndExpression is called when production logAndExpression is entered.
-func (s *BaseDaedalusListener) EnterLogAndExpression(ctx *LogAndExpressionContext) {}
-
-// ExitLogAndExpression is called when production logAndExpression is exited.
-func (s *BaseDaedalusListener) ExitLogAndExpression(ctx *LogAndExpressionContext) {}
+// ExitNullLiteralExpression is called when production nullLiteralExpression is exited.
+func (s *BaseDaedalusListener) ExitNullLiteralExpression(ctx *NullLiteralExpressionContext) {}
 
 // EnterArrayIndex is called when production arrayIndex is entered.
 func (s *BaseDaedalusListener) EnterArrayIndex(ctx *ArrayIndexContext) {}
@@ -321,65 +315,11 @@ func (s *BaseDaedalusListener) EnterArraySize(ctx *ArraySizeContext) {}
 // ExitArraySize is called when production arraySize is exited.
 func (s *BaseDaedalusListener) ExitArraySize(ctx *ArraySizeContext) {}
 
-// EnterIntegerLiteralValue is called when production integerLiteralValue is entered.
-func (s *BaseDaedalusListener) EnterIntegerLiteralValue(ctx *IntegerLiteralValueContext) {}
-
-// ExitIntegerLiteralValue is called when production integerLiteralValue is exited.
-func (s *BaseDaedalusListener) ExitIntegerLiteralValue(ctx *IntegerLiteralValueContext) {}
-
-// EnterFloatLiteralValue is called when production floatLiteralValue is entered.
-func (s *BaseDaedalusListener) EnterFloatLiteralValue(ctx *FloatLiteralValueContext) {}
-
-// ExitFloatLiteralValue is called when production floatLiteralValue is exited.
-func (s *BaseDaedalusListener) ExitFloatLiteralValue(ctx *FloatLiteralValueContext) {}
-
-// EnterStringLiteralValue is called when production stringLiteralValue is entered.
-func (s *BaseDaedalusListener) EnterStringLiteralValue(ctx *StringLiteralValueContext) {}
-
-// ExitStringLiteralValue is called when production stringLiteralValue is exited.
-func (s *BaseDaedalusListener) ExitStringLiteralValue(ctx *StringLiteralValueContext) {}
-
-// EnterNullLiteralValue is called when production nullLiteralValue is entered.
-func (s *BaseDaedalusListener) EnterNullLiteralValue(ctx *NullLiteralValueContext) {}
-
-// ExitNullLiteralValue is called when production nullLiteralValue is exited.
-func (s *BaseDaedalusListener) ExitNullLiteralValue(ctx *NullLiteralValueContext) {}
-
-// EnterFuncCallValue is called when production funcCallValue is entered.
-func (s *BaseDaedalusListener) EnterFuncCallValue(ctx *FuncCallValueContext) {}
-
-// ExitFuncCallValue is called when production funcCallValue is exited.
-func (s *BaseDaedalusListener) ExitFuncCallValue(ctx *FuncCallValueContext) {}
-
-// EnterReferenceValue is called when production referenceValue is entered.
-func (s *BaseDaedalusListener) EnterReferenceValue(ctx *ReferenceValueContext) {}
-
-// ExitReferenceValue is called when production referenceValue is exited.
-func (s *BaseDaedalusListener) ExitReferenceValue(ctx *ReferenceValueContext) {}
-
-// EnterReferenceAtom is called when production referenceAtom is entered.
-func (s *BaseDaedalusListener) EnterReferenceAtom(ctx *ReferenceAtomContext) {}
-
-// ExitReferenceAtom is called when production referenceAtom is exited.
-func (s *BaseDaedalusListener) ExitReferenceAtom(ctx *ReferenceAtomContext) {}
-
-// EnterReference is called when production reference is entered.
-func (s *BaseDaedalusListener) EnterReference(ctx *ReferenceContext) {}
-
-// ExitReference is called when production reference is exited.
-func (s *BaseDaedalusListener) ExitReference(ctx *ReferenceContext) {}
-
 // EnterTypeReference is called when production typeReference is entered.
 func (s *BaseDaedalusListener) EnterTypeReference(ctx *TypeReferenceContext) {}
 
 // ExitTypeReference is called when production typeReference is exited.
 func (s *BaseDaedalusListener) ExitTypeReference(ctx *TypeReferenceContext) {}
-
-// EnterAnyIdentifier is called when production anyIdentifier is entered.
-func (s *BaseDaedalusListener) EnterAnyIdentifier(ctx *AnyIdentifierContext) {}
-
-// ExitAnyIdentifier is called when production anyIdentifier is exited.
-func (s *BaseDaedalusListener) ExitAnyIdentifier(ctx *AnyIdentifierContext) {}
 
 // EnterNameNode is called when production nameNode is entered.
 func (s *BaseDaedalusListener) EnterNameNode(ctx *NameNodeContext) {}
@@ -392,69 +332,3 @@ func (s *BaseDaedalusListener) EnterParentReference(ctx *ParentReferenceContext)
 
 // ExitParentReference is called when production parentReference is exited.
 func (s *BaseDaedalusListener) ExitParentReference(ctx *ParentReferenceContext) {}
-
-// EnterAssignmentOperator is called when production assignmentOperator is entered.
-func (s *BaseDaedalusListener) EnterAssignmentOperator(ctx *AssignmentOperatorContext) {}
-
-// ExitAssignmentOperator is called when production assignmentOperator is exited.
-func (s *BaseDaedalusListener) ExitAssignmentOperator(ctx *AssignmentOperatorContext) {}
-
-// EnterUnaryOperator is called when production unaryOperator is entered.
-func (s *BaseDaedalusListener) EnterUnaryOperator(ctx *UnaryOperatorContext) {}
-
-// ExitUnaryOperator is called when production unaryOperator is exited.
-func (s *BaseDaedalusListener) ExitUnaryOperator(ctx *UnaryOperatorContext) {}
-
-// EnterAddOperator is called when production addOperator is entered.
-func (s *BaseDaedalusListener) EnterAddOperator(ctx *AddOperatorContext) {}
-
-// ExitAddOperator is called when production addOperator is exited.
-func (s *BaseDaedalusListener) ExitAddOperator(ctx *AddOperatorContext) {}
-
-// EnterBitMoveOperator is called when production bitMoveOperator is entered.
-func (s *BaseDaedalusListener) EnterBitMoveOperator(ctx *BitMoveOperatorContext) {}
-
-// ExitBitMoveOperator is called when production bitMoveOperator is exited.
-func (s *BaseDaedalusListener) ExitBitMoveOperator(ctx *BitMoveOperatorContext) {}
-
-// EnterCompOperator is called when production compOperator is entered.
-func (s *BaseDaedalusListener) EnterCompOperator(ctx *CompOperatorContext) {}
-
-// ExitCompOperator is called when production compOperator is exited.
-func (s *BaseDaedalusListener) ExitCompOperator(ctx *CompOperatorContext) {}
-
-// EnterEqOperator is called when production eqOperator is entered.
-func (s *BaseDaedalusListener) EnterEqOperator(ctx *EqOperatorContext) {}
-
-// ExitEqOperator is called when production eqOperator is exited.
-func (s *BaseDaedalusListener) ExitEqOperator(ctx *EqOperatorContext) {}
-
-// EnterMultOperator is called when production multOperator is entered.
-func (s *BaseDaedalusListener) EnterMultOperator(ctx *MultOperatorContext) {}
-
-// ExitMultOperator is called when production multOperator is exited.
-func (s *BaseDaedalusListener) ExitMultOperator(ctx *MultOperatorContext) {}
-
-// EnterBinAndOperator is called when production binAndOperator is entered.
-func (s *BaseDaedalusListener) EnterBinAndOperator(ctx *BinAndOperatorContext) {}
-
-// ExitBinAndOperator is called when production binAndOperator is exited.
-func (s *BaseDaedalusListener) ExitBinAndOperator(ctx *BinAndOperatorContext) {}
-
-// EnterBinOrOperator is called when production binOrOperator is entered.
-func (s *BaseDaedalusListener) EnterBinOrOperator(ctx *BinOrOperatorContext) {}
-
-// ExitBinOrOperator is called when production binOrOperator is exited.
-func (s *BaseDaedalusListener) ExitBinOrOperator(ctx *BinOrOperatorContext) {}
-
-// EnterLogAndOperator is called when production logAndOperator is entered.
-func (s *BaseDaedalusListener) EnterLogAndOperator(ctx *LogAndOperatorContext) {}
-
-// ExitLogAndOperator is called when production logAndOperator is exited.
-func (s *BaseDaedalusListener) ExitLogAndOperator(ctx *LogAndOperatorContext) {}
-
-// EnterLogOrOperator is called when production logOrOperator is entered.
-func (s *BaseDaedalusListener) EnterLogOrOperator(ctx *LogOrOperatorContext) {}
-
-// ExitLogOrOperator is called when production logOrOperator is exited.
-func (s *BaseDaedalusListener) ExitLogOrOperator(ctx *LogOrOperatorContext) {}

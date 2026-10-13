@@ -32,9 +32,6 @@ type DaedalusListener interface {
 	// EnterInstanceDef is called when entering the instanceDef production.
 	EnterInstanceDef(c *InstanceDefContext)
 
-	// EnterInstanceDecl is called when entering the instanceDecl production.
-	EnterInstanceDecl(c *InstanceDeclContext)
-
 	// EnterNamespaceDef is called when entering the namespaceDef production.
 	EnterNamespaceDef(c *NamespaceDefContext)
 
@@ -83,18 +80,6 @@ type DaedalusListener interface {
 	// EnterStatementBlock is called when entering the statementBlock production.
 	EnterStatementBlock(c *StatementBlockContext)
 
-	// EnterStatement is called when entering the statement production.
-	EnterStatement(c *StatementContext)
-
-	// EnterFuncCall is called when entering the funcCall production.
-	EnterFuncCall(c *FuncCallContext)
-
-	// EnterAssignment is called when entering the assignment production.
-	EnterAssignment(c *AssignmentContext)
-
-	// EnterIfCondition is called when entering the ifCondition production.
-	EnterIfCondition(c *IfConditionContext)
-
 	// EnterElseBlock is called when entering the elseBlock production.
 	EnterElseBlock(c *ElseBlockContext)
 
@@ -110,20 +95,35 @@ type DaedalusListener interface {
 	// EnterReturnStatement is called when entering the returnStatement production.
 	EnterReturnStatement(c *ReturnStatementContext)
 
-	// EnterFuncArgExpression is called when entering the funcArgExpression production.
-	EnterFuncArgExpression(c *FuncArgExpressionContext)
-
-	// EnterExpressionBlock is called when entering the expressionBlock production.
-	EnterExpressionBlock(c *ExpressionBlockContext)
-
 	// EnterBitMoveExpression is called when entering the bitMoveExpression production.
 	EnterBitMoveExpression(c *BitMoveExpressionContext)
 
+	// EnterReferenceExpression is called when entering the referenceExpression production.
+	EnterReferenceExpression(c *ReferenceExpressionContext)
+
+	// EnterAssignmentExpression is called when entering the assignmentExpression production.
+	EnterAssignmentExpression(c *AssignmentExpressionContext)
+
+	// EnterBracketExpression is called when entering the bracketExpression production.
+	EnterBracketExpression(c *BracketExpressionContext)
+
+	// EnterUnaryOperation is called when entering the unaryOperation production.
+	EnterUnaryOperation(c *UnaryOperationContext)
+
+	// EnterFloatLiteralExpression is called when entering the floatLiteralExpression production.
+	EnterFloatLiteralExpression(c *FloatLiteralExpressionContext)
+
+	// EnterLogAndExpression is called when entering the logAndExpression production.
+	EnterLogAndExpression(c *LogAndExpressionContext)
+
+	// EnterFuncCallExpression is called when entering the funcCallExpression production.
+	EnterFuncCallExpression(c *FuncCallExpressionContext)
+
+	// EnterStringLiteralExpression is called when entering the stringLiteralExpression production.
+	EnterStringLiteralExpression(c *StringLiteralExpressionContext)
+
 	// EnterEqExpression is called when entering the eqExpression production.
 	EnterEqExpression(c *EqExpressionContext)
-
-	// EnterValExpression is called when entering the valExpression production.
-	EnterValExpression(c *ValExpressionContext)
 
 	// EnterAddExpression is called when entering the addExpression production.
 	EnterAddExpression(c *AddExpressionContext)
@@ -137,20 +137,17 @@ type DaedalusListener interface {
 	// EnterBinAndExpression is called when entering the binAndExpression production.
 	EnterBinAndExpression(c *BinAndExpressionContext)
 
+	// EnterIntegerLiteralExpression is called when entering the integerLiteralExpression production.
+	EnterIntegerLiteralExpression(c *IntegerLiteralExpressionContext)
+
 	// EnterBinOrExpression is called when entering the binOrExpression production.
 	EnterBinOrExpression(c *BinOrExpressionContext)
 
 	// EnterMultExpression is called when entering the multExpression production.
 	EnterMultExpression(c *MultExpressionContext)
 
-	// EnterBracketExpression is called when entering the bracketExpression production.
-	EnterBracketExpression(c *BracketExpressionContext)
-
-	// EnterUnaryOperation is called when entering the unaryOperation production.
-	EnterUnaryOperation(c *UnaryOperationContext)
-
-	// EnterLogAndExpression is called when entering the logAndExpression production.
-	EnterLogAndExpression(c *LogAndExpressionContext)
+	// EnterNullLiteralExpression is called when entering the nullLiteralExpression production.
+	EnterNullLiteralExpression(c *NullLiteralExpressionContext)
 
 	// EnterArrayIndex is called when entering the arrayIndex production.
 	EnterArrayIndex(c *ArrayIndexContext)
@@ -158,74 +155,14 @@ type DaedalusListener interface {
 	// EnterArraySize is called when entering the arraySize production.
 	EnterArraySize(c *ArraySizeContext)
 
-	// EnterIntegerLiteralValue is called when entering the integerLiteralValue production.
-	EnterIntegerLiteralValue(c *IntegerLiteralValueContext)
-
-	// EnterFloatLiteralValue is called when entering the floatLiteralValue production.
-	EnterFloatLiteralValue(c *FloatLiteralValueContext)
-
-	// EnterStringLiteralValue is called when entering the stringLiteralValue production.
-	EnterStringLiteralValue(c *StringLiteralValueContext)
-
-	// EnterNullLiteralValue is called when entering the nullLiteralValue production.
-	EnterNullLiteralValue(c *NullLiteralValueContext)
-
-	// EnterFuncCallValue is called when entering the funcCallValue production.
-	EnterFuncCallValue(c *FuncCallValueContext)
-
-	// EnterReferenceValue is called when entering the referenceValue production.
-	EnterReferenceValue(c *ReferenceValueContext)
-
-	// EnterReferenceAtom is called when entering the referenceAtom production.
-	EnterReferenceAtom(c *ReferenceAtomContext)
-
-	// EnterReference is called when entering the reference production.
-	EnterReference(c *ReferenceContext)
-
 	// EnterTypeReference is called when entering the typeReference production.
 	EnterTypeReference(c *TypeReferenceContext)
-
-	// EnterAnyIdentifier is called when entering the anyIdentifier production.
-	EnterAnyIdentifier(c *AnyIdentifierContext)
 
 	// EnterNameNode is called when entering the nameNode production.
 	EnterNameNode(c *NameNodeContext)
 
 	// EnterParentReference is called when entering the parentReference production.
 	EnterParentReference(c *ParentReferenceContext)
-
-	// EnterAssignmentOperator is called when entering the assignmentOperator production.
-	EnterAssignmentOperator(c *AssignmentOperatorContext)
-
-	// EnterUnaryOperator is called when entering the unaryOperator production.
-	EnterUnaryOperator(c *UnaryOperatorContext)
-
-	// EnterAddOperator is called when entering the addOperator production.
-	EnterAddOperator(c *AddOperatorContext)
-
-	// EnterBitMoveOperator is called when entering the bitMoveOperator production.
-	EnterBitMoveOperator(c *BitMoveOperatorContext)
-
-	// EnterCompOperator is called when entering the compOperator production.
-	EnterCompOperator(c *CompOperatorContext)
-
-	// EnterEqOperator is called when entering the eqOperator production.
-	EnterEqOperator(c *EqOperatorContext)
-
-	// EnterMultOperator is called when entering the multOperator production.
-	EnterMultOperator(c *MultOperatorContext)
-
-	// EnterBinAndOperator is called when entering the binAndOperator production.
-	EnterBinAndOperator(c *BinAndOperatorContext)
-
-	// EnterBinOrOperator is called when entering the binOrOperator production.
-	EnterBinOrOperator(c *BinOrOperatorContext)
-
-	// EnterLogAndOperator is called when entering the logAndOperator production.
-	EnterLogAndOperator(c *LogAndOperatorContext)
-
-	// EnterLogOrOperator is called when entering the logOrOperator production.
-	EnterLogOrOperator(c *LogOrOperatorContext)
 
 	// ExitDaedalusFile is called when exiting the daedalusFile production.
 	ExitDaedalusFile(c *DaedalusFileContext)
@@ -250,9 +187,6 @@ type DaedalusListener interface {
 
 	// ExitInstanceDef is called when exiting the instanceDef production.
 	ExitInstanceDef(c *InstanceDefContext)
-
-	// ExitInstanceDecl is called when exiting the instanceDecl production.
-	ExitInstanceDecl(c *InstanceDeclContext)
 
 	// ExitNamespaceDef is called when exiting the namespaceDef production.
 	ExitNamespaceDef(c *NamespaceDefContext)
@@ -302,18 +236,6 @@ type DaedalusListener interface {
 	// ExitStatementBlock is called when exiting the statementBlock production.
 	ExitStatementBlock(c *StatementBlockContext)
 
-	// ExitStatement is called when exiting the statement production.
-	ExitStatement(c *StatementContext)
-
-	// ExitFuncCall is called when exiting the funcCall production.
-	ExitFuncCall(c *FuncCallContext)
-
-	// ExitAssignment is called when exiting the assignment production.
-	ExitAssignment(c *AssignmentContext)
-
-	// ExitIfCondition is called when exiting the ifCondition production.
-	ExitIfCondition(c *IfConditionContext)
-
 	// ExitElseBlock is called when exiting the elseBlock production.
 	ExitElseBlock(c *ElseBlockContext)
 
@@ -329,20 +251,35 @@ type DaedalusListener interface {
 	// ExitReturnStatement is called when exiting the returnStatement production.
 	ExitReturnStatement(c *ReturnStatementContext)
 
-	// ExitFuncArgExpression is called when exiting the funcArgExpression production.
-	ExitFuncArgExpression(c *FuncArgExpressionContext)
-
-	// ExitExpressionBlock is called when exiting the expressionBlock production.
-	ExitExpressionBlock(c *ExpressionBlockContext)
-
 	// ExitBitMoveExpression is called when exiting the bitMoveExpression production.
 	ExitBitMoveExpression(c *BitMoveExpressionContext)
 
+	// ExitReferenceExpression is called when exiting the referenceExpression production.
+	ExitReferenceExpression(c *ReferenceExpressionContext)
+
+	// ExitAssignmentExpression is called when exiting the assignmentExpression production.
+	ExitAssignmentExpression(c *AssignmentExpressionContext)
+
+	// ExitBracketExpression is called when exiting the bracketExpression production.
+	ExitBracketExpression(c *BracketExpressionContext)
+
+	// ExitUnaryOperation is called when exiting the unaryOperation production.
+	ExitUnaryOperation(c *UnaryOperationContext)
+
+	// ExitFloatLiteralExpression is called when exiting the floatLiteralExpression production.
+	ExitFloatLiteralExpression(c *FloatLiteralExpressionContext)
+
+	// ExitLogAndExpression is called when exiting the logAndExpression production.
+	ExitLogAndExpression(c *LogAndExpressionContext)
+
+	// ExitFuncCallExpression is called when exiting the funcCallExpression production.
+	ExitFuncCallExpression(c *FuncCallExpressionContext)
+
+	// ExitStringLiteralExpression is called when exiting the stringLiteralExpression production.
+	ExitStringLiteralExpression(c *StringLiteralExpressionContext)
+
 	// ExitEqExpression is called when exiting the eqExpression production.
 	ExitEqExpression(c *EqExpressionContext)
-
-	// ExitValExpression is called when exiting the valExpression production.
-	ExitValExpression(c *ValExpressionContext)
 
 	// ExitAddExpression is called when exiting the addExpression production.
 	ExitAddExpression(c *AddExpressionContext)
@@ -356,20 +293,17 @@ type DaedalusListener interface {
 	// ExitBinAndExpression is called when exiting the binAndExpression production.
 	ExitBinAndExpression(c *BinAndExpressionContext)
 
+	// ExitIntegerLiteralExpression is called when exiting the integerLiteralExpression production.
+	ExitIntegerLiteralExpression(c *IntegerLiteralExpressionContext)
+
 	// ExitBinOrExpression is called when exiting the binOrExpression production.
 	ExitBinOrExpression(c *BinOrExpressionContext)
 
 	// ExitMultExpression is called when exiting the multExpression production.
 	ExitMultExpression(c *MultExpressionContext)
 
-	// ExitBracketExpression is called when exiting the bracketExpression production.
-	ExitBracketExpression(c *BracketExpressionContext)
-
-	// ExitUnaryOperation is called when exiting the unaryOperation production.
-	ExitUnaryOperation(c *UnaryOperationContext)
-
-	// ExitLogAndExpression is called when exiting the logAndExpression production.
-	ExitLogAndExpression(c *LogAndExpressionContext)
+	// ExitNullLiteralExpression is called when exiting the nullLiteralExpression production.
+	ExitNullLiteralExpression(c *NullLiteralExpressionContext)
 
 	// ExitArrayIndex is called when exiting the arrayIndex production.
 	ExitArrayIndex(c *ArrayIndexContext)
@@ -377,72 +311,12 @@ type DaedalusListener interface {
 	// ExitArraySize is called when exiting the arraySize production.
 	ExitArraySize(c *ArraySizeContext)
 
-	// ExitIntegerLiteralValue is called when exiting the integerLiteralValue production.
-	ExitIntegerLiteralValue(c *IntegerLiteralValueContext)
-
-	// ExitFloatLiteralValue is called when exiting the floatLiteralValue production.
-	ExitFloatLiteralValue(c *FloatLiteralValueContext)
-
-	// ExitStringLiteralValue is called when exiting the stringLiteralValue production.
-	ExitStringLiteralValue(c *StringLiteralValueContext)
-
-	// ExitNullLiteralValue is called when exiting the nullLiteralValue production.
-	ExitNullLiteralValue(c *NullLiteralValueContext)
-
-	// ExitFuncCallValue is called when exiting the funcCallValue production.
-	ExitFuncCallValue(c *FuncCallValueContext)
-
-	// ExitReferenceValue is called when exiting the referenceValue production.
-	ExitReferenceValue(c *ReferenceValueContext)
-
-	// ExitReferenceAtom is called when exiting the referenceAtom production.
-	ExitReferenceAtom(c *ReferenceAtomContext)
-
-	// ExitReference is called when exiting the reference production.
-	ExitReference(c *ReferenceContext)
-
 	// ExitTypeReference is called when exiting the typeReference production.
 	ExitTypeReference(c *TypeReferenceContext)
-
-	// ExitAnyIdentifier is called when exiting the anyIdentifier production.
-	ExitAnyIdentifier(c *AnyIdentifierContext)
 
 	// ExitNameNode is called when exiting the nameNode production.
 	ExitNameNode(c *NameNodeContext)
 
 	// ExitParentReference is called when exiting the parentReference production.
 	ExitParentReference(c *ParentReferenceContext)
-
-	// ExitAssignmentOperator is called when exiting the assignmentOperator production.
-	ExitAssignmentOperator(c *AssignmentOperatorContext)
-
-	// ExitUnaryOperator is called when exiting the unaryOperator production.
-	ExitUnaryOperator(c *UnaryOperatorContext)
-
-	// ExitAddOperator is called when exiting the addOperator production.
-	ExitAddOperator(c *AddOperatorContext)
-
-	// ExitBitMoveOperator is called when exiting the bitMoveOperator production.
-	ExitBitMoveOperator(c *BitMoveOperatorContext)
-
-	// ExitCompOperator is called when exiting the compOperator production.
-	ExitCompOperator(c *CompOperatorContext)
-
-	// ExitEqOperator is called when exiting the eqOperator production.
-	ExitEqOperator(c *EqOperatorContext)
-
-	// ExitMultOperator is called when exiting the multOperator production.
-	ExitMultOperator(c *MultOperatorContext)
-
-	// ExitBinAndOperator is called when exiting the binAndOperator production.
-	ExitBinAndOperator(c *BinAndOperatorContext)
-
-	// ExitBinOrOperator is called when exiting the binOrOperator production.
-	ExitBinOrOperator(c *BinOrOperatorContext)
-
-	// ExitLogAndOperator is called when exiting the logAndOperator production.
-	ExitLogAndOperator(c *LogAndOperatorContext)
-
-	// ExitLogOrOperator is called when exiting the logOrOperator production.
-	ExitLogOrOperator(c *LogOrOperatorContext)
 }
