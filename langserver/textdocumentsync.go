@@ -5,7 +5,6 @@ import (
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
-	"go.lsp.dev/uri"
 )
 
 type textDocumentSync struct {
@@ -36,7 +35,7 @@ func (h *textDocumentSync) updateBuffer(ctx context.Context, ws *LspWorkspace, f
 		}
 	}
 	h.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
-		URI:         lsp.DocumentURI(uri.File(filePath)),
+		URI:         filenameToURI(filePath),
 		Diagnostics: diagnostics,
 	})
 

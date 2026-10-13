@@ -10,7 +10,6 @@ import (
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
-	"go.lsp.dev/uri"
 )
 
 type codeLensProvider interface {
@@ -159,7 +158,7 @@ func (p *codeLensHandler) provideReferences(ctx context.Context, source *ParseRe
 			ReferenceParams: lsp.ReferenceParams{
 				TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 					TextDocument: lsp.TextDocumentIdentifier{
-						URI: lsp.DocumentURI(uri.File(v.Source())),
+						URI: filenameToURI(v.Source()),
 					},
 					Position: lsp.Position{
 						Line:      uint32(v.Definition().Start.Line - 1),

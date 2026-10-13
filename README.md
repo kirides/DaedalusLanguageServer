@@ -4,6 +4,29 @@
 
 see: https://github.com/kirides/vscode-daedalus
 
+## WebAssembly (WASI)
+
+Besides the native executables there is a single, platform independent `DaedalusLanguageServer.wasm`
+that runs in any WASI preview 1 runtime (`GOOS=wasip1 GOARCH=wasm`, or `build.wasi.bat`).
+
+```sh
+# Linux / macOS: make your projects visible to the server, under their usual path
+wasmtime run -W max-wasm-stack=8388608 --dir /home/me DaedalusLanguageServer.wasm
+
+# Windows: a drive is mounted as /<letter>, so C:\Games\Gothic II is seen as /c/Games/Gothic II
+wasmtime run -W max-wasm-stack=8388608 --dir C:\::/c DaedalusLanguageServer.wasm
+wazero run -cachedir %TEMP%\wazero -mount C:\:/c DaedalusLanguageServer.wasm
+```
+
+- The server talks LSP over stdin/stdout like the native build, use the command line above as the server command of your editor.
+- A WASI module can only access what the runtime mounts. Mount a directory that contains all your workspaces (a whole drive, or your home directory),
+  as the command of an editor cannot change per project. Keep the mount at the path the editor uses (as shown above), the server translates nothing else.
+  The server also needs write access to create `.dls/externals` in a workspace when asked to.
+- `-W max-wasm-stack=8388608` (wasmtime) keeps the server alive on absurdly nested scripts, which otherwise exhaust the default stack of the runtime.
+- The first start compiles the module, which takes a couple of seconds (wasmtime caches the result by default, wazero needs `-cachedir`).
+- Parsing is single threaded, `numParserThreads` has no effect and a project takes about 5x as long to parse as with one thread of the native build.
+- The pprof server is not available.
+
 ## Custom externals
 
 The server looks for a `_externals\` directory located in the workspace root.  

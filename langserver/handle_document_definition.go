@@ -7,12 +7,11 @@ import (
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
-	"go.lsp.dev/uri"
 )
 
 func getSymbolLocation(symbol symbol.Symbol) lsp.Location {
 	return lsp.Location{
-		URI: lsp.DocumentURI(uri.File(symbol.Source())),
+		URI: filenameToURI(symbol.Source()),
 		Range: lsp.Range{
 			Start: lsp.Position{
 				Character: uint32(symbol.Definition().Start.Column),

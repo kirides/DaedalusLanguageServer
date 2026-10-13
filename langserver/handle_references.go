@@ -10,7 +10,6 @@ import (
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
-	"go.lsp.dev/uri"
 )
 
 var rxBlockComment = regexp.MustCompile(`(?s)\/\*.*?\*\/`)
@@ -146,7 +145,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 				}
 
 				resultCh <- lsp.Location{
-					URI: lsp.DocumentURI(uri.File(doc)),
+					URI: filenameToURI(doc),
 					Range: lsp.Range{
 						Start: lsp.Position{
 							Character: uint32(col),
@@ -211,7 +210,7 @@ func (h *LspWorkspace) getAllReferences(req context.Context, params lsp.Referenc
 					}
 
 					resultCh <- lsp.Location{
-						URI: lsp.DocumentURI(uri.File(k)),
+						URI: filenameToURI(k),
 						Range: lsp.Range{
 							Start: lsp.Position{
 								Character: uint32(col),

@@ -1,9 +1,12 @@
+//go:build !wasip1
+
 package main
 
 import (
 	"context"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 )
 
 type pprofServer struct {

@@ -14,7 +14,6 @@ import (
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
 	"go.lsp.dev/jsonrpc2"
-	"go.lsp.dev/uri"
 )
 
 type LspWorkspace struct {
@@ -87,8 +86,12 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 		return
 	}
 
-	exe, _ := os.Executable()
-	if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); err == nil {
+	// not available when running as wasm/wasi; the builtins are embedded anyway
+	exe, exeErr := os.Executable()
+	if exeErr != nil {
+		exe = ""
+	}
+	if f, err := findPath(filepath.Join(filepath.Dir(exe), "DaedalusBuiltins", "builtins.src")); exeErr == nil && err == nil {
 		_, err = ws.parsedDocuments.ParseSource(ws.workspaceCtx, f)
 		if err != nil {
 			ws.logger.Errorf("Error parsing %q: %v", f, err)
@@ -119,7 +122,7 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 			break
 		}
 
-		full := v
+		full := guestPath(v)
 		if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
 			if _, err := os.Stat(full); err == nil {
 				ws.logger.Errorf("Error user-define project file %s: %v", full, err)
@@ -171,7 +174,7 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 
 		for _, v := range config.ProjectFiles {
 			var err error
-			full := v
+			full := guestPath(v)
 			if filepath.IsAbs(full) || strings.ContainsAny(full, "\\/") {
 
 				if _, err := os.Stat(full); err != nil {
@@ -228,7 +231,7 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 				}
 				ws.logger.Infof("> %s", p.Source)
 				ws.conn.Notify(ctx, lsp.MethodTextDocumentPublishDiagnostics, lsp.PublishDiagnosticsParams{
-					URI:         lsp.DocumentURI(uri.File(p.Source)),
+					URI:         filenameToURI(p.Source),
 					Diagnostics: diagnostics,
 				})
 			}

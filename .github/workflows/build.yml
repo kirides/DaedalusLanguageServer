@@ -36,3 +36,23 @@ jobs:
     
     - name: Test
       run: go test -v ./...
+
+  wasi:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.26.x'
+
+    - name: Set up wasmtime
+      uses: bytecodealliance/actions/wasmtime/setup@v1
+
+    - name: build wasm/wasi
+      run: GOOS=wasip1 GOARCH=wasm go build -v -o DaedalusLanguageServer.wasm ./cmd/DaedalusLanguageServer
+
+    - name: Test (running in wasmtime)
+      run: GOOS=wasip1 GOARCH=wasm GOWASIRUNTIME=wasmtime go test -exec "$(go env GOROOT)/lib/wasm/go_wasip1_wasm_exec" ./...

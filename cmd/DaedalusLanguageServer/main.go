@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"log/slog"
 
@@ -19,8 +17,6 @@ import (
 
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/langserver"
-
-	_ "net/http/pprof"
 
 	"go.lsp.dev/jsonrpc2"
 )
@@ -77,10 +73,11 @@ func main() {
 	if *pprofPort > 0 {
 		pprofServer.ChangeAddr(fmt.Sprintf("127.0.0.1:%d", *pprofPort))
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
+	ctx, stop := notifyContext()
 	defer stop()
 
-	conn := connectLanguageServer(&rwc{os.Stdin, os.Stdout})
+	stdin, stdout := stdio()
+	conn := connectLanguageServer(&rwc{stdin, stdout})
 	lspHandler := langserver.NewLspHandler(conn, newDlsSlog(logger.Handler()))
 
 	lspHandler.OnConfigChanged(func(config langserver.LspConfig) {

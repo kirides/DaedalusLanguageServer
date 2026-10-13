@@ -56,7 +56,7 @@ func fixURI(s string) (string, bool) {
 	return s, true
 }
 
-func uriToFilename(v lsp.DocumentURI) string {
+func uriToFilenameDefault(v lsp.DocumentURI) string {
 	s := string(v)
 	if strings.HasPrefix(s, "git:/") {
 		return ""
