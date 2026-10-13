@@ -31,7 +31,7 @@ func referenceTokens(src string) []string {
 func compareLexers(t *testing.T, fl *fastLexer, src string) bool {
 	t.Helper()
 	fl.RemoveErrorListeners()
-	fl.Reset(src, antlr.NewInputStream(src))
+	fl.ResetString(src)
 	defer fl.Release()
 	used := fl.fast
 	if !used {

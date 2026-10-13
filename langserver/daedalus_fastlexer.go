@@ -37,7 +37,12 @@ func newFastLexer() *fastLexer {
 	return &fastLexer{DaedalusLexer: parser.NewDaedalusLexer(nil)}
 }
 
-// Reset prepares the lexer for src. input must be an InputStream over src.
+// ResetString prepares the lexer for src, without converting it to runes unless necessary.
+func (l *fastLexer) ResetString(src string) {
+	l.Reset(src, newLazyCharStream(src))
+}
+
+// Reset prepares the lexer for src. input must be a CharStream over src.
 func (l *fastLexer) Reset(src string, input antlr.CharStream) {
 	l.DaedalusLexer.SetInputStream(input)
 	l.pos = 0
@@ -555,6 +560,9 @@ func (l *fastLexer) tokenize(src string, input antlr.CharStream) bool {
 	}
 
 	emit(antlr.TokenEOF, "", antlr.TokenDefaultChannel, st.ri, st.ri-1, st.line, st.col)
+	if lazy, ok := input.(*lazyCharStream); ok {
+		lazy.size = st.ri
+	}
 	l.tokens = toks
 	return true
 }

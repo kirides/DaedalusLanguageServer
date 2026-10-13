@@ -48,7 +48,7 @@ func describeHidden(ts antlr.TokenStream) []string {
 }
 
 func runPipeline(src string, reference bool, fl *fastLexer) pipelineResult {
-	in := antlr.NewInputStream(src)
+	in := antlr.NewInputStream(src) // reference only
 	errs := &recordingErrorListener{DefaultErrorListener: antlr.NewDefaultErrorListener()}
 
 	var ts antlr.TokenStream
@@ -60,7 +60,7 @@ func runPipeline(src string, reference bool, fl *fastLexer) pipelineResult {
 		ts = antlr.NewCommonTokenStream(l, 0)
 	} else {
 		fl.RemoveErrorListeners()
-		fl.Reset(src, in)
+		fl.ResetString(src)
 		defer fl.Release()
 		ts = fl.TokenStream()
 	}

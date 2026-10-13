@@ -30,8 +30,6 @@ func newRegularParser() *RegularParser {
 }
 
 func (rp *RegularParser) Parse(source, content string, listener antlr.ParseTreeListener, errListener antlr.ErrorListener) parser.IDaedalusFileContext {
-	inputStream := antlr.NewInputStream(content)
-
 	lexer := rp.pooledLexers.Get()
 	p := rp.pooledParsers.Get()
 	defer func() {
@@ -40,7 +38,7 @@ func (rp *RegularParser) Parse(source, content string, listener antlr.ParseTreeL
 		p.SetInputStream(nil)
 		rp.pooledParsers.Put(p)
 	}()
-	lexer.Reset(content, inputStream)
+	lexer.ResetString(content)
 	tokenStream := lexer.TokenStream()
 
 	p.SetInputStream(tokenStream)

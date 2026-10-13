@@ -278,3 +278,63 @@ func (s *fastTokenStream) filterForChannel(left, right, channel int) []antlr.Tok
 	}
 	return hidden
 }
+
+// lazyCharStream is an antlr.CharStream over a string, that only converts the
+// input to runes (4 bytes per character) when somebody reads from it. The fast
+// lexer does not need to, only the generated lexer (fallback) does.
+type lazyCharStream struct {
+	src  string
+	size int // number of runes, -1 if unknown
+	real *antlr.InputStream
+}
+
+var _ antlr.CharStream = (*lazyCharStream)(nil)
+
+func newLazyCharStream(src string) *lazyCharStream {
+	return &lazyCharStream{src: src, size: -1}
+}
+
+func (s *lazyCharStream) stream() *antlr.InputStream {
+	if s.real == nil {
+		s.real = antlr.NewInputStream(s.src)
+	}
+	return s.real
+}
+
+func (s *lazyCharStream) Consume()                { s.stream().Consume() }
+func (s *lazyCharStream) LA(i int) int            { return s.stream().LA(i) }
+func (s *lazyCharStream) Mark() int               { return 0 }
+func (s *lazyCharStream) Release(marker int)      {}
+func (s *lazyCharStream) GetSourceName() string   { return "<empty>" }
+func (s *lazyCharStream) GetText(a, b int) string { return s.stream().GetText(a, b) }
+
+func (s *lazyCharStream) GetTextFromTokens(start, end antlr.Token) string {
+	return s.stream().GetTextFromTokens(start, end)
+}
+
+func (s *lazyCharStream) GetTextFromInterval(i antlr.Interval) string {
+	return s.stream().GetTextFromInterval(i)
+}
+
+func (s *lazyCharStream) Index() int {
+	if s.real == nil {
+		return 0
+	}
+	return s.real.Index()
+}
+
+func (s *lazyCharStream) Seek(index int) {
+	if s.real == nil && index == 0 {
+		return // already at the start
+	}
+	s.stream().Seek(index)
+}
+
+func (s *lazyCharStream) Size() int {
+	if s.real == nil && s.size >= 0 {
+		return s.size
+	}
+	return s.stream().Size()
+}
+
+func (s *lazyCharStream) String() string { return s.src }
