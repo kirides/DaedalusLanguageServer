@@ -11,11 +11,29 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
+// pendingCall is a function call whose argument count could not be checked yet,
+// because the functions of all other scripts of a workspace are not known while parsing.
+type pendingCall struct {
+	name      string
+	args      int32
+	line, col int32
+}
+
 // DaedalusValidatingListener ...
 type DaedalusValidatingListener struct {
 	parser.BaseDaedalusListener
 	knownSymbols SymbolProvider
 	source       string
+
+	// deferCalls collects function calls in pendingCalls instead of validating them directly.
+	deferCalls   bool
+	pendingCalls []pendingCall
+}
+
+// NewDeferringValidatingListener creates a listener that validates everything that does not
+// depend on other scripts, and collects the function calls to be checked later.
+func NewDeferringValidatingListener(source string) *DaedalusValidatingListener {
+	return &DaedalusValidatingListener{source: source, deferCalls: true}
 }
 
 // NewDaedalusValidatingListener ...
@@ -84,6 +102,13 @@ func (l *DaedalusValidatingListener) lookupSymbol(name string, symbol SymbolType
 func (l *DaedalusValidatingListener) EnterFuncCallExpression(ctx *parser.FuncCallExpressionContext) {
 	name := ctx.GetName()
 	l.checkIdentifierStart(ctx.GetParser(), ctx, name)
+
+	if l.deferCalls {
+		l.pendingCalls = append(l.pendingCalls, pendingCall{
+			name: name.GetText(), args: int32(len(ctx.AllExpression())), line: int32(name.GetLine()), col: int32(name.GetColumn()),
+		})
+		return
+	}
 
 	sym := l.lookupSymbol(strings.ToUpper(name.GetText()), SymbolFunction)
 	if sym == nil {

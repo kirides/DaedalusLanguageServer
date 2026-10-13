@@ -4,13 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kirides/DaedalusLanguageServer/daedalus/parser"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 )
 
 // ParseResult ...
 type ParseResult struct {
-	Ast             parser.IDaedalusFileContext
 	Instances       map[string]symbol.ProtoTypeOrInstance
 	GlobalVariables map[string]symbol.Symbol
 	GlobalConstants map[string]symbol.Symbol
@@ -22,6 +20,9 @@ type ParseResult struct {
 	SyntaxErrors    []SyntaxError
 
 	lastModifiedAt time.Time
+
+	// function calls that still have to be checked against the functions of all other scripts
+	pendingCalls []pendingCall
 }
 
 func (r *ParseResult) CountSymbols() int64 {

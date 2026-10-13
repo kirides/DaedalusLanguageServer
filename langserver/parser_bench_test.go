@@ -1,11 +1,14 @@
 package langserver
 
 import (
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -150,4 +153,46 @@ func BenchmarkParseCorpus(b *testing.B) {
 			m.ParseScript(s.name, s.content, time.Now())
 		}
 	}
+}
+
+// TestParseSourceMemory reports peak and retained heap of parsing a whole project:
+//
+//	DLS_SRC='path\to\Gothic.src' go test ./langserver -run ParseSourceMemory -v
+func TestParseSourceMemory(t *testing.T) {
+	src := os.Getenv("DLS_SRC")
+	if src == "" {
+		t.Skip("DLS_SRC not set")
+	}
+	var peak atomic.Uint64
+	stop := make(chan struct{})
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		var ms runtime.MemStats
+		for {
+			select {
+			case <-stop:
+				return
+			case <-time.After(5 * time.Millisecond):
+			}
+			runtime.ReadMemStats(&ms)
+			if ms.HeapInuse > peak.Load() {
+				peak.Store(ms.HeapInuse)
+			}
+		}
+	}()
+	m := newParseResultsManager(nopLogger{})
+	start := time.Now()
+	res, err := m.ParseSource(context.Background(), src)
+	elapsed := time.Since(start)
+	close(stop)
+	<-done
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime.GC()
+	var ms runtime.MemStats
+	runtime.ReadMemStats(&ms)
+	t.Logf("scripts=%d time=%v peakHeapInuse=%dMB retainedAfterGC=%dMB totalAlloc=%dMB numGC=%d",
+		len(res), elapsed.Round(time.Millisecond), peak.Load()>>20, ms.HeapAlloc>>20, ms.TotalAlloc>>20, ms.NumGC)
 }

@@ -54,7 +54,6 @@ func TestCorpusDump(t *testing.T) {
 		contents[i] = string(body)
 		// register global symbols for the validation of function calls
 		parsed := m.ParseScript(f, contents[i], fileModTime(f))
-		parsed.Ast = nil
 		m.mtx.Lock()
 		m.parseResults[f] = parsed
 		m.mtx.Unlock()

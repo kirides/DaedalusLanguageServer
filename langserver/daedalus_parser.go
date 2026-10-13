@@ -3,6 +3,8 @@ package langserver
 //go:generate go run ../cmd/gen-combined-listener
 
 import (
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -85,13 +87,15 @@ func (m *parseResultsManager) ParseScript(source, content string, lastModifiedAt
 	m.mtx.RUnlock()
 
 	listener := NewDaedalusStatefulListener(source, m)
+	validating := NewDeferringValidatingListener(source)
 	errListener := &SyntaxErrorListener{}
 
-	daedalusFile := m.ParseScriptListener(source, content, listener, errListener)
+	// Validate while walking the tree, so that the (large) tree does not have to be kept around.
+	m.ParseScriptListener(source, content, combineListeners(listener, validating), errListener)
 
 	result := &ParseResult{
-		Ast:             daedalusFile,
 		SyntaxErrors:    errListener.SyntaxErrors,
+		pendingCalls:    validating.pendingCalls,
 		GlobalVariables: listener.Globals.Variables,
 		GlobalConstants: listener.Globals.Constants,
 		Functions:       listener.Globals.Functions,
@@ -105,12 +109,53 @@ func (m *parseResultsManager) ParseScript(source, content string, lastModifiedAt
 	return result
 }
 
-func (m *parseResultsManager) ValidateAst(source string, ast parser.IDaedalusFileContext) []SyntaxError {
-	listener := NewDaedalusValidatingListener(source, m)
-	errListener := &SyntaxErrorListener{}
-	antlr.NewParseTreeWalker().Walk(listener, ast)
+// functionParameterCounts returns the number of parameters of all known global functions,
+// by upper case name. If a function is defined multiple times, the first definition
+// (by source path) wins.
+func (m *parseResultsManager) functionParameterCounts() map[string]int {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
 
-	return errListener.SyntaxErrors
+	sources := make([]string, 0, len(m.parseResults))
+	for k := range m.parseResults {
+		sources = append(sources, k)
+	}
+	sort.Strings(sources)
+
+	counts := make(map[string]int, 4096)
+	for _, src := range sources {
+		for name, fn := range m.parseResults[src].Functions {
+			if _, exists := counts[name]; !exists {
+				counts[name] = len(fn.Parameters)
+			}
+		}
+	}
+	return counts
+}
+
+// ResolvePendingCalls checks the argument counts of the function calls collected
+// while parsing against all known functions.
+func (m *parseResultsManager) ResolvePendingCalls(results ...*ParseResult) {
+	var counts map[string]int
+	for _, r := range results {
+		if len(r.pendingCalls) == 0 {
+			continue
+		}
+		if counts == nil {
+			counts = m.functionParameterCounts()
+		}
+		for _, c := range r.pendingCalls {
+			params, ok := counts[strings.ToUpper(c.name)]
+			switch {
+			case !ok:
+			case int(c.args) < params:
+				r.SyntaxErrors = append(r.SyntaxErrors, NewSyntaxError(int(c.line), int(c.col), D0004NotEnoughArgumentsSpecified))
+			case int(c.args) > params:
+				r.SyntaxErrors = append(r.SyntaxErrors, NewSyntaxError(int(c.line), int(c.col), D0005TooManyArgumentsSpecified))
+			}
+		}
+		r.pendingCalls = nil
+	}
 }
 
 // SymbolType ...
