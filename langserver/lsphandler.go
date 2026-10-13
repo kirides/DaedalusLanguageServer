@@ -343,7 +343,7 @@ func (h *LspHandler) Handle(ctx context.Context, reply dls.Replier, r *jsonrpc2.
 		json.Unmarshal(r.Params(), &openParams)
 
 		ws := h.GetWorkspace(openParams.TextDocument.URI)
-		if ws != nil && !ws.workspaceInitialized {
+		if ws != nil && !ws.workspaceInitialized.Load() {
 			ws.tryInitializeWorkspace(ctx, &openParams, h.config)
 		}
 	}

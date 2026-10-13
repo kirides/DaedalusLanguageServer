@@ -6,6 +6,7 @@ import (
 	dls "github.com/kirides/DaedalusLanguageServer"
 	"github.com/kirides/DaedalusLanguageServer/daedalus/symbol"
 	lsp "github.com/kirides/DaedalusLanguageServer/protocol"
+	"go.lsp.dev/jsonrpc2"
 )
 
 type textDocumentDocumentSymbol struct{}
@@ -98,7 +99,8 @@ func (h *LspHandler) handleDocumentSymbol(req dls.RpcContext, params lsp.Documen
 		return nil
 	}, SymbolAll)
 	if err != nil {
-		return nil
+		// LSP: RequestCancelled
+		return req.Reply(req.Context(), nil, jsonrpc2.NewError(-32800, "request cancelled"))
 	}
 
 	req.Reply(req.Context(), result, nil)

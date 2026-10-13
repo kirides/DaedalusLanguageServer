@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"unicode"
 
 	dls "github.com/kirides/DaedalusLanguageServer"
@@ -27,16 +28,57 @@ type LspWorkspace struct {
 	conn            jsonrpc2.Conn
 
 	parsedKnownSrcFiles  concurrentSet[string]
-	workspaceInitialized bool
+	workspaceInitialized atomic.Bool
+	setupPromptOpen      atomic.Bool
 
 	workspaceCtx       context.Context
 	cancelWorkspaceCtx context.CancelFunc
 }
 
+// promptSetupWorkspace asks the client whether to create the workspace files
+// and parses the created builtins afterwards.
+func (ws *LspWorkspace) promptSetupWorkspace() {
+	defer ws.setupPromptOpen.Store(false)
+
+	req := DlsMessageRequest{
+		ShowMessageRequestParams: lsp.ShowMessageRequestParams{
+			Type:    lsp.Info,
+			Message: "Create neccessery workspace files",
+			Actions: []lsp.MessageActionItem{
+				{Title: "Cancel"},
+				{Title: "Gothic 1"},
+				{Title: "Gothic 2"},
+			},
+		},
+		WorkspaceURI: ws.uri,
+	}
+	var result lsp.MessageActionItem
+	id, err := ws.conn.Call(ws.workspaceCtx, lsp.MethodWindowShowMessageRequest, req, &result)
+	if err != nil {
+		ws.logger.Errorf("Error requesting message %q: %v", id, err)
+		return
+	}
+	ws.logger.Debugf("Result: %#v", result)
+	switch result.Title {
+	case "Gothic 2":
+		ws.commandSetupWorkspace(ws, "G2A")
+	case "Gothic 1":
+		ws.commandSetupWorkspace(ws, "G1")
+	default:
+		return
+	}
+
+	if f, err := findPath(filepath.Join(ws.path, ".dls", "externals", "builtins.src")); err == nil {
+		if _, err := ws.parsedDocuments.ParseSource(ws.workspaceCtx, f); err != nil {
+			ws.logger.Errorf("Error parsing %q: %v", f, err)
+		}
+	}
+}
+
 // TODO: We need to figure out a better way to handle workspaces.
 // We might have to separate the parsers for Gothic/Music/SFX/VFX/...
 func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.DidOpenTextDocumentParams, config LspConfig) {
-	if ws.workspaceInitialized {
+	if ws.workspaceInitialized.Load() {
 		return
 	}
 	wd := uriToFilename(params.TextDocument.URI)
@@ -55,29 +97,11 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 	}
 
 	if _, err := findPath(filepath.Join(ws.path, ".dls", "externals", "builtins.src")); err != nil {
-		req := DlsMessageRequest{
-			ShowMessageRequestParams: lsp.ShowMessageRequestParams{
-				Type:    lsp.Info,
-				Message: "Create neccessery workspace files",
-				Actions: []lsp.MessageActionItem{
-					{Title: "Cancel"},
-					{Title: "Gothic 1"},
-					{Title: "Gothic 2"},
-				},
-			},
-			WorkspaceURI: ws.uri,
-		}
-		var result lsp.MessageActionItem
-		id, err := ws.conn.Call(context.Background(), lsp.MethodWindowShowMessageRequest, req, &result)
-		if err != nil {
-			ws.logger.Errorf("Error requesting message %q: %v", id, err)
-		}
-		ws.logger.Debugf("Result: %#v", result)
-		switch result.Title {
-		case "Gothic 2":
-			ws.commandSetupWorkspace(ws, "G2A")
-		case "Gothic 1":
-			ws.commandSetupWorkspace(ws, "G1")
+		// The client may take arbitrarily long to answer (or never will).
+		// Do not hold up opening the document, which would make every
+		// request for it wait until the prompt has been answered.
+		if ws.setupPromptOpen.CompareAndSwap(false, true) {
+			go ws.promptSetupWorkspace()
 		}
 	}
 
@@ -88,7 +112,6 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 			return
 		}
 	}
-
 	// Try to locate a workspace file
 	foundProjectFile := false
 	for _, v := range config.ProjectFiles {
@@ -120,7 +143,7 @@ func (ws *LspWorkspace) tryInitializeWorkspace(ctx context.Context, params *lsp.
 		ws.logger.Debugf("No project file found, deferring workspace initialization")
 		return
 	}
-	ws.workspaceInitialized = true
+	ws.workspaceInitialized.Store(true)
 
 	ws.onceParseAll.Do(func() {
 		var resultsX []*ParseResult
